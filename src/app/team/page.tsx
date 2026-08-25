@@ -99,7 +99,7 @@ export default function TeamPage() {
                   <tr key={p.id} className="border-b border-line/50 last:border-0 hover:bg-white/4">
                     <td className="px-3 py-2 tabular-nums text-dim">{p.jersey ?? "—"}</td>
                     <td className="px-3 py-2">
-                      <Link href={`/team/${p.id}`} className="font-semibold text-sky hover:underline">
+                      <Link href={`/team/player?id=${p.id}`} className="font-semibold text-sky hover:underline">
                         {p.name}
                       </Link>
                     </td>

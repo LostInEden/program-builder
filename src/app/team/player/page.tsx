@@ -1,8 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { useStore, useHydrated, type Player, type Evaluation } from "@/lib/store";
@@ -30,8 +30,16 @@ const evalFields: { key: keyof Evaluation; label: string; rows?: number }[] = [
 
 const groups = ["Body", "Strength", "Explosiveness", "Speed / Agility"];
 
-export default function PlayerProfile({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function PlayerProfilePage() {
+  return (
+    <Suspense fallback={<div className="px-8 py-10 display text-dim">Loading…</div>}>
+      <PlayerProfile />
+    </Suspense>
+  );
+}
+
+function PlayerProfile() {
+  const id = useSearchParams().get("id") ?? "";
   const hydrated = useHydrated();
   const router = useRouter();
   const player = useStore((s) => s.players.find((p) => p.id === id));
