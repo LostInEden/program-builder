@@ -74,6 +74,30 @@ export const opponent = {
   ],
 };
 
+// Season schedule — game dates drive the calendar's month view.
+export type SeasonGame = {
+  date: string; // YYYY-MM-DD
+  opponent: string;
+  homeAway: "home" | "away";
+  result?: string;
+};
+
+export const seasonGames: SeasonGame[] = [
+  { date: "2026-08-21", opponent: "Franklin East", homeAway: "away", result: "W 27–14" },
+  { date: "2026-08-28", opponent: "Central", homeAway: "home", result: "W 21–17" },
+  { date: "2026-09-04", opponent: "Miller Creek", homeAway: "away", result: "L 13–20" },
+  { date: "2026-09-11", opponent: "Westview", homeAway: "home", result: "W 35–7" },
+  { date: "2026-09-19", opponent: "Red Valley", homeAway: "home" },
+  { date: "2026-09-25", opponent: "North Ridge", homeAway: "away" },
+  { date: "2026-10-02", opponent: "Bellwood", homeAway: "home" },
+  { date: "2026-10-09", opponent: "South Gate", homeAway: "away" },
+  { date: "2026-10-16", opponent: "Pine Hill", homeAway: "home" },
+  { date: "2026-10-23", opponent: "East Ridge", homeAway: "away" },
+];
+
+export const seasonStart = "2026-08-03"; // heat acclimatization begins
+export const seasonEnd = "2026-10-30";
+
 export const schedule = [
   { day: "Mon", date: "Sep 14", items: [{ time: "3:30 PM", title: "Film — Red Valley offense", kind: "film" }, { time: "4:30 PM", title: "Practice — Install day", kind: "practice" }] },
   { day: "Tue", date: "Sep 15", items: [{ time: "4:30 PM", title: "Practice — Pads, run fits", kind: "practice" }] },
