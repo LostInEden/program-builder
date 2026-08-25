@@ -5,7 +5,8 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
 import { useStore, useHydrated, slotLabelOf, type PlaybookSection } from "@/lib/store";
-import { getStructure, offensivePresets, type OffMarker } from "@/lib/football";
+import { getStructure, offensivePresets } from "@/lib/football";
+import { recognizeFormation, formationLabel } from "@/lib/recognize";
 
 const SECTIONS: PlaybookSection[] = ["Fronts", "Coverages", "Pressures", "Checks & Adjustments"];
 
@@ -18,7 +19,7 @@ export default function PlaybookPage() {
   const hydrated = useHydrated();
   const {
     calls, activeCallId, setActiveCall, addCall, updateCall, duplicateCall, deleteCall,
-    groups, activeGroupId, players, overrides,
+    groups, activeGroupId, players, overrides, strengthRule, formationTerms,
   } = useStore();
   const [section, setSection] = useState<PlaybookSection>("Fronts");
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
@@ -57,6 +58,7 @@ export default function PlaybookPage() {
   };
 
   const selOffMarker = call?.offLook.find((m) => m.id === selectedOff) ?? null;
+  const rec = call ? recognizeFormation(call.offLook, strengthRule) : null;
 
   return (
     <div className="px-6 py-8 max-w-7xl mx-auto">
@@ -224,6 +226,25 @@ export default function PlaybookPage() {
                   );
                 })}
               </div>
+
+              {rec && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-line bg-card/80 px-4 py-2.5 text-sm">
+                  <span className="display text-xs font-semibold tracking-[0.15em] text-dim">Recognized</span>
+                  <span className="display text-lg font-bold text-grass">{formationLabel(rec, formationTerms)}</span>
+                  {rec.strengthSide && (
+                    <span className="rounded-full border border-ember/40 bg-ember/10 px-2.5 py-0.5 text-xs text-ember">
+                      Strength: {rec.strengthSide} ({strengthRule})
+                    </span>
+                  )}
+                  <span className="text-xs text-dim">{rec.detail}</span>
+                  <button
+                    onClick={() => updateCall(call.id, { offForm: formationLabel(rec, formationTerms) })}
+                    className="ml-auto rounded-full border border-grass/50 px-3 py-1 text-xs text-grass transition hover:bg-grass hover:text-pitch"
+                  >
+                    Use as formation name
+                  </button>
+                </div>
+              )}
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>

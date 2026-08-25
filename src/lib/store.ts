@@ -10,6 +10,7 @@ import {
   type OffMarker,
   type Concept,
 } from "@/lib/football";
+import type { StrengthRule } from "@/lib/recognize";
 
 export type Evaluation = {
   skill?: string;
@@ -181,6 +182,8 @@ type Store = {
   activeGroupId: string;
   scheme: { structureName: string; philosophy: string };
   overrides: Overrides;
+  strengthRule: StrengthRule;
+  formationTerms: Record<string, string>; // internal name -> coach's label
   calls: Call[];
   activeCallId: string | null;
   opponent: { name: string; kickoff: string };
@@ -197,6 +200,8 @@ type Store = {
 
   setScheme: (patch: Partial<{ structureName: string; philosophy: string }>) => void;
   setSlotOverride: (structureId: string, slotIndex: number, patch: SlotOverride) => void;
+  setStrengthRule: (rule: StrengthRule) => void;
+  setFormationTerm: (internal: string, label: string) => void;
 
   addCall: (section: PlaybookSection) => string;
   updateCall: (id: string, patch: Partial<Call>) => void;
@@ -219,6 +224,8 @@ export const useStore = create<Store>()(
           "Stop the run first. Eliminate explosive plays, create negative plays, disguise intentions, and force the offense to execute long drives without help.",
       },
       overrides: {},
+      strengthRule: "Receiver strength",
+      formationTerms: {},
       calls: seedCalls,
       activeCallId: seedCalls[0].id,
       opponent: { name: "Red Valley", kickoff: "Saturday, 7:00 PM" },
@@ -302,6 +309,10 @@ export const useStore = create<Store>()(
             },
           },
         })),
+
+      setStrengthRule: (rule) => set({ strengthRule: rule }),
+      setFormationTerm: (internal, label) =>
+        set((s) => ({ formationTerms: { ...s.formationTerms, [internal]: label } })),
 
       addCall: (section) => {
         const id = uid();
