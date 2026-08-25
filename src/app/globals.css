@@ -1,26 +1,88 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-pitch: #0a0e0b;
+  --color-panel: #11161230;
+  --color-card: #131a15;
+  --color-line: #232d26;
+  --color-ink: #e9efe9;
+  --color-dim: #8fa094;
+  --color-grass: #4ade80;
+  --color-grass-deep: #16a34a;
+  --color-sky: #38bdf8;
+  --color-ember: #f59e0b;
+  --color-mind: #a78bfa;
+  --font-display: var(--font-barlow), "Arial Narrow", sans-serif;
+  --font-body: var(--font-source), "Segoe UI", sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-pitch);
+  color: var(--color-ink);
+  font-family: var(--font-body);
 }
+
+/* Stadium atmosphere behind everything */
+.stadium-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(74, 222, 128, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 15% 110%, rgba(56, 189, 248, 0.05), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 85% 110%, rgba(167, 139, 250, 0.05), transparent 60%),
+    linear-gradient(180deg, #0d120e 0%, #0a0e0b 45%, #080b09 100%);
+}
+
+.display {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.field-lines {
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0px,
+    transparent 39px,
+    rgba(233, 239, 233, 0.05) 39px,
+    rgba(233, 239, 233, 0.05) 40px
+  );
+}
+
+::selection {
+  background: rgba(74, 222, 128, 0.3);
+}
+
+/* Number inputs: no native stepper arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Selects: custom chevron with breathing room, dark popup list */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238fa094' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 38px !important;
+  cursor: pointer;
+}
+select option {
+  background-color: #131a15;
+  color: #e9efe9;
+}
+
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: #232d26; border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
