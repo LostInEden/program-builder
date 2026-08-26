@@ -54,15 +54,17 @@ const DEF_INK = "#9aa59b";
 // legacy stored colors from the light-theme build
 const legacy = (c?: string) => (c === "#111827" ? undefined : c === "#3b82f6" ? "#38bdf8" : c === "#6b7280" ? undefined : c);
 
-const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string; key: string }[] = [
-  { id: "select", icon: MousePointer2, label: "Select", key: "1" },
-  { id: "line", icon: Minus, label: "Line", key: "2" },
-  { id: "route", icon: ArrowUpRight, label: "Route", key: "3" },
-  { id: "motion", icon: MoveRight, label: "Motion", key: "4" },
-  { id: "block", icon: RectangleHorizontal, label: "Block", key: "5" },
-  { id: "text", icon: Type, label: "Text", key: "6" },
-  { id: "zone", icon: Circle, label: "Zone", key: "7" },
-  { id: "player", icon: UserPlus, label: "Player", key: "8" },
+// Number keys per the coach's request, plus mnemonic letter aliases
+// (the convention in Excalidraw/tldraw: letters primary, digits secondary).
+const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string; key: string; alias: string }[] = [
+  { id: "select", icon: MousePointer2, label: "Select", key: "1", alias: "v" },
+  { id: "line", icon: Minus, label: "Line", key: "2", alias: "l" },
+  { id: "route", icon: ArrowUpRight, label: "Route", key: "3", alias: "r" },
+  { id: "motion", icon: MoveRight, label: "Motion", key: "4", alias: "m" },
+  { id: "block", icon: RectangleHorizontal, label: "Block", key: "5", alias: "b" },
+  { id: "text", icon: Type, label: "Text", key: "6", alias: "t" },
+  { id: "zone", icon: Circle, label: "Zone", key: "7", alias: "z" },
+  { id: "player", icon: UserPlus, label: "Player", key: "8", alias: "p" },
 ];
 
 const STYLES: { id: LineStyle; label: string }[] = [
@@ -105,6 +107,8 @@ export default function StudioCanvas({
   const [hover, setHover] = useState<Pt | null>(null);
   const [zoneStart, setZoneStart] = useState<Pt | null>(null);
   const dragRef = useRef<Drag | null>(null);
+  const pendingFromDownRef = useRef(false); // pointerdown-on-player → drag-release draws
+  const extendDragRef = useRef<string | null>(null); // + button pressed; click = arm, drag = live-extend
   type Snap = Pick<Call, "offLook" | "lines" | "zones" | "defOffsets"> & { texts: NonNullable<Call["texts"]> };
   const undoStack = useRef<Snap[]>([]);
   const redoStack = useRef<Snap[]>([]);
@@ -296,6 +300,17 @@ export default function StudioCanvas({
     }
   };
   const onFieldPointerUp = (e: React.PointerEvent) => {
+    // press-drag-release drawing: released far from the armed player → draw now
+    if (pending && pendingFromDownRef.current) {
+      pendingFromDownRef.current = false;
+      const a = anchorPos(pending);
+      const pt = toCanvas(e);
+      if (a && Math.hypot(pt[0] - a[0], pt[1] - a[1]) > 3) {
+        drawLineTo(pt);
+        return;
+      }
+      // plain click on the player → stays armed for click-to-place
+    }
     if (zoneStart) {
       const [x, y] = toCanvas(e);
       const rx = Math.abs(x - zoneStart[0]) / 2;
@@ -316,19 +331,29 @@ export default function StudioCanvas({
       if (d.type === "off") onSelect({ kind: "off", id: d.id });
       else if (d.type === "def") onSelect({ kind: "def", slot: d.slot });
       else if (d.type === "text") onSelect({ kind: "text", id: d.id });
+      else if (d.type === "wp" && extendDragRef.current === d.lineId) {
+        // + tapped without dragging: nothing changed — drop the snapshot, arm extend
+        undoStack.current.pop();
+        setExtendId(d.lineId);
+      }
     }
+    extendDragRef.current = null;
     dragRef.current = null;
   };
   const beginMarkerDrag = (e: React.PointerEvent, kind: "off" | "def" | "text", id: string, slot?: number) => {
     e.preventDefault();
     e.stopPropagation();
     if (isDrawTool && kind !== "text") {
-      // arm this player — next field click draws the complete line
+      // arm this player — a release after dragging draws immediately (press-drag-release),
+      // a plain click leaves it armed for the click-to-place model
+      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
       setPending(kind === "off" ? `off:${id}` : `def:${slot}`);
       setExtendId(null);
+      pendingFromDownRef.current = true;
       return;
     }
     if (tool !== "select") return;
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
     snapshot();
     dragRef.current =
       kind === "off" ? { type: "off", id, moved: false } : kind === "def" ? { type: "def", slot: slot!, moved: false } : { type: "text", id, moved: false };
@@ -353,8 +378,8 @@ export default function StudioCanvas({
     const onKey = (e: KeyboardEvent) => {
       const tag = (document.activeElement?.tagName ?? "").toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select") return;
-      const toolByKey = TOOLS.find((t) => t.key === e.key);
-      if (toolByKey && !e.ctrlKey && !e.metaKey) {
+      const toolByKey = TOOLS.find((t) => t.key === e.key || t.alias === e.key.toLowerCase());
+      if (toolByKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
         setPending(null);
         setExtendId(null);
         setTool(toolByKey.id);
@@ -503,12 +528,17 @@ export default function StudioCanvas({
               bar = { x1: bx - nx * 1.9, y1: by - ny * 1.9, x2: bx + nx * 1.9, y2: by + ny * 1.9 };
             }
             // Excalidraw-style midpoint handles for bending
+            // suppress midpoint handles on short segments (Excalidraw: 4× handle size)
             const midpoints: { x: number; y: number; insertAt: number }[] = selected
-              ? pts.slice(0, -1).map(([x1, y1], i) => ({
-                  x: (x1 + pts[i + 1][0]) / 2,
-                  y: (y1 + pts[i + 1][1]) / 2,
-                  insertAt: i, // insert into points array before relative index i
-                }))
+              ? pts
+                  .slice(0, -1)
+                  .map(([x1, y1], i) => ({
+                    x: (x1 + pts[i + 1][0]) / 2,
+                    y: (y1 + pts[i + 1][1]) / 2,
+                    insertAt: i,
+                    len: Math.hypot(pts[i + 1][0] - x1, pts[i + 1][1] - y1),
+                  }))
+                  .filter((m) => m.len > 4.5)
               : [];
             return (
               <g key={l.id}>
@@ -531,7 +561,8 @@ export default function StudioCanvas({
                 {selected && (
                   <>
                     {/* waypoint handles (filled) */}
-                    {pts.slice(1).map(([x, y], i) => (
+                    {pts.slice(1).map(([x, y], i) =>
+                      i === l.points.length - 1 && !extendId ? null : ( // tip is the + button
                       <circle
                         key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#0d130f" stroke="#f59e0b" strokeWidth="0.3"
                         style={{ pointerEvents: "all", cursor: "grab" }}
@@ -645,10 +676,20 @@ export default function StudioCanvas({
         {/* + extend button at the end of the selected line */}
         {extendBtnPos && !extendId && (
           <button
-            onClick={(e) => { e.stopPropagation(); setExtendId(extendBtnFor!.id); }}
-            title="Extend line — next click adds a segment"
-            className="absolute z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-ember bg-pitch text-ember shadow-lg transition hover:bg-ember hover:text-pitch"
-            style={{ left: `calc(${extendBtnPos[0]}% + 14px)`, top: `${(extendBtnPos[1] / FIELD_H) * 100}%` }}
+            onPointerDown={(e) => {
+              // sits ON the arrow tip: drag moves the endpoint, click arms extend
+              e.preventDefault();
+              e.stopPropagation();
+              const l = extendBtnFor!;
+              (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+              snapshot();
+              extendDragRef.current = l.id;
+              dragRef.current = { type: "wp", lineId: l.id, index: l.points.length - 1, moved: false };
+            }}
+            onClick={(e) => e.stopPropagation()}
+            title="Drag to move the endpoint · click + to extend the line"
+            className="absolute z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-ember bg-pitch text-ember shadow-lg transition hover:bg-ember hover:text-pitch"
+            style={{ left: `${extendBtnPos[0]}%`, top: `${(extendBtnPos[1] / FIELD_H) * 100}%` }}
           >
             <Plus size={13} />
           </button>
