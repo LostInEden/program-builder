@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
+import { ArrowLeft, Plus, Copy, Trash2, X, Maximize2 } from "lucide-react";
+import PlayEditor from "@/components/PlayEditor";
 import { useStore, useHydrated, slotLabelOf, type PlaybookSection } from "@/lib/store";
 import { getStructure, offensivePresets, LOS_Y } from "@/lib/football";
 import { recognizeFormation, formationLabel } from "@/lib/recognize";
@@ -20,6 +21,7 @@ export default function PlaybookPage() {
   const [section, setSection] = useState<PlaybookSection>("Fronts");
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedOff, setSelectedOff] = useState<string | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
 
@@ -92,6 +94,12 @@ export default function PlaybookPage() {
                   onChange={(e) => updateCall(call.id, { name: e.target.value })}
                   className="display rounded-lg border border-line bg-black/25 px-3 py-1.5 text-2xl font-bold min-w-0 w-52"
                 />
+                <button
+                  onClick={() => setEditorOpen(true)}
+                  className="display inline-flex items-center gap-1.5 rounded-full bg-grass px-4 py-1.5 text-xs font-bold text-pitch transition hover:brightness-110"
+                >
+                  <Maximize2 size={13} /> Full Screen
+                </button>
                 <button
                   onClick={() => duplicateCall(call.id)}
                   className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-dim hover:text-ink"
@@ -306,6 +314,8 @@ export default function PlaybookPage() {
           )}
         </div>
       </div>
+
+      {editorOpen && call && <PlayEditor callId={call.id} onClose={() => setEditorOpen(false)} />}
     </div>
   );
 }

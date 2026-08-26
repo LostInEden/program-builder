@@ -204,7 +204,18 @@ export const defaultPresetName = "Gun Spread (2x2)";
 // stored RELATIVE to the anchor, so moving the player moves the whole drawing.
 // "free" anchors store absolute canvas coordinates.
 
-export type LineKind = "route" | "block" | "motion";
+export type LineKind = "route" | "block" | "motion" | "pitch";
+
+// Field-position presets (Hudl-style): the card shows a slice of field around
+// the LOS; the preset picks which slice, driving yard numbers and end zones.
+export type FieldPreset = "midfield" | "redzone" | "goalline" | "backedup";
+export const FIELD_PRESETS: { id: FieldPreset; label: string; losYardline: number }[] = [
+  { id: "midfield", label: "Midfield", losYardline: 50 },
+  { id: "redzone", label: "Red Zone", losYardline: 15 },
+  { id: "goalline", label: "Goal Line", losYardline: 3 },
+  { id: "backedup", label: "Backed Up", losYardline: 95 }, // own 5
+];
+export const YD = 2.2; // canvas units per yard
 
 export type DrawLine = {
   id: string;

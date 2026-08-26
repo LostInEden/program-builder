@@ -6,33 +6,46 @@ import {
   ArrowUpRight,
   RectangleHorizontal,
   MoveRight,
+  Spline,
   Circle,
   Undo2,
+  Redo2,
   Eraser,
   Check,
   Trash2,
+  FlipHorizontal2,
 } from "lucide-react";
 import {
   getStructure,
   defenseCanvasY,
   FIELD_H,
   LOS_Y,
+  YD,
+  FIELD_PRESETS,
+  type FieldPreset,
   type DrawLine,
   type Zone,
   type LineKind,
 } from "@/lib/football";
 import { useStore, type Call, type Player } from "@/lib/store";
 
-type Tool = "select" | "route" | "block" | "motion" | "zone";
+type Tool = "select" | "route" | "block" | "motion" | "pitch" | "zone";
 type Pt = [number, number];
+type Drag =
+  | { type: "off"; id: string; moved: boolean }
+  | { type: "def"; slot: number; moved: boolean }
+  | { type: "wp"; lineId: string; index: number; moved: boolean }
+  | { type: "zone-move"; id: string; grab: Pt; moved: boolean }
+  | { type: "zone-resize"; id: string; moved: boolean };
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string; hint: string }[] = [
-  { id: "select", icon: MousePointer2, label: "Select", hint: "Drag players · click lines to edit" },
-  { id: "route", icon: ArrowUpRight, label: "Route", hint: "Click a player, click waypoints, double-click to finish" },
-  { id: "block", icon: RectangleHorizontal, label: "Block", hint: "Click a player, click waypoints, double-click to finish" },
-  { id: "motion", icon: MoveRight, label: "Motion", hint: "Click a player, click waypoints, double-click to finish" },
+  { id: "select", icon: MousePointer2, label: "Select", hint: "Drag players & handles · click lines to edit · with an O selected, double-click a defender to block him" },
+  { id: "route", icon: ArrowUpRight, label: "Route", hint: "Click a player → click points (or hold & drag to freehand) → double-click / Enter to finish" },
+  { id: "block", icon: RectangleHorizontal, label: "Block", hint: "Click a player → click points → finish. Ends in a block bar" },
+  { id: "motion", icon: MoveRight, label: "Motion", hint: "Dashed pre-snap movement — click a player, then points" },
+  { id: "pitch", icon: Spline, label: "Pitch", hint: "Dotted pitch / option path — click a player, then points" },
   { id: "zone", icon: Circle, label: "Zone", hint: "Drag on the field to draw a coverage area" },
 ];
 
@@ -46,6 +59,7 @@ export default function PlayCanvas({
   onSelectSlot,
   selectedOff,
   onSelectOff,
+  large = false,
 }: {
   call: Call;
   structureId: string;
@@ -56,10 +70,12 @@ export default function PlayCanvas({
   onSelectSlot: (i: number | null) => void;
   selectedOff: string | null;
   onSelectOff: (id: string | null) => void;
+  large?: boolean;
 }) {
   const updateCall = useStore((s) => s.updateCall);
   const structure = getStructure(structureId);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  const preset = FIELD_PRESETS.find((p) => p.id === (call.fieldPreset ?? "midfield")) ?? FIELD_PRESETS[0];
 
   const fieldRef = useRef<HTMLDivElement>(null);
   const [tool, setTool] = useState<Tool>("select");
@@ -68,27 +84,40 @@ export default function PlayCanvas({
   const [zoneStart, setZoneStart] = useState<Pt | null>(null);
   const [selLine, setSelLine] = useState<string | null>(null);
   const [selZone, setSelZone] = useState<string | null>(null);
-  const dragRef = useRef<{ kind: "off" | "def"; id: string; slot?: number; moved: boolean } | null>(null);
+  const dragRef = useRef<Drag | null>(null);
+  const freehandRef = useRef(false);
   const undoStack = useRef<Pick<Call, "offLook" | "lines" | "zones" | "defOffsets">[]>([]);
+  const redoStack = useRef<Pick<Call, "offLook" | "lines" | "zones" | "defOffsets">[]>([]);
 
+  const snap = () => ({
+    offLook: call.offLook.map((m) => ({ ...m })),
+    lines: call.lines.map((l) => ({ ...l, points: l.points.map((p) => [...p] as Pt) })),
+    zones: call.zones.map((z) => ({ ...z })),
+    defOffsets: { ...call.defOffsets },
+  });
   const snapshot = () => {
-    undoStack.current.push({
-      offLook: call.offLook.map((m) => ({ ...m })),
-      lines: call.lines.map((l) => ({ ...l, points: l.points.map((p) => [...p] as Pt) })),
-      zones: call.zones.map((z) => ({ ...z })),
-      defOffsets: { ...call.defOffsets },
-    });
-    if (undoStack.current.length > 50) undoStack.current.shift();
+    undoStack.current.push(snap());
+    redoStack.current = [];
+    if (undoStack.current.length > 60) undoStack.current.shift();
   };
-
   const undo = () => {
     const prev = undoStack.current.pop();
-    if (prev) updateCall(call.id, prev);
+    if (prev) {
+      redoStack.current.push(snap());
+      updateCall(call.id, prev);
+    }
     setSelLine(null);
     setSelZone(null);
   };
+  const redo = () => {
+    const next = redoStack.current.pop();
+    if (next) {
+      undoStack.current.push(snap());
+      updateCall(call.id, next);
+    }
+  };
 
-  // ── position helpers (canvas space: x 0–100, y 0–75) ──────────────────────
+  // ── position helpers ──────────────────────────────────────────────────────
   const defPos = (i: number): Pt => {
     const slot = structure.slots[i];
     const off = call.defOffsets[i] ?? [0, 0];
@@ -112,54 +141,88 @@ export default function PlayCanvas({
       Math.min(FIELD_H - 1, Math.max(1, ((e.clientY - r.top) / r.height) * FIELD_H)),
     ];
   };
-
   const lineColor = (anchor: string, selected: boolean) =>
     selected ? "#f59e0b" : anchor.startsWith("def:") ? "#38bdf8" : "#f87171";
 
-  // ── drawing interactions ──────────────────────────────────────────────────
+  // ── flip horizontal (mirror everything across midfield) ───────────────────
+  const flipH = () => {
+    snapshot();
+    updateCall(call.id, {
+      offLook: call.offLook.map((m) => ({ ...m, x: 100 - m.x })),
+      zones: call.zones.map((z) => ({ ...z, x: 100 - z.x })),
+      lines: call.lines.map((l) => ({ ...l, points: l.points.map(([dx, dy]) => [-dx, dy] as Pt) })),
+      defOffsets: Object.fromEntries(
+        Object.entries(call.defOffsets).map(([k, [ox, oy]]) => {
+          const slot = structure.slots[Number(k)];
+          return [k, [100 - 2 * slot.x - ox, oy] as Pt];
+        }),
+      ),
+    });
+  };
+
+  // ── drawing ───────────────────────────────────────────────────────────────
   const startDraft = (anchor: string) => {
     const pos = anchorPos(anchor);
     if (pos) setDraft({ anchor, anchorPos: pos, rel: [] });
   };
-
   const finishDraft = () => {
-    if (draft && draft.rel.length > 0) {
-      snapshot();
-      updateCall(call.id, {
-        lines: [
-          ...call.lines,
-          { id: uid(), anchor: draft.anchor, kind: tool === "select" || tool === "zone" ? "route" : tool, points: draft.rel },
-        ],
-      });
-    }
-    setDraft(null);
+    setDraft((d) => {
+      if (d && d.rel.length > 0) {
+        snapshot();
+        updateCall(call.id, {
+          lines: [
+            ...call.lines,
+            {
+              id: uid(),
+              anchor: d.anchor,
+              kind: (tool === "select" || tool === "zone" ? "route" : tool) as LineKind,
+              points: d.rel,
+            },
+          ],
+        });
+      }
+      return null;
+    });
     setHover(null);
+    freehandRef.current = false;
   };
 
-  const onPlayerClick = (anchor: string) => {
-    if (tool === "route" || tool === "block" || tool === "motion") {
-      if (!draft) startDraft(anchor);
-      return;
+  const selectMarker = (anchor: string) => {
+    if (anchor.startsWith("off:")) {
+      onSelectOff(anchor.slice(4));
+      onSelectSlot(null);
+    } else {
+      onSelectSlot(Number(anchor.slice(4)));
+      onSelectOff(null);
     }
-    if (tool === "select") {
-      if (anchor.startsWith("off:")) {
-        onSelectOff(anchor.slice(4));
-        onSelectSlot(null);
-      } else {
-        onSelectSlot(Number(anchor.slice(4)));
-        onSelectOff(null);
-      }
-      setSelLine(null);
-      setSelZone(null);
-    }
+    setSelLine(null);
+    setSelZone(null);
+  };
+
+  // Hudl block shortcut: with an O selected, double-click a defender.
+  const blockTo = (slotIndex: number) => {
+    if (!selectedOff) return false;
+    const from = anchorPos(`off:${selectedOff}`);
+    const to = defPos(slotIndex);
+    if (!from) return false;
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
+    const len = Math.hypot(dx, dy) || 1;
+    const shorten = Math.max(0, len - 2.2) / len; // stop just short of the defender
+    snapshot();
+    updateCall(call.id, {
+      lines: [...call.lines, { id: uid(), anchor: `off:${selectedOff}`, kind: "block", points: [[dx * shorten, dy * shorten]] }],
+    });
+    return true;
   };
 
   const onFieldPointerDown = (e: React.PointerEvent) => {
     if (tool === "zone" && e.target === e.currentTarget) setZoneStart(toCanvas(e));
+    if (draft && e.target === e.currentTarget) freehandRef.current = true;
   };
-
   const onFieldClick = (e: React.MouseEvent) => {
     if (draft) {
+      if (freehandRef.current && draft.rel.length > 2) return; // freehand already added points
       const [x, y] = toCanvas(e);
       setDraft({ ...draft, rel: [...draft.rel, [x - draft.anchorPos[0], y - draft.anchorPos[1]]] });
     } else if (tool === "select" && e.target === e.currentTarget) {
@@ -169,27 +232,60 @@ export default function PlayCanvas({
       setSelZone(null);
     }
   };
-
   const onFieldPointerMove = (e: React.PointerEvent) => {
     if (draft || zoneStart) setHover(toCanvas(e));
+    // freehand: append points while held down
+    if (draft && freehandRef.current) {
+      const [x, y] = toCanvas(e);
+      const rel: Pt = [x - draft.anchorPos[0], y - draft.anchorPos[1]];
+      const last = draft.rel[draft.rel.length - 1] ?? [0, 0];
+      if (Math.hypot(rel[0] - last[0], rel[1] - last[1]) > 1.6) {
+        setDraft({ ...draft, rel: [...draft.rel, rel] });
+      }
+      return;
+    }
     const d = dragRef.current;
     if (!d) return;
     d.moved = true;
     const [x, y] = toCanvas(e);
-    if (d.kind === "off") {
+    if (d.type === "off") {
       updateCall(call.id, {
-        offLook: call.offLook.map((m) => (m.id === d.id ? { ...m, x, y: Math.min(72, Math.max(LOS_Y + 1.5, y)) } : m)),
+        offLook: call.offLook.map((m) => (m.id === d.id ? { ...m, x, y: Math.min(72, Math.max(LOS_Y + 1.2, y)) } : m)),
       });
-    } else if (d.slot !== undefined) {
+    } else if (d.type === "def") {
       const slot = structure.slots[d.slot];
-      const base: Pt = [slot.x, defenseCanvasY(slot.y)];
       updateCall(call.id, {
-        defOffsets: { ...call.defOffsets, [d.slot]: [x - base[0], Math.min(LOS_Y - 1.5, y) - base[1]] },
+        defOffsets: {
+          ...call.defOffsets,
+          [d.slot]: [x - slot.x, Math.min(LOS_Y - 1.2, y) - defenseCanvasY(slot.y)],
+        },
+      });
+    } else if (d.type === "wp") {
+      const line = call.lines.find((l) => l.id === d.lineId);
+      const a = line && anchorPos(line.anchor);
+      if (line && a) {
+        updateCall(call.id, {
+          lines: call.lines.map((l) =>
+            l.id === d.lineId
+              ? { ...l, points: l.points.map((p, i) => (i === d.index ? ([x - a[0], y - a[1]] as Pt) : p)) }
+              : l,
+          ),
+        });
+      }
+    } else if (d.type === "zone-move") {
+      updateCall(call.id, {
+        zones: call.zones.map((z) => (z.id === d.id ? { ...z, x: x - d.grab[0], y: y - d.grab[1] } : z)),
+      });
+    } else if (d.type === "zone-resize") {
+      updateCall(call.id, {
+        zones: call.zones.map((z) =>
+          z.id === d.id ? { ...z, rx: Math.max(2, Math.abs(x - z.x)), ry: Math.max(2, Math.abs(y - z.y)) } : z,
+        ),
       });
     }
   };
-
   const onFieldPointerUp = (e: React.PointerEvent) => {
+    freehandRef.current = false;
     if (zoneStart) {
       const [x, y] = toCanvas(e);
       const rx = Math.abs(x - zoneStart[0]) / 2;
@@ -205,25 +301,32 @@ export default function PlayCanvas({
       setZoneStart(null);
       setHover(null);
     }
-    if (dragRef.current && !dragRef.current.moved) {
-      onPlayerClick(dragRef.current.kind === "off" ? `off:${dragRef.current.id}` : `def:${dragRef.current.slot}`);
+    const d = dragRef.current;
+    if (d && !d.moved) {
+      if (d.type === "off") selectMarker(`off:${d.id}`);
+      else if (d.type === "def") selectMarker(`def:${d.slot}`);
     }
     dragRef.current = null;
   };
 
-  const beginDrag = (e: React.PointerEvent, kind: "off" | "def", id: string, slot?: number) => {
+  const beginMarkerDrag = (e: React.PointerEvent, kind: "off" | "def", id: string, slot?: number) => {
     e.preventDefault();
     e.stopPropagation();
-    if (tool === "route" || tool === "block" || tool === "motion") {
+    if (tool === "route" || tool === "block" || tool === "motion" || tool === "pitch") {
       if (!draft) startDraft(kind === "off" ? `off:${id}` : `def:${slot}`);
+      else {
+        // clicking another player while drafting = waypoint at that player
+        const pos = kind === "off" ? anchorPos(`off:${id}`) : defPos(slot!);
+        if (pos) setDraft({ ...draft, rel: [...draft.rel, [pos[0] - draft.anchorPos[0], pos[1] - draft.anchorPos[1]]] });
+      }
       return;
     }
     if (tool !== "select") return;
     snapshot();
-    dragRef.current = { kind, id, slot, moved: false };
+    dragRef.current = kind === "off" ? { type: "off", id, moved: false } : { type: "def", slot: slot!, moved: false };
   };
 
-  // Keyboard: Escape cancels, Delete removes selection, Ctrl+Z undoes.
+  // Keyboard shortcuts.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (document.activeElement?.tagName ?? "").toLowerCase();
@@ -233,6 +336,9 @@ export default function PlayCanvas({
         setZoneStart(null);
         setSelLine(null);
         setSelZone(null);
+        freehandRef.current = false;
+      } else if (e.key === "Enter" && draft) {
+        finishDraft();
       } else if ((e.key === "Delete" || e.key === "Backspace") && (selLine || selZone)) {
         snapshot();
         updateCall(call.id, {
@@ -241,24 +347,47 @@ export default function PlayCanvas({
         });
         setSelLine(null);
         setSelZone(null);
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && e.shiftKey) {
+        e.preventDefault();
+        redo();
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
         e.preventDefault();
         undo();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") {
+        e.preventDefault();
+        redo();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  // ── SVG path builders ─────────────────────────────────────────────────────
+  // ── field markings from the preset ────────────────────────────────────────
+  // Yards upfield (defense side) decrease toward the opponent goal; behind the
+  // offense they increase toward their own goal.
+  const yardLines: { y: number; label: string | null; goal: boolean }[] = [];
+  for (let k = -14; k <= 14; k++) {
+    const yardsFromLos = k * 5;
+    const dist = preset.losYardline - yardsFromLos; // distance to opponent goal at this stripe
+    const y = LOS_Y - yardsFromLos * YD;
+    if (y < 1 || y > FIELD_H - 1) continue;
+    if (dist < 0 || dist > 100) continue;
+    const fieldNum = dist > 50 ? 100 - dist : dist;
+    yardLines.push({
+      y,
+      label: dist % 10 === 0 && dist !== 0 && dist !== 100 && fieldNum !== 0 ? String(fieldNum) : null,
+      goal: dist === 0 || dist === 100,
+    });
+  }
+  const oppGoalY = LOS_Y - preset.losYardline * YD; // may be off-canvas
+  const ownGoalY = LOS_Y + (100 - preset.losYardline) * YD;
+
   const linePath = (l: DrawLine): { pts: Pt[]; color: string } | null => {
     const a = anchorPos(l.anchor);
     if (!a) return null;
-    const pts: Pt[] = [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as Pt)];
-    return { pts, color: lineColor(l.anchor, l.id === selLine) };
+    return { pts: [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as Pt)], color: lineColor(l.anchor, l.id === selLine) };
   };
-
-  const blockBar = (pts: Pt[]): { x1: number; y1: number; x2: number; y2: number } | null => {
+  const blockBar = (pts: Pt[]) => {
     if (pts.length < 2) return null;
     const [ax, ay] = pts[pts.length - 2];
     const [bx, by] = pts[pts.length - 1];
@@ -270,10 +399,13 @@ export default function PlayCanvas({
   };
 
   const selLineObj = call.lines.find((l) => l.id === selLine) ?? null;
+  const selZoneObj = call.zones.find((z) => z.id === selZone) ?? null;
   const activeToolMeta = TOOLS.find((t) => t.id === tool)!;
+  const mSize = large ? "size-11 text-sm" : "size-8 text-[11px]";
+  const dSize = large ? "size-10 text-[13px]" : "size-8 text-[11px]";
 
   return (
-    <div>
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Toolbar */}
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <div className="flex gap-1 rounded-full border border-line bg-card p-1">
@@ -285,29 +417,41 @@ export default function PlayCanvas({
                 setTool(t.id);
               }}
               title={t.label}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs display font-semibold transition ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} display font-semibold transition ${
                 tool === t.id ? "bg-grass text-pitch" : "text-dim hover:text-ink"
               }`}
             >
-              <t.icon size={14} /> {t.label}
+              <t.icon size={large ? 16 : 14} /> {t.label}
             </button>
           ))}
         </div>
         {draft && (
           <button
             onClick={finishDraft}
-            className="inline-flex items-center gap-1.5 rounded-full border border-grass bg-grass/15 px-3 py-1.5 text-xs text-grass"
+            className={`inline-flex items-center gap-1.5 rounded-full border border-grass bg-grass/15 px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-grass`}
           >
-            <Check size={13} /> Finish line
+            <Check size={13} /> Finish
           </button>
         )}
-        <button
-          onClick={undo}
-          title="Undo (Ctrl+Z)"
-          className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-dim hover:text-ink"
-        >
+        <button onClick={undo} title="Undo (Ctrl+Z)" className={`inline-flex items-center gap-1.5 rounded-full border border-line px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-dim hover:text-ink`}>
           <Undo2 size={13} /> Undo
         </button>
+        <button onClick={redo} title="Redo (Ctrl+Shift+Z)" className={`inline-flex items-center gap-1.5 rounded-full border border-line px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-dim hover:text-ink`}>
+          <Redo2 size={13} /> Redo
+        </button>
+        <button onClick={flipH} title="Flip play horizontally" className={`inline-flex items-center gap-1.5 rounded-full border border-line px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-dim hover:text-ink`}>
+          <FlipHorizontal2 size={13} /> Flip
+        </button>
+        <select
+          value={preset.id}
+          onChange={(e) => updateCall(call.id, { fieldPreset: e.target.value as FieldPreset })}
+          className={`rounded-full border border-line bg-card px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-dim`}
+          title="Field position"
+        >
+          {FIELD_PRESETS.map((p) => (
+            <option key={p.id} value={p.id}>{p.label}</option>
+          ))}
+        </select>
         <button
           onClick={() => {
             if (call.lines.length || call.zones.length) {
@@ -316,12 +460,12 @@ export default function PlayCanvas({
             }
           }}
           title="Clear all drawings"
-          className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-dim hover:text-red-400 hover:border-red-500/40"
+          className={`inline-flex items-center gap-1.5 rounded-full border border-line px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-dim hover:text-red-400 hover:border-red-500/40`}
         >
           <Eraser size={13} /> Clear
         </button>
-        <span className="text-xs text-dim ml-auto">{activeToolMeta.hint}</span>
       </div>
+      <p className={`mb-2 text-dim ${large ? "text-sm" : "text-xs"}`}>{activeToolMeta.hint}</p>
 
       {/* Field */}
       <div
@@ -331,11 +475,10 @@ export default function PlayCanvas({
         onPointerUp={onFieldPointerUp}
         onClick={onFieldClick}
         onDoubleClick={finishDraft}
-        className={`relative rounded-xl border border-line bg-[#0d130f] aspect-4/3 overflow-hidden touch-none select-none ${
+        className={`relative rounded-xl border border-line bg-[#0d130f] aspect-4/3 overflow-hidden touch-none select-none min-h-0 ${
           tool === "select" ? "" : "cursor-crosshair"
         }`}
       >
-        {/* field markings + drawings */}
         <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
           <defs>
             <marker id="arr-off" viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
@@ -349,38 +492,65 @@ export default function PlayCanvas({
             </marker>
           </defs>
 
-          {/* yard lines + hashes */}
-          {[7, 14.5, 22, 29.5, 49.5, 57, 64.5, 72].map((y) => (
-            <line key={y} x1="0" x2="100" y1={y} y2={y} stroke="rgba(233,239,233,0.06)" strokeWidth="0.25" />
+          {/* end zones */}
+          {oppGoalY > -22 && (
+            <rect x="0" y={Math.max(-22, oppGoalY - 22)} width="100" height={Math.min(22, oppGoalY - Math.max(-22, oppGoalY - 22))} fill="rgba(74,222,128,0.06)" />
+          )}
+          {ownGoalY < FIELD_H + 22 && <rect x="0" y={ownGoalY} width="100" height="22" fill="rgba(248,113,113,0.05)" />}
+
+          {/* yard lines + numbers */}
+          {yardLines.map((yl) => (
+            <g key={yl.y}>
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "rgba(233,239,233,0.35)" : "rgba(233,239,233,0.09)"} strokeWidth={yl.goal ? 0.45 : 0.25} />
+              {yl.label && (
+                <>
+                  <text x="8" y={yl.y + 1.2} fontSize="3.2" fill="rgba(233,239,233,0.22)" fontFamily="var(--font-barlow)" textAnchor="middle">{yl.label}</text>
+                  <text x="92" y={yl.y + 1.2} fontSize="3.2" fill="rgba(233,239,233,0.22)" fontFamily="var(--font-barlow)" textAnchor="middle">{yl.label}</text>
+                </>
+              )}
+            </g>
           ))}
-          {[38, 62].map((x) =>
-            Array.from({ length: 14 }, (_, i) => 4 + i * 5).map((y) => (
-              <line key={`${x}-${y}`} x1={x - 0.7} x2={x + 0.7} y1={y} y2={y} stroke="rgba(233,239,233,0.07)" strokeWidth="0.22" />
+          {/* hash marks every yard */}
+          {[40, 60].map((x) =>
+            Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => (
+              <line key={`${x}-${y}`} x1={x - 0.7} x2={x + 0.7} y1={y} y2={y} stroke="rgba(233,239,233,0.10)" strokeWidth="0.22" />
             )),
           )}
           {/* LOS */}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="rgba(74,222,128,0.55)" strokeWidth="0.35" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="rgba(74,222,128,0.55)" strokeWidth="0.4" />
 
           {/* zones */}
           {call.zones.map((z: Zone) => (
-            <ellipse
-              key={z.id}
-              cx={z.x}
-              cy={z.y}
-              rx={z.rx}
-              ry={z.ry}
-              fill={z.id === selZone ? "rgba(245,158,11,0.14)" : z.side === "def" ? "rgba(56,189,248,0.10)" : "rgba(248,113,113,0.10)"}
-              stroke={z.id === selZone ? "#f59e0b" : z.side === "def" ? "rgba(56,189,248,0.55)" : "rgba(248,113,113,0.55)"}
-              strokeWidth="0.3"
-              strokeDasharray="1.4 1"
-              style={{ pointerEvents: "all", cursor: "pointer" }}
-              onClick={(e) => {
-                if (tool !== "select") return;
-                e.stopPropagation();
-                setSelZone(z.id === selZone ? null : z.id);
-                setSelLine(null);
-              }}
-            />
+            <g key={z.id}>
+              <ellipse
+                cx={z.x} cy={z.y} rx={z.rx} ry={z.ry}
+                fill={z.id === selZone ? "rgba(245,158,11,0.14)" : z.side === "def" ? "rgba(56,189,248,0.10)" : "rgba(248,113,113,0.10)"}
+                stroke={z.id === selZone ? "#f59e0b" : z.side === "def" ? "rgba(56,189,248,0.55)" : "rgba(248,113,113,0.55)"}
+                strokeWidth="0.3" strokeDasharray="1.4 1"
+                style={{ pointerEvents: "all", cursor: tool === "select" ? "move" : undefined }}
+                onPointerDown={(e) => {
+                  if (tool !== "select") return;
+                  e.stopPropagation();
+                  const [x, y] = toCanvas(e);
+                  snapshot();
+                  dragRef.current = { type: "zone-move", id: z.id, grab: [x - z.x, y - z.y], moved: false };
+                  setSelZone(z.id);
+                  setSelLine(null);
+                }}
+              />
+              {z.id === selZone && (
+                <rect
+                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2"
+                  fill="#fff" stroke="#f59e0b" strokeWidth="0.25"
+                  style={{ pointerEvents: "all", cursor: "nwse-resize" }}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    snapshot();
+                    dragRef.current = { type: "zone-resize", id: z.id, moved: false };
+                  }}
+                />
+              )}
+            </g>
           ))}
 
           {/* committed lines */}
@@ -395,10 +565,7 @@ export default function PlayCanvas({
             return (
               <g key={l.id}>
                 <path
-                  d={d}
-                  fill="none"
-                  stroke="transparent"
-                  strokeWidth="2.5"
+                  d={d} fill="none" stroke="transparent" strokeWidth="3"
                   style={{ pointerEvents: "stroke", cursor: tool === "select" ? "pointer" : undefined }}
                   onClick={(e) => {
                     if (tool !== "select") return;
@@ -410,16 +577,38 @@ export default function PlayCanvas({
                   }}
                 />
                 <path
-                  d={d}
-                  fill="none"
-                  stroke={built.color}
+                  d={d} fill="none" stroke={built.color}
                   strokeWidth={selected ? 0.55 : 0.42}
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  strokeDasharray={l.kind === "motion" ? "1.5 1.1" : undefined}
+                  strokeLinejoin="round" strokeLinecap="round"
+                  strokeDasharray={l.kind === "motion" ? "1.5 1.1" : l.kind === "pitch" ? "0.35 0.9" : undefined}
                   markerEnd={markerEnd}
                 />
                 {bar && <line x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={built.color} strokeWidth={selected ? 0.55 : 0.42} strokeLinecap="round" />}
+                {/* waypoint handles when selected */}
+                {selected &&
+                  built.pts.slice(1).map(([x, y], i) => (
+                    <circle
+                      key={i} cx={x} cy={y} r="1.15"
+                      fill="#0d130f" stroke="#f59e0b" strokeWidth="0.3"
+                      style={{ pointerEvents: "all", cursor: "grab" }}
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                        snapshot();
+                        dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false };
+                      }}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        snapshot();
+                        const remaining = l.points.filter((_, j) => j !== i);
+                        updateCall(call.id, {
+                          lines: remaining.length
+                            ? call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: remaining } : x2))
+                            : call.lines.filter((x2) => x2.id !== l.id),
+                        });
+                        if (!remaining.length) setSelLine(null);
+                      }}
+                    />
+                  ))}
               </g>
             );
           })}
@@ -430,25 +619,17 @@ export default function PlayCanvas({
               d={[
                 `M${draft.anchorPos[0]},${draft.anchorPos[1]}`,
                 ...draft.rel.map(([dx, dy]) => `L${draft.anchorPos[0] + dx},${draft.anchorPos[1] + dy}`),
-                hover ? `L${hover[0]},${hover[1]}` : "",
+                hover && !freehandRef.current ? `L${hover[0]},${hover[1]}` : "",
               ].join(" ")}
-              fill="none"
-              stroke={lineColor(draft.anchor, false)}
-              strokeOpacity="0.6"
-              strokeWidth="0.4"
-              strokeDasharray={tool === "motion" ? "1.5 1.1" : "0.9 0.9"}
+              fill="none" stroke={lineColor(draft.anchor, false)} strokeOpacity="0.6" strokeWidth="0.4"
+              strokeDasharray={tool === "motion" ? "1.5 1.1" : tool === "pitch" ? "0.35 0.9" : "0.9 0.9"}
             />
           )}
           {zoneStart && hover && (
             <ellipse
-              cx={(zoneStart[0] + hover[0]) / 2}
-              cy={(zoneStart[1] + hover[1]) / 2}
-              rx={Math.abs(hover[0] - zoneStart[0]) / 2}
-              ry={Math.abs(hover[1] - zoneStart[1]) / 2}
-              fill="rgba(74,222,128,0.07)"
-              stroke="rgba(74,222,128,0.5)"
-              strokeWidth="0.3"
-              strokeDasharray="1.4 1"
+              cx={(zoneStart[0] + hover[0]) / 2} cy={(zoneStart[1] + hover[1]) / 2}
+              rx={Math.abs(hover[0] - zoneStart[0]) / 2} ry={Math.abs(hover[1] - zoneStart[1]) / 2}
+              fill="rgba(74,222,128,0.07)" stroke="rgba(74,222,128,0.5)" strokeWidth="0.3" strokeDasharray="1.4 1"
             />
           )}
         </svg>
@@ -458,7 +639,7 @@ export default function PlayCanvas({
           className="absolute left-2 -translate-y-1/2 text-[10px] text-grass/60 display tracking-widest pointer-events-none"
           style={{ top: `${(LOS_Y / FIELD_H) * 100}%` }}
         >
-          LOS
+          LOS · {preset.losYardline > 50 ? `own ${100 - preset.losYardline}` : `opp ${preset.losYardline}`}
         </span>
 
         {/* defense (top) */}
@@ -471,12 +652,16 @@ export default function PlayCanvas({
           return (
             <button
               key={`d${i}`}
-              onPointerDown={(e) => beginDrag(e, "def", `${i}`, i)}
+              onPointerDown={(e) => beginMarkerDrag(e, "def", `${i}`, i)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                if (tool === "select" && selectedOff) blockTo(i);
+              }}
               className="absolute -translate-x-1/2 -translate-y-1/2 text-center"
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
               <span
-                className={`grid size-8 place-items-center rounded-full border-2 display text-[11px] font-bold transition ${
+                className={`grid ${dSize} place-items-center rounded-full border-2 display font-bold transition ${
                   sel || anchored
                     ? "border-ember bg-ember/20 text-ember"
                     : call.assignments[i]
@@ -486,7 +671,7 @@ export default function PlayCanvas({
               >
                 {labelFor(i)}
               </span>
-              {pl && <span className="mt-0.5 block text-[9px] text-dim">#{pl.jersey}</span>}
+              {pl && <span className={`mt-0.5 block ${large ? "text-[11px]" : "text-[9px]"} text-dim`}>#{pl.jersey}</span>}
             </button>
           );
         })}
@@ -498,8 +683,8 @@ export default function PlayCanvas({
           return (
             <span
               key={o.id}
-              onPointerDown={(e) => beginDrag(e, "off", o.id)}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 grid size-8 place-items-center border-2 display text-[11px] font-bold select-none ${
+              onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 grid ${mSize} place-items-center border-2 display font-bold select-none ${
                 isCenter ? "rounded-md" : "rounded-full"
               } ${
                 selectedOff === o.id || anchored
@@ -514,11 +699,11 @@ export default function PlayCanvas({
         })}
 
         {/* selected line / zone control bar */}
-        {(selLineObj || selZone) && (
+        {(selLineObj || selZoneObj) && (
           <div className="absolute top-2 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full border border-line bg-pitch/95 px-2 py-1.5 shadow-lg">
             {selLineObj && (
               <>
-                {(["route", "block", "motion"] as LineKind[]).map((k) => (
+                {(["route", "block", "motion", "pitch"] as LineKind[]).map((k) => (
                   <button
                     key={k}
                     onClick={() => {
@@ -534,6 +719,8 @@ export default function PlayCanvas({
                     {k}
                   </button>
                 ))}
+                <span className="h-4 w-px bg-line" />
+                <span className="text-[10px] text-dim px-1">drag dots · dbl-click dot removes</span>
                 <span className="h-4 w-px bg-line" />
               </>
             )}

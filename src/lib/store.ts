@@ -64,6 +64,7 @@ export type Call = {
   offForm: string;
   offConcept: string;
   offLook: OffMarker[]; // editable offensive look for this call
+  fieldPreset?: "midfield" | "redzone" | "goalline" | "backedup";
   lines: DrawLine[]; // drawn routes / blocks / motions (both sides)
   zones: Zone[]; // coverage / responsibility areas
   defOffsets: Record<number, [number, number]>; // per-call defensive alignment nudges
