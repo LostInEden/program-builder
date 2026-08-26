@@ -18,6 +18,7 @@ import {
 import {
   getStructure,
   defenseCanvasY,
+  smoothPath,
   FIELD_H,
   LOS_Y,
   YD,
@@ -42,10 +43,10 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 
 const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string; hint: string }[] = [
   { id: "select", icon: MousePointer2, label: "Select", hint: "Drag players & handles · click lines to edit · with an O selected, double-click a defender to block him" },
-  { id: "route", icon: ArrowUpRight, label: "Route", hint: "Click a player → click points (or hold & drag to freehand) → double-click / Enter to finish" },
-  { id: "block", icon: RectangleHorizontal, label: "Block", hint: "Click a player → click points → finish. Ends in a block bar" },
-  { id: "motion", icon: MoveRight, label: "Motion", hint: "Dashed pre-snap movement — click a player, then points" },
-  { id: "pitch", icon: Spline, label: "Pitch", hint: "Dotted pitch / option path — click a player, then points" },
+  { id: "route", icon: ArrowUpRight, label: "Route", hint: "Click a player, then click each point — the line draws as you go. Hold & drag for freehand. Click another player to start their line." },
+  { id: "block", icon: RectangleHorizontal, label: "Block", hint: "Click a player, then click where the block goes — ends in a block bar" },
+  { id: "motion", icon: MoveRight, label: "Motion", hint: "Dashed pre-snap movement — click a player, then click the path" },
+  { id: "pitch", icon: Spline, label: "Pitch", hint: "Dotted pitch / option path — click a player, then click the path" },
   { id: "zone", icon: Circle, label: "Zone", hint: "Drag on the field to draw a coverage area" },
 ];
 
@@ -73,13 +74,17 @@ export default function PlayCanvas({
   large?: boolean;
 }) {
   const updateCall = useStore((s) => s.updateCall);
+  const defStyle = useStore((s) => s.defStyle);
+  const setDefStyle = useStore((s) => s.setDefStyle);
   const structure = getStructure(structureId);
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const preset = FIELD_PRESETS.find((p) => p.id === (call.fieldPreset ?? "midfield")) ?? FIELD_PRESETS[0];
 
   const fieldRef = useRef<HTMLDivElement>(null);
   const [tool, setTool] = useState<Tool>("select");
-  const [draft, setDraft] = useState<{ anchor: string; anchorPos: Pt; rel: Pt[] } | null>(null);
+  // Live-commit drawing (the Hudl model): the line exists in the store from the
+  // first click; every click extends it; you finish by simply stopping.
+  const [active, setActive] = useState<{ lineId: string; anchor: string } | null>(null);
   const [hover, setHover] = useState<Pt | null>(null);
   const [zoneStart, setZoneStart] = useState<Pt | null>(null);
   const [selLine, setSelLine] = useState<string | null>(null);
@@ -160,31 +165,50 @@ export default function PlayCanvas({
     });
   };
 
-  // ── drawing ───────────────────────────────────────────────────────────────
-  const startDraft = (anchor: string) => {
+  // ── drawing (live-commit) ─────────────────────────────────────────────────
+  const activeLine = active ? call.lines.find((l) => l.id === active.lineId) ?? null : null;
+
+  const startLine = (anchor: string) => {
     const pos = anchorPos(anchor);
-    if (pos) setDraft({ anchor, anchorPos: pos, rel: [] });
+    if (!pos) return;
+    snapshot(); // one undo step removes the whole line
+    const id = uid();
+    updateCall(call.id, {
+      lines: [
+        ...call.lines,
+        { id, anchor, kind: (tool === "select" || tool === "zone" ? "route" : tool) as LineKind, points: [] },
+      ],
+    });
+    setActive({ lineId: id, anchor });
   };
-  const finishDraft = () => {
-    setDraft((d) => {
-      if (d && d.rel.length > 0) {
-        snapshot();
-        updateCall(call.id, {
-          lines: [
-            ...call.lines,
-            {
-              id: uid(),
-              anchor: d.anchor,
-              kind: (tool === "select" || tool === "zone" ? "route" : tool) as LineKind,
-              points: d.rel,
-            },
-          ],
-        });
+
+  const endLine = () => {
+    setActive((a) => {
+      if (a) {
+        const l = call.lines.find((x) => x.id === a.lineId);
+        if (l && l.points.length === 0) {
+          // nothing was drawn — remove the empty line and its undo step
+          updateCall(call.id, { lines: call.lines.filter((x) => x.id !== a.lineId) });
+          undoStack.current.pop();
+        }
       }
       return null;
     });
     setHover(null);
     freehandRef.current = false;
+  };
+
+  const appendPoint = (canvasPt: Pt) => {
+    if (!active) return;
+    const l = call.lines.find((x) => x.id === active.lineId);
+    const a = anchorPos(active.anchor);
+    if (!l || !a) return;
+    const rel: Pt = [canvasPt[0] - a[0], canvasPt[1] - a[1]];
+    const last = l.points[l.points.length - 1];
+    if (last && Math.hypot(rel[0] - last[0], rel[1] - last[1]) < 0.9) return; // dedupe (dbl-click)
+    updateCall(call.id, {
+      lines: call.lines.map((x) => (x.id === l.id ? { ...x, points: [...x.points, rel] } : x)),
+    });
   };
 
   const selectMarker = (anchor: string) => {
@@ -218,13 +242,11 @@ export default function PlayCanvas({
 
   const onFieldPointerDown = (e: React.PointerEvent) => {
     if (tool === "zone" && e.target === e.currentTarget) setZoneStart(toCanvas(e));
-    if (draft && e.target === e.currentTarget) freehandRef.current = true;
+    if (active && e.target === e.currentTarget) freehandRef.current = true;
   };
   const onFieldClick = (e: React.MouseEvent) => {
-    if (draft) {
-      if (freehandRef.current && draft.rel.length > 2) return; // freehand already added points
-      const [x, y] = toCanvas(e);
-      setDraft({ ...draft, rel: [...draft.rel, [x - draft.anchorPos[0], y - draft.anchorPos[1]]] });
+    if (active) {
+      appendPoint(toCanvas(e));
     } else if (tool === "select" && e.target === e.currentTarget) {
       onSelectSlot(null);
       onSelectOff(null);
@@ -233,14 +255,20 @@ export default function PlayCanvas({
     }
   };
   const onFieldPointerMove = (e: React.PointerEvent) => {
-    if (draft || zoneStart) setHover(toCanvas(e));
-    // freehand: append points while held down
-    if (draft && freehandRef.current) {
+    if (active || zoneStart) setHover(toCanvas(e));
+    // freehand: extend the committed line while held down
+    if (active && freehandRef.current) {
       const [x, y] = toCanvas(e);
-      const rel: Pt = [x - draft.anchorPos[0], y - draft.anchorPos[1]];
-      const last = draft.rel[draft.rel.length - 1] ?? [0, 0];
-      if (Math.hypot(rel[0] - last[0], rel[1] - last[1]) > 1.6) {
-        setDraft({ ...draft, rel: [...draft.rel, rel] });
+      const l = call.lines.find((x2) => x2.id === active.lineId);
+      const a = anchorPos(active.anchor);
+      if (l && a) {
+        const rel: Pt = [x - a[0], y - a[1]];
+        const last = l.points[l.points.length - 1] ?? [0, 0];
+        if (Math.hypot(rel[0] - last[0], rel[1] - last[1]) > 1.6) {
+          updateCall(call.id, {
+            lines: call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: [...x2.points, rel] } : x2)),
+          });
+        }
       }
       return;
     }
@@ -313,12 +341,9 @@ export default function PlayCanvas({
     e.preventDefault();
     e.stopPropagation();
     if (tool === "route" || tool === "block" || tool === "motion" || tool === "pitch") {
-      if (!draft) startDraft(kind === "off" ? `off:${id}` : `def:${slot}`);
-      else {
-        // clicking another player while drafting = waypoint at that player
-        const pos = kind === "off" ? anchorPos(`off:${id}`) : defPos(slot!);
-        if (pos) setDraft({ ...draft, rel: [...draft.rel, [pos[0] - draft.anchorPos[0], pos[1] - draft.anchorPos[1]]] });
-      }
+      // clicking a player ends the current line and starts a new one from them
+      if (active) endLine();
+      startLine(kind === "off" ? `off:${id}` : `def:${slot}`);
       return;
     }
     if (tool !== "select") return;
@@ -332,13 +357,12 @@ export default function PlayCanvas({
       const tag = (document.activeElement?.tagName ?? "").toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select") return;
       if (e.key === "Escape") {
-        setDraft(null);
+        endLine();
         setZoneStart(null);
         setSelLine(null);
         setSelZone(null);
-        freehandRef.current = false;
-      } else if (e.key === "Enter" && draft) {
-        finishDraft();
+      } else if (e.key === "Enter" && active) {
+        endLine();
       } else if ((e.key === "Delete" || e.key === "Backspace") && (selLine || selZone)) {
         snapshot();
         updateCall(call.id, {
@@ -413,7 +437,7 @@ export default function PlayCanvas({
             <button
               key={t.id}
               onClick={() => {
-                finishDraft();
+                endLine();
                 setTool(t.id);
               }}
               title={t.label}
@@ -425,13 +449,10 @@ export default function PlayCanvas({
             </button>
           ))}
         </div>
-        {draft && (
-          <button
-            onClick={finishDraft}
-            className={`inline-flex items-center gap-1.5 rounded-full border border-grass bg-grass/15 px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-grass`}
-          >
-            <Check size={13} /> Finish
-          </button>
+        {active && (
+          <span className={`inline-flex items-center gap-1.5 rounded-full border border-grass/50 bg-grass/10 px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-grass`}>
+            <Check size={13} /> Drawing — click a player or press Esc to stop
+          </span>
         )}
         <button onClick={undo} title="Undo (Ctrl+Z)" className={`inline-flex items-center gap-1.5 rounded-full border border-line px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-dim hover:text-ink`}>
           <Undo2 size={13} /> Undo
@@ -451,6 +472,15 @@ export default function PlayCanvas({
           {FIELD_PRESETS.map((p) => (
             <option key={p.id} value={p.id}>{p.label}</option>
           ))}
+        </select>
+        <select
+          value={defStyle}
+          onChange={(e) => setDefStyle(e.target.value as "letters" | "triangles")}
+          className={`rounded-full border border-line bg-card px-3 ${large ? "py-2 text-sm" : "py-1.5 text-xs"} text-dim`}
+          title="Defense marker style"
+        >
+          <option value="letters">D: Letters</option>
+          <option value="triangles">D: Triangles</option>
         </select>
         <button
           onClick={() => {
@@ -473,8 +503,9 @@ export default function PlayCanvas({
         onPointerDown={onFieldPointerDown}
         onPointerMove={onFieldPointerMove}
         onPointerUp={onFieldPointerUp}
+        onPointerLeave={() => setHover(null)}
         onClick={onFieldClick}
-        onDoubleClick={finishDraft}
+        onDoubleClick={endLine}
         className={`relative rounded-xl border border-line bg-[#0d130f] aspect-4/3 overflow-hidden touch-none select-none min-h-0 ${
           tool === "select" ? "" : "cursor-crosshair"
         }`}
@@ -557,7 +588,9 @@ export default function PlayCanvas({
           {call.lines.map((l) => {
             const built = linePath(l);
             if (!built) return null;
-            const d = built.pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
+            const d = l.smooth
+              ? smoothPath(built.pts)
+              : built.pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
             const bar = l.kind === "block" ? blockBar(built.pts) : null;
             const selected = l.id === selLine;
             const markerEnd =
@@ -613,18 +646,21 @@ export default function PlayCanvas({
             );
           })}
 
-          {/* rubber-band preview */}
-          {draft && (
-            <path
-              d={[
-                `M${draft.anchorPos[0]},${draft.anchorPos[1]}`,
-                ...draft.rel.map(([dx, dy]) => `L${draft.anchorPos[0] + dx},${draft.anchorPos[1] + dy}`),
-                hover && !freehandRef.current ? `L${hover[0]},${hover[1]}` : "",
-              ].join(" ")}
-              fill="none" stroke={lineColor(draft.anchor, false)} strokeOpacity="0.6" strokeWidth="0.4"
-              strokeDasharray={tool === "motion" ? "1.5 1.1" : tool === "pitch" ? "0.35 0.9" : "0.9 0.9"}
-            />
-          )}
+          {/* ghost segment: last committed point → cursor (only while over the field) */}
+          {active && activeLine && hover && !freehandRef.current && (() => {
+            const a = anchorPos(active.anchor);
+            if (!a) return null;
+            const last = activeLine.points.length
+              ? ([a[0] + activeLine.points[activeLine.points.length - 1][0], a[1] + activeLine.points[activeLine.points.length - 1][1]] as Pt)
+              : a;
+            return (
+              <line
+                x1={last[0]} y1={last[1]} x2={hover[0]} y2={hover[1]}
+                stroke={lineColor(active.anchor, false)} strokeOpacity="0.45" strokeWidth="0.35"
+                strokeDasharray="0.9 0.9"
+              />
+            );
+          })()}
           {zoneStart && hover && (
             <ellipse
               cx={(zoneStart[0] + hover[0]) / 2} cy={(zoneStart[1] + hover[1]) / 2}
@@ -648,7 +684,7 @@ export default function PlayCanvas({
           const ids = groupSlots[i] ?? [];
           const pl = ids[0] ? byId.get(ids[0]) : undefined;
           const sel = selectedSlot === i;
-          const anchored = draft?.anchor === `def:${i}`;
+          const anchored = active?.anchor === `def:${i}`;
           return (
             <button
               key={`d${i}`}
@@ -660,17 +696,35 @@ export default function PlayCanvas({
               className="absolute -translate-x-1/2 -translate-y-1/2 text-center"
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
-              <span
-                className={`grid ${dSize} place-items-center rounded-full border-2 display font-bold transition ${
-                  sel || anchored
-                    ? "border-ember bg-ember/20 text-ember"
-                    : call.assignments[i]
-                      ? "border-sky bg-pitch text-sky"
-                      : "border-sky/50 bg-pitch text-sky/80 hover:border-sky"
-                }`}
-              >
-                {labelFor(i)}
-              </span>
+              {defStyle === "triangles" ? (
+                <svg viewBox="0 0 24 24" className={large ? "size-10" : "size-8"}>
+                  <polygon
+                    points="12,2 23,22 1,22"
+                    fill="#0d130f"
+                    stroke={sel || anchored ? "#f59e0b" : "#38bdf8"}
+                    strokeWidth="2"
+                  />
+                  <text
+                    x="12" y="19" textAnchor="middle" fontSize="9" fontWeight="700"
+                    fill={sel || anchored ? "#f59e0b" : "#38bdf8"}
+                    fontFamily="var(--font-barlow)"
+                  >
+                    {labelFor(i).slice(0, 2)}
+                  </text>
+                </svg>
+              ) : (
+                <span
+                  className={`grid ${dSize} place-items-center rounded-full border-2 display font-bold transition ${
+                    sel || anchored
+                      ? "border-ember bg-ember/20 text-ember"
+                      : call.assignments[i]
+                        ? "border-sky bg-pitch text-sky"
+                        : "border-sky/50 bg-pitch text-sky/80 hover:border-sky"
+                  }`}
+                >
+                  {labelFor(i)}
+                </span>
+              )}
               {pl && <span className={`mt-0.5 block ${large ? "text-[11px]" : "text-[9px]"} text-dim`}>#{pl.jersey}</span>}
             </button>
           );
@@ -678,7 +732,7 @@ export default function PlayCanvas({
 
         {/* offense (bottom) */}
         {call.offLook.map((o) => {
-          const anchored = draft?.anchor === `off:${o.id}`;
+          const anchored = active?.anchor === `off:${o.id}`;
           const isCenter = o.label.toUpperCase() === "C";
           return (
             <span
@@ -719,6 +773,20 @@ export default function PlayCanvas({
                     {k}
                   </button>
                 ))}
+                <span className="h-4 w-px bg-line" />
+                <button
+                  onClick={() => {
+                    snapshot();
+                    updateCall(call.id, {
+                      lines: call.lines.map((l) => (l.id === selLineObj.id ? { ...l, smooth: !l.smooth } : l)),
+                    });
+                  }}
+                  className={`display rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                    selLineObj.smooth ? "bg-ember text-pitch" : "text-dim hover:text-ink"
+                  }`}
+                >
+                  Curved
+                </button>
                 <span className="h-4 w-px bg-line" />
                 <span className="text-[10px] text-dim px-1">drag dots · dbl-click dot removes</span>
                 <span className="h-4 w-px bg-line" />

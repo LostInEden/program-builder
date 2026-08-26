@@ -17,6 +17,7 @@ export default function PlaybookPage() {
   const {
     calls, activeCallId, setActiveCall, addCall, updateCall, duplicateCall, deleteCall,
     groups, activeGroupId, players, overrides, strengthRule, formationTerms,
+    formationTemplates, saveFormationTemplate,
   } = useStore();
   const [section, setSection] = useState<PlaybookSection>("Fronts");
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
@@ -42,6 +43,12 @@ export default function PlaybookPage() {
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <h1 className="display text-4xl font-bold">Playbook</h1>
+        <Link
+          href="/scheme/playbook/print"
+          className="display rounded-full border border-line px-4 py-1.5 text-xs font-semibold text-dim transition hover:text-ink hover:border-dim"
+        >
+          Print / PDF
+        </Link>
         <div className="ml-auto flex gap-1.5 rounded-full border border-line bg-card p-1">
           {SECTIONS.map((s) => (
             <button
@@ -124,18 +131,39 @@ export default function PlaybookPage() {
                   value=""
                   onChange={(e) => {
                     if (!e.target.value) return;
-                    updateCall(call.id, {
-                      offLook: offensivePresets[e.target.value].map((m) => ({ ...m })),
-                    });
+                    const look = offensivePresets[e.target.value] ?? formationTemplates[e.target.value];
+                    if (look) updateCall(call.id, { offLook: look.map((m) => ({ ...m })) });
                     setSelectedOff(null);
                   }}
                   className="rounded-lg border border-line bg-black/25 px-2.5 py-1.5"
                 >
-                  <option value="">Load preset…</option>
-                  {Object.keys(offensivePresets).map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
+                  <option value="">Load formation…</option>
+                  {Object.keys(formationTemplates).length > 0 && (
+                    <optgroup label="Your formations">
+                      {Object.keys(formationTemplates).map((n) => (
+                        <option key={n} value={n}>{n}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <optgroup label="Built-in">
+                    {Object.keys(offensivePresets).map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </optgroup>
                 </select>
+                <button
+                  onClick={() => {
+                    const name = call.offForm.trim() || window.prompt("Formation name to save this look as:")?.trim();
+                    if (name) {
+                      saveFormationTemplate(name, call.offLook);
+                      if (!call.offForm.trim()) updateCall(call.id, { offForm: name });
+                    }
+                  }}
+                  title="Save this offensive look under the formation name — never draw it twice"
+                  className="rounded-lg border border-grass/40 px-2.5 py-1.5 text-grass hover:bg-grass/10"
+                >
+                  Save as formation
+                </button>
                 <button
                   onClick={() =>
                     updateCall(call.id, {

@@ -225,6 +225,8 @@ type Store = {
   overrides: Overrides;
   strengthRule: StrengthRule;
   formationTerms: Record<string, string>; // internal name -> coach's label
+  formationTemplates: Record<string, OffMarker[]>; // saved offensive looks by name
+  defStyle: "letters" | "triangles";
   calls: Call[];
   activeCallId: string | null;
   opponent: { name: string; kickoff: string };
@@ -243,6 +245,8 @@ type Store = {
   setSlotOverride: (structureId: string, slotIndex: number, patch: SlotOverride) => void;
   setStrengthRule: (rule: StrengthRule) => void;
   setFormationTerm: (internal: string, label: string) => void;
+  saveFormationTemplate: (name: string, look: OffMarker[]) => void;
+  setDefStyle: (s: "letters" | "triangles") => void;
 
   addCall: (section: PlaybookSection) => string;
   updateCall: (id: string, patch: Partial<Call>) => void;
@@ -267,6 +271,8 @@ export const useStore = create<Store>()(
       overrides: {},
       strengthRule: "Receiver strength",
       formationTerms: {},
+      formationTemplates: {},
+      defStyle: "letters",
       calls: seedCalls,
       activeCallId: seedCalls[0].id,
       opponent: { name: "Red Valley", kickoff: "Saturday, 7:00 PM" },
@@ -352,6 +358,11 @@ export const useStore = create<Store>()(
         })),
 
       setStrengthRule: (rule) => set({ strengthRule: rule }),
+      saveFormationTemplate: (name, look) =>
+        set((s) => ({
+          formationTemplates: { ...s.formationTemplates, [name]: look.map((m) => ({ ...m })) },
+        })),
+      setDefStyle: (defStyle) => set({ defStyle }),
       setFormationTerm: (internal, label) =>
         set((s) => ({ formationTerms: { ...s.formationTerms, [internal]: label } })),
 

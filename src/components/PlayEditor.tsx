@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useStore, slotLabelOf } from "@/lib/store";
-import { getStructure } from "@/lib/football";
+import { getStructure, offensivePresets } from "@/lib/football";
 import PlayCanvas from "@/components/PlayCanvas";
 
 // Full-screen play editor — big canvas, big targets (Hudl-style authoring view).
 export default function PlayEditor({ callId, onClose }: { callId: string; onClose: () => void }) {
-  const { calls, updateCall, groups, activeGroupId, players, overrides } = useStore();
+  const { calls, updateCall, groups, activeGroupId, players, overrides, formationTemplates, saveFormationTemplate } = useStore();
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedOff, setSelectedOff] = useState<string | null>(null);
 
@@ -58,6 +58,45 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
             className="rounded-lg border border-line bg-black/25 px-3 py-1.5 text-sm w-40"
           />
         </div>
+        <div>
+          <label className="block text-[10px] text-dim">Load formation</label>
+          <select
+            value=""
+            onChange={(e) => {
+              if (!e.target.value) return;
+              const look = offensivePresets[e.target.value] ?? formationTemplates[e.target.value];
+              if (look) updateCall(call.id, { offLook: look.map((m) => ({ ...m })) });
+            }}
+            className="rounded-lg border border-line bg-black/25 px-3 py-1.5 text-sm w-40"
+          >
+            <option value="">Choose…</option>
+            {Object.keys(formationTemplates).length > 0 && (
+              <optgroup label="Your formations">
+                {Object.keys(formationTemplates).map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </optgroup>
+            )}
+            <optgroup label="Built-in">
+              {Object.keys(offensivePresets).map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </optgroup>
+          </select>
+        </div>
+        <button
+          onClick={() => {
+            const name = call.offForm.trim() || window.prompt("Formation name to save this look as:")?.trim();
+            if (name) {
+              saveFormationTemplate(name, call.offLook);
+              if (!call.offForm.trim()) updateCall(call.id, { offForm: name });
+            }
+          }}
+          className="self-end rounded-lg border border-grass/40 px-3 py-1.5 text-sm text-grass hover:bg-grass/10"
+          title="Save this offensive look under the formation name"
+        >
+          Save formation
+        </button>
         <span className="text-sm text-dim">{group.name} · {structure.name} · saves automatically</span>
         <button
           onClick={onClose}
