@@ -108,6 +108,7 @@ export default function StudioCanvas({
   const [zoneStart, setZoneStart] = useState<Pt | null>(null);
   const dragRef = useRef<Drag | null>(null);
   const pendingFromDownRef = useRef(false); // pointerdown-on-player → drag-release draws
+  const clickConsumedRef = useRef(false); // pointerup did work — swallow the synthetic click that follows
   const extendDragRef = useRef<string | null>(null); // + button pressed; click = arm, drag = live-extend
   type Snap = Pick<Call, "offLook" | "lines" | "zones" | "defOffsets"> & { texts: NonNullable<Call["texts"]> };
   const undoStack = useRef<Snap[]>([]);
@@ -245,6 +246,10 @@ export default function StudioCanvas({
     if (tool === "zone" && isFieldTarget(e)) setZoneStart(toCanvas(e));
   };
   const onFieldClick = (e: React.MouseEvent) => {
+    if (clickConsumedRef.current) {
+      clickConsumedRef.current = false;
+      return;
+    }
     const onField = isFieldTarget(e);
     if (pending && onField) return drawLineTo(toCanvas(e));
     if (extendId && onField) return extendLineTo(toCanvas(e));
@@ -266,9 +271,12 @@ export default function StudioCanvas({
       setTool("select");
       return;
     }
-    if (tool === "select" && onField) {
+    if (onField) {
+      // empty-field click = done: back to Select, everything deselected/placed
+      setTool("select");
       onSelect(null);
       setExtendId(null);
+      setPending(null);
     }
   };
   const onFieldPointerMove = (e: React.PointerEvent) => {
@@ -314,6 +322,7 @@ export default function StudioCanvas({
       const pt = toCanvas(e);
       if (a && Math.hypot(pt[0] - a[0], pt[1] - a[1]) > 3) {
         drawLineTo(pt);
+        clickConsumedRef.current = true;
         return;
       }
       // plain click on the player → stays armed for click-to-place
@@ -329,6 +338,8 @@ export default function StudioCanvas({
         const id = uid();
         updateCall(call.id, { zones: [...call.zones, { id, x: cx, y: cy, rx, ry, side: cy < LOS_Y ? "off" : "def" }] });
         onSelect({ kind: "zone", id });
+        setTool("select");
+        clickConsumedRef.current = true;
       }
       setZoneStart(null);
       setHover(null);
@@ -344,6 +355,7 @@ export default function StudioCanvas({
         setExtendId(d.lineId);
       }
     }
+    if (d) clickConsumedRef.current = true;
     extendDragRef.current = null;
     dragRef.current = null;
   };
