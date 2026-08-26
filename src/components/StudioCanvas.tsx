@@ -13,6 +13,7 @@ import {
   Trash2,
   Undo2,
   Redo2,
+  Plus,
 } from "lucide-react";
 import {
   getStructure,
@@ -48,16 +49,20 @@ type Drag =
   | { type: "zone-resize"; id: string; moved: boolean };
 
 const uid = () => Math.random().toString(36).slice(2, 9);
+const INK = ROUTE_COLORS[0];
+const DEF_INK = "#9aa59b";
+// legacy stored colors from the light-theme build
+const legacy = (c?: string) => (c === "#111827" ? undefined : c === "#3b82f6" ? "#38bdf8" : c === "#6b7280" ? undefined : c);
 
-const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string }[] = [
-  { id: "select", icon: MousePointer2, label: "Select" },
-  { id: "line", icon: Minus, label: "Line" },
-  { id: "route", icon: ArrowUpRight, label: "Route" },
-  { id: "motion", icon: MoveRight, label: "Motion" },
-  { id: "block", icon: RectangleHorizontal, label: "Block" },
-  { id: "text", icon: Type, label: "Text" },
-  { id: "zone", icon: Circle, label: "Zone" },
-  { id: "player", icon: UserPlus, label: "Player" },
+const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string; key: string }[] = [
+  { id: "select", icon: MousePointer2, label: "Select", key: "1" },
+  { id: "line", icon: Minus, label: "Line", key: "2" },
+  { id: "route", icon: ArrowUpRight, label: "Route", key: "3" },
+  { id: "motion", icon: MoveRight, label: "Motion", key: "4" },
+  { id: "block", icon: RectangleHorizontal, label: "Block", key: "5" },
+  { id: "text", icon: Type, label: "Text", key: "6" },
+  { id: "zone", icon: Circle, label: "Zone", key: "7" },
+  { id: "player", icon: UserPlus, label: "Player", key: "8" },
 ];
 
 const STYLES: { id: LineStyle; label: string }[] = [
@@ -90,13 +95,16 @@ export default function StudioCanvas({
 
   const fieldRef = useRef<HTMLDivElement>(null);
   const [tool, setTool] = useState<Tool>("select");
-  const [color, setColor] = useState(ROUTE_COLORS[0]);
+  const [color, setColor] = useState(INK);
   const [style, setStyle] = useState<LineStyle>("solid");
-  const [active, setActive] = useState<{ lineId: string; anchor: string } | null>(null);
+  // New drawing model: click a player = arm ("pending"); the next field click
+  // draws a COMPLETE line with its arrow and selects it. A small + button at
+  // the endpoint arms one extension segment at a time.
+  const [pending, setPending] = useState<string | null>(null); // armed anchor
+  const [extendId, setExtendId] = useState<string | null>(null); // line armed for one more point
   const [hover, setHover] = useState<Pt | null>(null);
   const [zoneStart, setZoneStart] = useState<Pt | null>(null);
   const dragRef = useRef<Drag | null>(null);
-  const freehandRef = useRef(false);
   type Snap = Pick<Call, "offLook" | "lines" | "zones" | "defOffsets"> & { texts: NonNullable<Call["texts"]> };
   const undoStack = useRef<Snap[]>([]);
   const redoStack = useRef<Snap[]>([]);
@@ -120,6 +128,8 @@ export default function StudioCanvas({
       updateCall(call.id, prev);
     }
     onSelect(null);
+    setPending(null);
+    setExtendId(null);
   };
   const redo = () => {
     const next = redoStack.current.pop();
@@ -152,16 +162,24 @@ export default function StudioCanvas({
       Math.min(FIELD_H - 1, Math.max(1, ((e.clientY - r.top) / r.height) * FIELD_H)),
     ];
   };
-  const colorOf = (l: { anchor: string; color?: string }, selected: boolean) =>
-    selected ? "#2563eb" : l.color ?? (l.anchor.startsWith("def:") ? "#6b7280" : "#111827");
+  const colorOf = (l: { anchor: string; color?: string }, selected: boolean) => {
+    if (selected) return "#f59e0b";
+    return legacy(l.color) ?? (l.anchor.startsWith("def:") ? DEF_INK : INK);
+  };
+  // clicks on empty field land on the SVG layer, not the container
+  const isFieldTarget = (e: React.SyntheticEvent) => {
+    const t = e.target as Element;
+    return t === e.currentTarget || t.tagName?.toLowerCase() === "svg";
+  };
 
-  // ── live-commit drawing ───────────────────────────────────────────────────
-  const activeLine = active ? call.lines.find((l) => l.id === active.lineId) ?? null : null;
+  const isDrawTool = tool === "line" || tool === "route" || tool === "motion" || tool === "block";
   const toolKind = (): LineKind => (tool === "motion" ? "motion" : tool === "block" ? "block" : "route");
 
-  const startLine = (anchor: string) => {
-    const pos = anchorPos(anchor);
-    if (!pos) return;
+  // Draw one complete line from the armed player to the clicked point.
+  const drawLineTo = (pt: Pt) => {
+    if (!pending) return;
+    const a = anchorPos(pending);
+    if (!a) return;
     snapshot();
     const id = uid();
     updateCall(call.id, {
@@ -169,47 +187,34 @@ export default function StudioCanvas({
         ...call.lines,
         {
           id,
-          anchor,
+          anchor: pending,
           kind: toolKind(),
-          points: [],
-          color: anchor.startsWith("def:") && color === ROUTE_COLORS[0] ? "#6b7280" : color,
+          points: [[pt[0] - a[0], pt[1] - a[1]]],
+          color: color === INK ? undefined : color,
           style: tool === "motion" ? "dashed" : style,
           showArrow: tool !== "block" && tool !== "line",
         },
       ],
     });
-    setActive({ lineId: id, anchor });
-  };
-  const endLine = () => {
-    setActive((a) => {
-      if (a) {
-        const l = call.lines.find((x) => x.id === a.lineId);
-        if (l && l.points.length === 0) {
-          updateCall(call.id, { lines: call.lines.filter((x) => x.id !== a.lineId) });
-          undoStack.current.pop();
-        }
-      }
-      return null;
-    });
+    setPending(null);
     setHover(null);
-    freehandRef.current = false;
+    onSelect({ kind: "line", id });
   };
-  const appendPoint = (canvasPt: Pt) => {
-    if (!active) return;
-    const l = call.lines.find((x) => x.id === active.lineId);
-    const a = anchorPos(active.anchor);
+
+  // One extension point on an existing line.
+  const extendLineTo = (pt: Pt) => {
+    const l = call.lines.find((x) => x.id === extendId);
+    const a = l && anchorPos(l.anchor);
     if (!l || !a) return;
-    const rel: Pt = [canvasPt[0] - a[0], canvasPt[1] - a[1]];
-    const last = l.points[l.points.length - 1];
-    if (last && Math.hypot(rel[0] - last[0], rel[1] - last[1]) < 0.9) return;
+    snapshot();
     updateCall(call.id, {
-      lines: call.lines.map((x) => (x.id === l.id ? { ...x, points: [...x.points, rel] } : x)),
+      lines: call.lines.map((x) => (x.id === l.id ? { ...x, points: [...x.points, [pt[0] - a[0], pt[1] - a[1]] as Pt] } : x)),
     });
+    setExtendId(null);
+    setHover(null);
   };
 
-  const isDrawTool = tool === "line" || tool === "route" || tool === "motion" || tool === "block";
-
-  // Hudl block shortcut: O selected → double-click defender.
+  // Block gesture: stop the bar just IN FRONT of the target defender.
   const blockTo = (slotIndex: number) => {
     if (selection?.kind !== "off") return;
     const from = anchorPos(`off:${selection.id}`);
@@ -218,23 +223,21 @@ export default function StudioCanvas({
     const dx = to[0] - from[0];
     const dy = to[1] - from[1];
     const len = Math.hypot(dx, dy) || 1;
-    const k = Math.max(0, len - 2.2) / len;
+    const k = Math.max(0.2, (len - 3.4) / len); // marker radius + gap
     snapshot();
     updateCall(call.id, {
-      lines: [...call.lines, { id: uid(), anchor: `off:${selection.id}`, kind: "block", points: [[dx * k, dy * k]], color: "#111827", style: "solid", showArrow: false }],
+      lines: [...call.lines, { id: uid(), anchor: `off:${selection.id}`, kind: "block", points: [[dx * k, dy * k]], style: "solid", showArrow: false }],
     });
   };
 
   const onFieldPointerDown = (e: React.PointerEvent) => {
-    if (tool === "zone" && e.target === e.currentTarget) setZoneStart(toCanvas(e));
-    if (active && e.target === e.currentTarget) freehandRef.current = true;
+    if (tool === "zone" && isFieldTarget(e)) setZoneStart(toCanvas(e));
   };
   const onFieldClick = (e: React.MouseEvent) => {
-    if (active) {
-      appendPoint(toCanvas(e));
-      return;
-    }
-    if (tool === "text" && e.target === e.currentTarget) {
+    const onField = isFieldTarget(e);
+    if (pending && onField) return drawLineTo(toCanvas(e));
+    if (extendId && onField) return extendLineTo(toCanvas(e));
+    if (tool === "text" && onField) {
       const [x, y] = toCanvas(e);
       snapshot();
       const id = uid();
@@ -243,36 +246,22 @@ export default function StudioCanvas({
       setTool("select");
       return;
     }
-    if (tool === "player" && e.target === e.currentTarget) {
+    if (tool === "player" && onField) {
       const [x, y] = toCanvas(e);
       snapshot();
       const id = uid();
-      updateCall(call.id, {
-        offLook: [...call.offLook, { id, label: "?", x, y: Math.max(LOS_Y + 1.2, y) }],
-      });
+      updateCall(call.id, { offLook: [...call.offLook, { id, label: "?", x, y: Math.max(LOS_Y + 1.2, y) }] });
       onSelect({ kind: "off", id });
       setTool("select");
       return;
     }
-    if (tool === "select" && e.target === e.currentTarget) onSelect(null);
+    if (tool === "select" && onField) {
+      onSelect(null);
+      setExtendId(null);
+    }
   };
   const onFieldPointerMove = (e: React.PointerEvent) => {
-    if (active || zoneStart) setHover(toCanvas(e));
-    if (active && freehandRef.current) {
-      const [x, y] = toCanvas(e);
-      const l = call.lines.find((x2) => x2.id === active.lineId);
-      const a = anchorPos(active.anchor);
-      if (l && a) {
-        const rel: Pt = [x - a[0], y - a[1]];
-        const last = l.points[l.points.length - 1] ?? [0, 0];
-        if (Math.hypot(rel[0] - last[0], rel[1] - last[1]) > 1.6) {
-          updateCall(call.id, {
-            lines: call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: [...x2.points, rel] } : x2)),
-          });
-        }
-      }
-      return;
-    }
+    if (pending || extendId || zoneStart) setHover(toCanvas(e));
     const d = dragRef.current;
     if (!d) return;
     d.moved = true;
@@ -307,7 +296,6 @@ export default function StudioCanvas({
     }
   };
   const onFieldPointerUp = (e: React.PointerEvent) => {
-    freehandRef.current = false;
     if (zoneStart) {
       const [x, y] = toCanvas(e);
       const rx = Math.abs(x - zoneStart[0]) / 2;
@@ -335,8 +323,9 @@ export default function StudioCanvas({
     e.preventDefault();
     e.stopPropagation();
     if (isDrawTool && kind !== "text") {
-      if (active) endLine();
-      startLine(kind === "off" ? `off:${id}` : `def:${slot}`);
+      // arm this player — next field click draws the complete line
+      setPending(kind === "off" ? `off:${id}` : `def:${slot}`);
+      setExtendId(null);
       return;
     }
     if (tool !== "select") return;
@@ -357,18 +346,27 @@ export default function StudioCanvas({
         lines: call.lines.filter((l) => l.anchor !== `off:${selection.id}`),
       });
     onSelect(null);
+    setExtendId(null);
   };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (document.activeElement?.tagName ?? "").toLowerCase();
       if (tag === "input" || tag === "textarea" || tag === "select") return;
+      const toolByKey = TOOLS.find((t) => t.key === e.key);
+      if (toolByKey && !e.ctrlKey && !e.metaKey) {
+        setPending(null);
+        setExtendId(null);
+        setTool(toolByKey.id);
+        return;
+      }
       if (e.key === "Escape") {
-        endLine();
+        setPending(null);
+        setExtendId(null);
         setZoneStart(null);
+        setHover(null);
         onSelect(null);
-      } else if (e.key === "Enter" && active) endLine();
-      else if ((e.key === "Delete" || e.key === "Backspace") && selection && selection.kind !== "def") deleteSelection();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && selection && selection.kind !== "def") deleteSelection();
       else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && e.shiftKey) { e.preventDefault(); redo(); }
       else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
     };
@@ -389,25 +387,51 @@ export default function StudioCanvas({
 
   const selLineId = selection?.kind === "line" ? selection.id : null;
   const selZoneId = selection?.kind === "zone" ? selection.id : null;
+  const selLineObj = selLineId ? call.lines.find((l) => l.id === selLineId) : null;
+
+  // endpoint of a line in canvas coords (for the + extend button)
+  const lineEnd = (l: { anchor: string; points: Pt[] }): Pt | null => {
+    const a = anchorPos(l.anchor);
+    if (!a || !l.points.length) return null;
+    const last = l.points[l.points.length - 1];
+    return [a[0] + last[0], a[1] + last[1]];
+  };
+  const extendBtnFor = selLineObj ?? null;
+  const extendBtnPos = extendBtnFor ? lineEnd(extendBtnFor) : null;
+
+  // hover ghost start point
+  const ghostFrom: Pt | null = pending
+    ? anchorPos(pending)
+    : extendId
+      ? lineEnd(call.lines.find((l) => l.id === extendId) ?? { anchor: "", points: [] })
+      : null;
+
+  const markerBase =
+    "grid size-9 place-items-center rounded-full display text-[13px] font-bold text-pitch select-none transition bg-ink";
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      {/* Field */}
       <div
         ref={fieldRef}
         onPointerDown={onFieldPointerDown}
         onPointerMove={onFieldPointerMove}
         onPointerUp={onFieldPointerUp}
         onPointerLeave={() => setHover(null)}
+        onPointerCancel={() => {
+          // iOS fires this on system gestures / palm rejection — abort the drag
+          // and restore the pre-gesture state so nothing is half-moved.
+          if (dragRef.current?.moved) undo();
+          dragRef.current = null;
+          setZoneStart(null);
+        }}
         onClick={onFieldClick}
-        onDoubleClick={endLine}
-        className={`relative mx-auto aspect-4/3 max-h-full w-full max-w-full overflow-hidden rounded-lg border border-gray-200 bg-[#fbfbfa] shadow-sm touch-none select-none ${
-          tool === "select" ? "" : "cursor-crosshair"
+        className={`relative mx-auto aspect-4/3 max-h-full w-full max-w-full overflow-hidden rounded-xl border border-line bg-[#0d130f] touch-none select-none ${
+          tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
         <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
           <defs>
-            {[...ROUTE_COLORS, "#6b7280", "#2563eb"].map((c) => (
+            {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
                 <path d="M0,0 L6,3 L0,6 z" fill={c} />
               </marker>
@@ -416,28 +440,28 @@ export default function StudioCanvas({
 
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#9ca3af" : "#e7e5e4"} strokeWidth={yl.goal ? 0.5 : 0.24} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "rgba(233,239,233,0.35)" : "rgba(233,239,233,0.08)"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
-                  <text x="5.5" y={yl.y} fontSize="4.6" fill="#d6d3d1" fontFamily="var(--font-barlow)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 5.5 ${yl.y})`}>{yl.label}</text>
-                  <text x="94.5" y={yl.y} fontSize="4.6" fill="#d6d3d1" fontFamily="var(--font-barlow)" fontWeight="700" textAnchor="middle" transform={`rotate(90 94.5 ${yl.y})`}>{yl.label}</text>
+                  <text x="5.5" y={yl.y} fontSize="4.6" fill="rgba(233,239,233,0.14)" fontFamily="var(--font-barlow)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 5.5 ${yl.y})`}>{yl.label}</text>
+                  <text x="94.5" y={yl.y} fontSize="4.6" fill="rgba(233,239,233,0.14)" fontFamily="var(--font-barlow)" fontWeight="700" textAnchor="middle" transform={`rotate(90 94.5 ${yl.y})`}>{yl.label}</text>
                 </>
               )}
             </g>
           ))}
           {[40, 60].map((x) =>
             Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => (
-              <polygon key={`${x}-${y}`} points={`${x - 0.5},${y + 0.35} ${x + 0.5},${y + 0.35} ${x},${y - 0.45}`} fill="#e7e5e4" />
+              <polygon key={`${x}-${y}`} points={`${x - 0.5},${y + 0.35} ${x + 0.5},${y + 0.35} ${x},${y - 0.45}`} fill="rgba(233,239,233,0.08)" />
             )),
           )}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#2563eb" strokeWidth="0.4" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#4ade80" strokeWidth="0.4" strokeOpacity="0.7" />
 
           {call.zones.map((z) => (
             <g key={z.id}>
               <ellipse
                 cx={z.x} cy={z.y} rx={z.rx} ry={z.ry}
-                fill={z.id === selZoneId ? "rgba(37,99,235,0.10)" : z.side === "def" ? "rgba(107,114,128,0.08)" : "rgba(239,68,68,0.07)"}
-                stroke={z.id === selZoneId ? "#2563eb" : z.side === "def" ? "#9ca3af" : "#ef4444"}
+                fill={z.id === selZoneId ? "rgba(245,158,11,0.12)" : z.side === "def" ? "rgba(56,189,248,0.08)" : "rgba(248,113,113,0.08)"}
+                stroke={z.id === selZoneId ? "#f59e0b" : z.side === "def" ? "rgba(56,189,248,0.55)" : "rgba(248,113,113,0.55)"}
                 strokeWidth="0.3" strokeDasharray="1.4 1"
                 style={{ pointerEvents: "all", cursor: tool === "select" ? "move" : undefined }}
                 onPointerDown={(e) => {
@@ -451,7 +475,7 @@ export default function StudioCanvas({
               />
               {z.id === selZoneId && (
                 <rect
-                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#fff" stroke="#2563eb" strokeWidth="0.25"
+                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#e9efe9" stroke="#f59e0b" strokeWidth="0.25"
                   style={{ pointerEvents: "all", cursor: "nwse-resize" }}
                   onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "zone-resize", id: z.id, moved: false }; }}
                 />
@@ -466,6 +490,7 @@ export default function StudioCanvas({
             if (pts.length < 2) return null;
             const selected = l.id === selLineId;
             const c = colorOf(l, selected);
+            const rawColor = legacy(l.color) ?? (l.anchor.startsWith("def:") ? DEF_INK : INK);
             const d = l.smooth ? smoothPath(pts) : pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
             const showArrow = l.showArrow ?? l.kind !== "block";
             let bar = null;
@@ -475,8 +500,16 @@ export default function StudioCanvas({
               const len = Math.hypot(bx - ax, by - ay) || 1;
               const nx = -(by - ay) / len;
               const ny = (bx - ax) / len;
-              bar = { x1: bx - nx * 1.6, y1: by - ny * 1.6, x2: bx + nx * 1.6, y2: by + ny * 1.6 };
+              bar = { x1: bx - nx * 1.9, y1: by - ny * 1.9, x2: bx + nx * 1.9, y2: by + ny * 1.9 };
             }
+            // Excalidraw-style midpoint handles for bending
+            const midpoints: { x: number; y: number; insertAt: number }[] = selected
+              ? pts.slice(0, -1).map(([x1, y1], i) => ({
+                  x: (x1 + pts[i + 1][0]) / 2,
+                  y: (y1 + pts[i + 1][1]) / 2,
+                  insertAt: i, // insert into points array before relative index i
+                }))
+              : [];
             return (
               <g key={l.id}>
                 <path
@@ -486,50 +519,68 @@ export default function StudioCanvas({
                     if (tool !== "select") return;
                     e.stopPropagation();
                     onSelect(selected ? null : { kind: "line", id: l.id });
+                    setExtendId(null);
                   }}
                 />
                 <path
                   d={d} fill="none" stroke={c} strokeWidth={selected ? 0.6 : 0.48}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
-                  markerEnd={showArrow ? `url(#sarr-${(selected ? "#2563eb" : (l.color ?? (l.anchor.startsWith("def:") ? "#6b7280" : "#111827"))).slice(1)})` : undefined}
+                  markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
                 />
-                {bar && <line x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={c} strokeWidth={selected ? 0.6 : 0.48} strokeLinecap="round" />}
-                {selected &&
-                  pts.slice(1).map(([x, y], i) => (
-                    <circle
-                      key={i} cx={x} cy={y} r="1.1" fill="#fff" stroke="#2563eb" strokeWidth="0.3"
-                      style={{ pointerEvents: "all", cursor: "grab" }}
-                      onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
-                      onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        snapshot();
-                        const remaining = l.points.filter((_, j) => j !== i);
-                        updateCall(call.id, {
-                          lines: remaining.length
-                            ? call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: remaining } : x2))
-                            : call.lines.filter((x2) => x2.id !== l.id),
-                        });
-                        if (!remaining.length) onSelect(null);
-                      }}
-                    />
-                  ))}
+                {bar && <line x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={c} strokeWidth={selected ? 0.7 : 0.55} strokeLinecap="round" />}
+                {selected && (
+                  <>
+                    {/* waypoint handles (filled) */}
+                    {pts.slice(1).map(([x, y], i) => (
+                      <circle
+                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#0d130f" stroke="#f59e0b" strokeWidth="0.3"
+                        style={{ pointerEvents: "all", cursor: "grab" }}
+                        onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
+                        onDoubleClick={(e) => {
+                          e.stopPropagation();
+                          snapshot();
+                          const remaining = l.points.filter((_, j) => j !== i);
+                          updateCall(call.id, {
+                            lines: remaining.length
+                              ? call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: remaining } : x2))
+                              : call.lines.filter((x2) => x2.id !== l.id),
+                          });
+                          if (!remaining.length) onSelect(null);
+                        }}
+                      />
+                    ))}
+                    {/* midpoint bend handles (hollow) — drag to bend like Excalidraw */}
+                    {midpoints.map((m, i) => (
+                      <circle
+                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(13,19,15,0.6)" stroke="#f59e0b" strokeWidth="0.22" strokeDasharray="0.5 0.4"
+                        style={{ pointerEvents: "all", cursor: "grab" }}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          snapshot();
+                          const newPts = [...l.points];
+                          newPts.splice(m.insertAt, 0, [m.x - a[0], m.y - a[1]]);
+                          updateCall(call.id, {
+                            lines: call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: newPts, smooth: true } : x2)),
+                          });
+                          dragRef.current = { type: "wp", lineId: l.id, index: m.insertAt, moved: false };
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
               </g>
             );
           })}
 
-          {active && activeLine && hover && !freehandRef.current && (() => {
-            const a = anchorPos(active.anchor);
-            if (!a) return null;
-            const last = activeLine.points.length
-              ? ([a[0] + activeLine.points[activeLine.points.length - 1][0], a[1] + activeLine.points[activeLine.points.length - 1][1]] as Pt)
-              : a;
-            return <line x1={last[0]} y1={last[1]} x2={hover[0]} y2={hover[1]} stroke={colorOf(activeLine, false)} strokeOpacity="0.4" strokeWidth="0.4" strokeDasharray="0.9 0.9" />;
-          })()}
+          {/* aim ghost: armed player/extension → cursor */}
+          {ghostFrom && hover && (
+            <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={INK} strokeOpacity="0.35" strokeWidth="0.35" strokeDasharray="0.9 0.9" />
+          )}
           {zoneStart && hover && (
             <ellipse
               cx={(zoneStart[0] + hover[0]) / 2} cy={(zoneStart[1] + hover[1]) / 2}
               rx={Math.abs(hover[0] - zoneStart[0]) / 2} ry={Math.abs(hover[1] - zoneStart[1]) / 2}
-              fill="rgba(37,99,235,0.06)" stroke="#2563eb" strokeWidth="0.3" strokeDasharray="1.4 1"
+              fill="rgba(74,222,128,0.06)" stroke="rgba(74,222,128,0.5)" strokeWidth="0.3" strokeDasharray="1.4 1"
             />
           )}
         </svg>
@@ -540,7 +591,7 @@ export default function StudioCanvas({
             key={t.id}
             onPointerDown={(e) => beginMarkerDrag(e, "text", t.id)}
             className={`absolute -translate-x-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[12px] font-semibold whitespace-pre ${
-              selection?.kind === "text" && selection.id === t.id ? "bg-blue-100 text-blue-800 ring-1 ring-blue-500" : "text-gray-700"
+              selection?.kind === "text" && selection.id === t.id ? "bg-ember/20 text-ember ring-1 ring-ember" : "text-ink/80"
             } ${tool === "select" ? "cursor-grab" : ""}`}
             style={{ left: `${t.x}%`, top: `${(t.y / FIELD_H) * 100}%` }}
           >
@@ -552,7 +603,7 @@ export default function StudioCanvas({
         {structure.slots.map((slot, i) => {
           const [x, y] = defPos(i);
           const sel = selection?.kind === "def" && selection.slot === i;
-          const anchored = active?.anchor === `def:${i}`;
+          const armed = pending === `def:${i}`;
           const ids = groupSlots[i] ?? [];
           const pl = ids[0] ? byId.get(ids[0]) : undefined;
           return (
@@ -561,14 +612,11 @@ export default function StudioCanvas({
               onPointerDown={(e) => beginMarkerDrag(e, "def", `${i}`, i)}
               onDoubleClick={(e) => { e.stopPropagation(); if (tool === "select") blockTo(i); }}
               title={pl ? `#${pl.jersey} ${pl.name}` : undefined}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
+              className="group absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
-              <span
-                className={`grid size-9 place-items-center rounded-full display text-[13px] font-bold text-white transition ${
-                  sel || anchored ? "bg-blue-600 ring-2 ring-blue-300" : "bg-gray-900 hover:ring-2 hover:ring-gray-300"
-                }`}
-              >
+              <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
+              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-pitch" : ""}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -578,38 +626,51 @@ export default function StudioCanvas({
         {/* offense */}
         {call.offLook.map((o) => {
           const sel = selection?.kind === "off" && selection.id === o.id;
-          const anchored = active?.anchor === `off:${o.id}`;
+          const armed = pending === `off:${o.id}`;
           return (
             <span
               key={o.id}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
-              className={`absolute -translate-x-1/2 -translate-y-1/2 grid size-9 place-items-center rounded-full display text-[13px] font-bold text-white select-none transition ${
-                sel || anchored ? "bg-blue-600 ring-2 ring-blue-300" : "bg-gray-900 hover:ring-2 hover:ring-gray-300"
-              } ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
+              className={`group absolute -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
             >
-              {(o.showLabel ?? true) ? o.label : ""}
+              <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
+              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-pitch" : ""}`}>
+                {(o.showLabel ?? true) ? o.label : ""}
+              </span>
             </span>
           );
         })}
+
+        {/* + extend button at the end of the selected line */}
+        {extendBtnPos && !extendId && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setExtendId(extendBtnFor!.id); }}
+            title="Extend line — next click adds a segment"
+            className="absolute z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-ember bg-pitch text-ember shadow-lg transition hover:bg-ember hover:text-pitch"
+            style={{ left: `calc(${extendBtnPos[0]}% + 14px)`, top: `${(extendBtnPos[1] / FIELD_H) * 100}%` }}
+          >
+            <Plus size={13} />
+          </button>
+        )}
       </div>
 
       {/* Floating toolbar */}
-      <div className="mx-auto mt-3 flex flex-wrap items-center gap-1 rounded-xl border border-gray-200 bg-white px-2 py-1.5 shadow-lg">
+      <div className="mx-auto mt-3 flex flex-wrap items-center gap-1 rounded-xl border border-line bg-card px-2 py-1.5 shadow-lg">
         {TOOLS.map((t) => (
           <button
             key={t.id}
-            onClick={() => { endLine(); setTool(t.id); }}
-            title={t.label}
+            onClick={() => { setPending(null); setExtendId(null); setTool(t.id); }}
+            title={`${t.label} (${t.key})`}
             className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-semibold transition ${
-              tool === t.id ? "bg-blue-50 text-blue-700 ring-1 ring-blue-200" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+              tool === t.id ? "bg-grass/15 text-grass ring-1 ring-grass/40" : "text-dim hover:bg-white/5 hover:text-ink"
             }`}
           >
             <t.icon size={17} />
             {t.label}
           </button>
         ))}
-        <span className="mx-1 h-8 w-px bg-gray-200" />
+        <span className="mx-1 h-8 w-px bg-line" />
         {ROUTE_COLORS.map((c) => (
           <button
             key={c}
@@ -617,16 +678,16 @@ export default function StudioCanvas({
               setColor(c);
               if (selLineId) {
                 snapshot();
-                updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLineId ? { ...l, color: c } : l)) });
+                updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLineId ? { ...l, color: c === INK ? undefined : c } : l)) });
               }
             }}
             aria-label={`Color ${c}`}
-            className={`grid size-7 place-items-center rounded-full transition ${color === c ? "ring-2 ring-blue-400 ring-offset-1" : ""}`}
+            className={`grid size-7 place-items-center rounded-full transition ${color === c ? "ring-2 ring-grass ring-offset-1 ring-offset-card" : ""}`}
           >
-            <span className="size-4.5 rounded-full" style={{ backgroundColor: c }} />
+            <span className="size-4.5 rounded-full border border-line" style={{ backgroundColor: c }} />
           </button>
         ))}
-        <span className="mx-1 h-8 w-px bg-gray-200" />
+        <span className="mx-1 h-8 w-px bg-line" />
         {STYLES.map((s) => (
           <button
             key={s.id}
@@ -638,28 +699,28 @@ export default function StudioCanvas({
               }
             }}
             title={s.label}
-            className={`rounded-lg px-2.5 py-2 transition ${style === s.id && !selLineId ? "bg-blue-50 ring-1 ring-blue-200" : "hover:bg-gray-50"}`}
+            className={`rounded-lg px-2.5 py-2 transition ${style === s.id && !selLineId ? "bg-grass/15 ring-1 ring-grass/40" : "hover:bg-white/5"}`}
           >
             <svg width="26" height="4" viewBox="0 0 26 4">
-              <line x1="1" y1="2" x2="25" y2="2" stroke="#374151" strokeWidth={s.id === "solid" ? 2.4 : 2} strokeDasharray={s.id === "dashed" ? "5 3" : s.id === "dotted" ? "1.6 2.6" : undefined} strokeLinecap="round" />
+              <line x1="1" y1="2" x2="25" y2="2" stroke="#9aa59b" strokeWidth={s.id === "solid" ? 2.4 : 2} strokeDasharray={s.id === "dashed" ? "5 3" : s.id === "dotted" ? "1.6 2.6" : undefined} strokeLinecap="round" />
             </svg>
           </button>
         ))}
-        <span className="mx-1 h-8 w-px bg-gray-200" />
-        <button onClick={undo} title="Undo (Ctrl+Z)" className="rounded-lg p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-800"><Undo2 size={16} /></button>
-        <button onClick={redo} title="Redo (Ctrl+Shift+Z)" className="rounded-lg p-2 text-gray-500 hover:bg-gray-50 hover:text-gray-800"><Redo2 size={16} /></button>
+        <span className="mx-1 h-8 w-px bg-line" />
+        <button onClick={undo} title="Undo (Ctrl+Z)" className="rounded-lg p-2 text-dim hover:bg-white/5 hover:text-ink"><Undo2 size={16} /></button>
+        <button onClick={redo} title="Redo (Ctrl+Shift+Z)" className="rounded-lg p-2 text-dim hover:bg-white/5 hover:text-ink"><Redo2 size={16} /></button>
         <button
           onClick={deleteSelection}
           disabled={!selection || selection.kind === "def"}
           title="Delete selection"
-          className="rounded-lg p-2 text-red-500 hover:bg-red-50 disabled:opacity-30"
+          className="rounded-lg p-2 text-red-400 hover:bg-red-500/10 disabled:opacity-30"
         >
           <Trash2 size={16} />
         </button>
       </div>
-      {active && (
-        <p className="mx-auto mt-1.5 text-xs text-blue-600 font-medium">
-          Drawing — click points on the field · click another player to start their line · Esc to stop
+      {(pending || extendId) && (
+        <p className="mx-auto mt-1.5 text-xs font-medium text-grass">
+          {pending ? "Click the field to draw the line — it finishes where you click. Esc cancels." : "Click the field to add one segment. Esc cancels."}
         </p>
       )}
     </div>

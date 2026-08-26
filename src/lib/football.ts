@@ -240,7 +240,9 @@ export type DrawLine = {
 
 export type TextNote = { id: string; x: number; y: number; text: string };
 
-export const ROUTE_COLORS = ["#111827", "#eab308", "#ef4444", "#3b82f6", "#22c55e"];
+// First entry is the default "ink" color — light on the dark field; the print
+// renderer maps it back to dark for paper.
+export const ROUTE_COLORS = ["#e9efe9", "#eab308", "#ef4444", "#38bdf8", "#22c55e"];
 
 export function lineDash(l: { kind: LineKind; style?: LineStyle }): string | undefined {
   const style = l.style ?? (l.kind === "motion" ? "dashed" : l.kind === "pitch" ? "dotted" : "solid");

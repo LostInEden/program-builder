@@ -75,9 +75,9 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
   const playId = `PB-${group.name.replace(/\s+/g, "").toUpperCase()}-${call.name.replace(/\s+/g, "-").toUpperCase()}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#f6f7f9] text-gray-900" style={{ colorScheme: "light" }}>
+    <div className="fixed inset-0 z-50 flex flex-col bg-pitch stadium-bg text-ink">
       {/* Dark app bar */}
-      <div className="flex h-12 shrink-0 items-center gap-6 bg-[#0b1220] px-4 text-white">
+      <div className="flex h-12 shrink-0 items-center gap-6 bg-black/60 border-b border-line px-4 text-white">
         <span className="display text-xl font-bold"><span className="text-grass">P</span>B</span>
         {["Dashboard", "Team", "Scouting", "Playbooks"].map((n) => (
           <span key={n} className={`text-sm ${n === "Playbooks" ? "font-semibold border-b-2 border-grass pb-0.5" : "text-white/60"}`}>{n}</span>
@@ -89,33 +89,33 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
       </div>
 
       {/* Breadcrumb bar */}
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-gray-200 bg-white px-5 py-2.5">
-        <span className="text-sm text-gray-400">Playbook</span>
-        <span className="text-gray-300">/</span>
-        <span className="text-sm text-gray-500">{call.section}</span>
-        <span className="text-gray-300">/</span>
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-line bg-card/80 px-5 py-2.5">
+        <span className="text-sm text-dim">Playbook</span>
+        <span className="text-dim/50">/</span>
+        <span className="text-sm text-dim">{call.section}</span>
+        <span className="text-dim/50">/</span>
         <input
           value={call.name}
           onChange={(e) => updateCall(call.id, { name: e.target.value })}
-          className="rounded-md border border-transparent px-2 py-1 text-sm font-bold hover:border-gray-200 focus:border-blue-400 focus:outline-none w-44"
+          className="rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-bold hover:border-line focus:border-grass focus:outline-none w-44"
         />
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-grass/10 px-2.5 py-1 text-xs font-medium text-grass">
           <Check size={12} /> Saved
         </span>
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={() => navigator.clipboard?.writeText(window.location.origin + "/scheme/playbook").catch(() => {})}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm text-dim hover:text-ink hover:bg-white/5"
           >
             <Share2 size={14} /> Share
           </button>
           <button
             onClick={onClose}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-grass px-4 py-1.5 text-sm font-bold text-pitch hover:brightness-110"
           >
             Publish Play
           </button>
-          <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100">
+          <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-dim hover:bg-white/5">
             <X size={18} />
           </button>
         </div>
@@ -124,7 +124,7 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
       {/* Body */}
       <div className="flex min-h-0 flex-1">
         {/* Icon rail */}
-        <div className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-gray-200 bg-white py-3">
+        <div className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-line bg-card/60 py-3">
           {[
             { icon: LayoutGrid, l: "Library", active: true },
             { icon: Lightbulb, l: "Concepts" },
@@ -135,7 +135,7 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
               key={l}
               title={l}
               className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-[9px] font-medium ${
-                active ? "bg-blue-50 text-blue-700" : "text-gray-400"
+                active ? "bg-grass/15 text-grass" : "text-dim"
               }`}
             >
               <I size={17} />
@@ -145,19 +145,19 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
         </div>
 
         {/* Formation library */}
-        <div className="flex w-60 shrink-0 flex-col border-r border-gray-200 bg-white">
+        <div className="flex w-60 shrink-0 flex-col border-r border-line bg-card/60">
           <div className="p-3 pb-2">
-            <div className="display text-[11px] font-semibold tracking-widest text-gray-400 mb-2">Formation Library</div>
-            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 mb-2">
-              <Search size={13} className="text-gray-400" />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search formations…" className="w-full bg-transparent text-sm outline-none placeholder:text-gray-400" />
+            <div className="display text-[11px] font-semibold tracking-widest text-dim mb-2">Formation Library</div>
+            <div className="flex items-center gap-2 rounded-lg border border-line bg-black/25 px-2.5 py-1.5 mb-2">
+              <Search size={13} className="text-dim" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search formations…" className="w-full bg-transparent text-sm outline-none placeholder:text-dim" />
             </div>
-            <div className="flex rounded-lg bg-gray-100 p-0.5 text-xs font-medium">
+            <div className="flex rounded-lg bg-black/30 p-0.5 text-xs font-medium">
               {(["Offense", "Defense"] as const).map((t) => (
                 <button
                   key={t}
                   onClick={() => setLibTab(t)}
-                  className={`flex-1 rounded-md py-1.5 ${libTab === t ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
+                  className={`flex-1 rounded-md py-1.5 ${libTab === t ? "bg-card shadow-sm text-ink" : "text-dim"}`}
                 >
                   {t}
                 </button>
@@ -172,18 +172,18 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                   if (!items.length) return null;
                   return (
                     <div key={src} className="mb-2">
-                      <div className="px-1 py-1 text-[11px] font-semibold text-gray-400">
+                      <div className="px-1 py-1 text-[11px] font-semibold text-dim">
                         {src === "Yours" ? "Your formations" : "Built-in"} ({items.length})
                       </div>
                       {items.map((f) => (
                         <button
                           key={f.name}
                           onClick={() => loadFormation(f.name)}
-                          className="group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-800"
+                          className="group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-ink/80 hover:bg-grass/10 hover:text-grass"
                         >
-                          <span className="size-1.5 rounded-full bg-gray-300 group-hover:bg-blue-400" />
+                          <span className="size-1.5 rounded-full bg-dim/40 group-hover:bg-grass" />
                           <span className="flex-1 truncate">{f.name}</span>
-                          <Star size={12} className="text-gray-300 opacity-0 group-hover:opacity-100" />
+                          <Star size={12} className="text-dim opacity-0 group-hover:opacity-100" />
                         </button>
                       ))}
                     </div>
@@ -194,14 +194,14 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                     const name = window.prompt("Save current look as formation:", call.offForm)?.trim();
                     if (name) saveFormationTemplate(name, call.offLook);
                   }}
-                  className="mt-1 w-full rounded-lg border border-dashed border-gray-300 px-2 py-1.5 text-sm text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                  className="mt-1 w-full rounded-lg border border-dashed border-line px-2 py-1.5 text-sm text-dim hover:border-grass/50 hover:text-grass"
                 >
                   + Save current as formation
                 </button>
               </>
             ) : (
               <>
-                <div className="px-1 py-1 text-[11px] font-semibold text-gray-400">Defensive structures</div>
+                <div className="px-1 py-1 text-[11px] font-semibold text-dim">Defensive structures</div>
                 {structures.map((s) => (
                   <button
                     key={s.id}
@@ -210,10 +210,10 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                         setGroupStructure(group.id, s.id);
                     }}
                     className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
-                      s.id === group.structureId ? "bg-blue-50 font-semibold text-blue-800" : "text-gray-700 hover:bg-gray-50"
+                      s.id === group.structureId ? "bg-grass/10 font-semibold text-grass" : "text-ink/80 hover:bg-white/5"
                     }`}
                   >
-                    <span className={`size-1.5 rounded-full ${s.id === group.structureId ? "bg-blue-500" : "bg-gray-300"}`} />
+                    <span className={`size-1.5 rounded-full ${s.id === group.structureId ? "bg-grass" : "bg-dim/40"}`} />
                     {s.name}
                   </button>
                 ))}
@@ -225,36 +225,35 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
         {/* Canvas column */}
         <div className="flex min-w-0 flex-1 flex-col px-5 py-3">
           <div className="mb-2 flex items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-lg border border-line bg-card px-3 py-1.5 text-sm font-semibold">
               {call.offForm || "No formation"} {call.offConcept ? `· ${call.offConcept}` : ""}
             </span>
             <div className="relative ml-auto">
               <button
                 onClick={() => setGearOpen((g) => !g)}
-                className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 shadow-sm hover:text-gray-800"
+                className="rounded-lg border border-line bg-card p-2 text-dim hover:text-ink"
                 aria-label="Field settings"
               >
                 <Settings2 size={15} />
               </button>
               {gearOpen && (
-                <div className="absolute right-0 top-10 z-10 w-52 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
-                  <label className="block text-[11px] font-semibold text-gray-400 mb-1">Field position</label>
+                <div className="absolute right-0 top-10 z-10 w-52 rounded-xl border border-line bg-card p-3 shadow-xl">
+                  <label className="block text-[11px] font-semibold text-dim mb-1">Field position</label>
                   <select
                     value={call.fieldPreset ?? "midfield"}
                     onChange={(e) => updateCall(call.id, { fieldPreset: e.target.value as FieldPreset })}
-                    className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm"
-                    style={{ colorScheme: "light" }}
+                    className="mb-3 w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
                   >
                     {FIELD_PRESETS.map((p) => (
                       <option key={p.id} value={p.id}>{p.label}</option>
                     ))}
                   </select>
-                  <label className="block text-[11px] font-semibold text-gray-400 mb-1">Concept</label>
+                  <label className="block text-[11px] font-semibold text-dim mb-1">Concept</label>
                   <input
                     value={call.offConcept}
                     onChange={(e) => updateCall(call.id, { offConcept: e.target.value })}
                     placeholder="Inside zone"
-                    className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm"
+                    className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
                   />
                 </div>
               )}
@@ -274,38 +273,38 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
           {/* Frames strip */}
           <div className="mt-3 flex items-center gap-3">
             <div>
-              <div className="display text-[10px] font-semibold tracking-widest text-gray-400 mb-1">Frames</div>
+              <div className="display text-[10px] font-semibold tracking-widest text-dim mb-1">Frames</div>
               <div className="flex gap-2">
-                <div className="w-20 rounded-lg border-2 border-blue-500 bg-white p-0.5">
+                <div className="w-20 rounded-lg border-2 border-grass bg-white p-0.5">
                   <PlayCardSVG call={call} structureId={group.structureId} overrides={overrides} defStyle="letters" />
                 </div>
                 <button
                   disabled
                   title="Play animation — coming soon"
-                  className="grid w-20 place-items-center rounded-lg border-2 border-dashed border-gray-300 text-[11px] text-gray-400"
+                  className="grid w-20 place-items-center rounded-lg border-2 border-dashed border-line text-[11px] text-dim"
                 >
                   + Add Frame
                 </button>
               </div>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <span className="display text-[10px] font-semibold tracking-widest text-gray-400">Animation</span>
-              <button disabled title="Coming soon" className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-400">
+              <span className="display text-[10px] font-semibold tracking-widest text-dim">Animation</span>
+              <button disabled title="Coming soon" className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-card px-3 py-1.5 text-sm text-dim/60">
                 <Play size={13} /> Play
               </button>
-              <span className="text-xs text-gray-400">1x · coming soon</span>
+              <span className="text-xs text-dim">1x · coming soon</span>
             </div>
           </div>
         </div>
 
         {/* Inspector */}
-        <div className="flex w-72 shrink-0 flex-col border-l border-gray-200 bg-white">
-          <div className="flex border-b border-gray-200 px-2">
+        <div className="flex w-72 shrink-0 flex-col border-l border-line bg-card/60">
+          <div className="flex border-b border-line px-2">
             {INSPECTOR_TABS.map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-3 py-2.5 text-sm font-medium ${tab === t ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-400"}`}
+                className={`px-3 py-2.5 text-sm font-medium ${tab === t ? "border-b-2 border-grass text-grass" : "text-dim"}`}
               >
                 {t}
               </button>
@@ -317,18 +316,18 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                 {selOff ? (
                   <>
                     <div className="mb-3 flex items-center gap-2">
-                      <span className="grid size-8 place-items-center rounded-full bg-gray-900 text-xs font-bold text-white">{selOff.label}</span>
+                      <span className="grid size-8 place-items-center rounded-full bg-ink text-xs font-bold text-pitch">{selOff.label}</span>
                       <div className="flex-1">
                         <div className="text-sm font-bold">{selOff.label} {selOff.ptype ? `(${selOff.ptype})` : ""}</div>
-                        <div className="text-xs text-gray-400">{selOff.ptype ?? "Offensive player"}</div>
+                        <div className="text-xs text-dim">{selOff.ptype ?? "Offensive player"}</div>
                       </div>
-                      <Lock size={13} className="text-gray-300" />
+                      <Lock size={13} className="text-dim/50" />
                     </div>
                     <Field label="Type">
                       <select
                         value={selOff.ptype ?? ""}
                         onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, ptype: e.target.value || undefined } : m)) })}
-                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm" style={{ colorScheme: "light" }}
+                        className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
                       >
                         <option value="">—</option>
                         {PTYPES.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -338,7 +337,7 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                       <input
                         value={selOff.label}
                         onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, label: e.target.value.slice(0, 3) } : m)) })}
-                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm"
+                        className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
                       />
                     </Field>
                     <Field label="Jersey">
@@ -346,10 +345,10 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                         value={selOff.jersey ?? ""}
                         onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, jersey: e.target.value } : m)) })}
                         placeholder="—"
-                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm"
+                        className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
                       />
                     </Field>
-                    <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+                    <label className="mt-2 flex items-center gap-2 text-sm text-ink/85">
                       <input
                         type="checkbox"
                         checked={selOff.showLabel ?? true}
@@ -365,7 +364,7 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                       <select
                         value={selLine.kind}
                         onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, kind: e.target.value as LineKind } : l)) })}
-                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm capitalize" style={{ colorScheme: "light" }}
+                        className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm capitalize"
                       >
                         {(["route", "block", "motion", "pitch"] as LineKind[]).map((k) => <option key={k} value={k}>{k}</option>)}
                       </select>
@@ -376,7 +375,7 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                           <button
                             key={c}
                             onClick={() => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, color: c } : l)) })}
-                            className={`size-6 rounded-full ${selLine.color === c ? "ring-2 ring-blue-400 ring-offset-1" : ""}`}
+                            className={`size-6 rounded-full ${selLine.color === c ? "ring-2 ring-grass ring-offset-1 ring-offset-card" : ""}`}
                             style={{ backgroundColor: c }}
                             aria-label={c}
                           />
@@ -387,12 +386,12 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                       <select
                         value={selLine.style ?? "solid"}
                         onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, style: e.target.value as LineStyle } : l)) })}
-                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm capitalize" style={{ colorScheme: "light" }}
+                        className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm capitalize"
                       >
                         {["solid", "dashed", "dotted"].map((s) => <option key={s} value={s}>{s}</option>)}
                       </select>
                     </Field>
-                    <label className="mt-1 flex items-center gap-2 text-sm text-gray-700">
+                    <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
                       <input
                         type="checkbox"
                         checked={selLine.showArrow ?? selLine.kind !== "block"}
@@ -400,7 +399,7 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                       />
                       Show Arrow
                     </label>
-                    <label className="mt-1 flex items-center gap-2 text-sm text-gray-700">
+                    <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
                       <input
                         type="checkbox"
                         checked={selLine.smooth ?? false}
@@ -412,10 +411,10 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                 ) : selDef !== null ? (
                   <>
                     <div className="mb-3 flex items-center gap-2">
-                      <span className="grid size-8 place-items-center rounded-full bg-gray-900 text-xs font-bold text-white">{label(selDef)}</span>
+                      <span className="grid size-8 place-items-center rounded-full bg-ink text-xs font-bold text-pitch">{label(selDef)}</span>
                       <div>
                         <div className="text-sm font-bold">{label(selDef)}</div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-dim">
                           {(group.slots[selDef] ?? [])[0] ? `#${byId.get(group.slots[selDef][0])?.jersey} ${byId.get(group.slots[selDef][0])?.name}` : "Unassigned"}
                         </div>
                       </div>
@@ -426,10 +425,10 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                         value={call.assignments[selDef] ?? ""}
                         onChange={(e) => updateCall(call.id, { assignments: { ...call.assignments, [selDef]: e.target.value } })}
                         placeholder="Gap, leverage, drop, rules…"
-                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm resize-y"
+                        className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm resize-y"
                       />
                     </Field>
-                    <p className="text-xs text-gray-400">Tip: select an O player, then double-click this defender to draw a block.</p>
+                    <p className="text-xs text-dim">Tip: select an O player, then double-click this defender to draw a block.</p>
                   </>
                 ) : selText ? (
                   <>
@@ -438,11 +437,11 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                       rows={3}
                       value={selText.text}
                       onChange={(e) => updateCall(call.id, { texts: (call.texts ?? []).map((t) => (t.id === selText.id ? { ...t, text: e.target.value } : t)) })}
-                      className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm resize-y"
+                      className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm resize-y"
                     />
                   </>
                 ) : (
-                  <p className="text-sm text-gray-400">Select a player, route, zone, or text on the field to edit its properties.</p>
+                  <p className="text-sm text-dim">Select a player, route, zone, or text on the field to edit its properties.</p>
                 )}
               </>
             )}
@@ -454,20 +453,20 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
                     rows={5}
                     value={call.notes}
                     onChange={(e) => updateCall(call.id, { notes: e.target.value })}
-                    className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm resize-y"
+                    className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm resize-y"
                   />
                 </Field>
-                <div className="display text-[11px] font-semibold tracking-widest text-gray-400 mt-4 mb-2">Assignments</div>
+                <div className="display text-[11px] font-semibold tracking-widest text-dim mt-4 mb-2">Assignments</div>
                 <div className="flex flex-col gap-1.5">
                   {structure.slots.map((slot, i) =>
                     call.assignments[i] ? (
                       <button
                         key={i}
                         onClick={() => { setSelection({ kind: "def", slot: i }); setTab("Object"); }}
-                        className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-left text-xs hover:border-blue-300"
+                        className="rounded-lg border border-line bg-black/20 px-2.5 py-1.5 text-left text-xs hover:border-grass/40"
                       >
-                        <span className="font-bold text-blue-700 mr-1.5">{label(i)}</span>
-                        <span className="text-gray-500">{call.assignments[i]}</span>
+                        <span className="font-bold text-sky mr-1.5">{label(i)}</span>
+                        <span className="text-dim">{call.assignments[i]}</span>
                       </button>
                     ) : null,
                   )}
@@ -476,8 +475,8 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
             )}
 
             {tab === "Animation" && (
-              <div className="text-sm text-gray-400">
-                <p className="font-medium text-gray-500 mb-1">Play animation</p>
+              <div className="text-sm text-dim">
+                <p className="font-medium text-ink/80 mb-1">Play animation</p>
                 <p>Frame-by-frame animation is on the roadmap — draw the play now and it will animate here later.</p>
               </div>
             )}
@@ -486,8 +485,8 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
       </div>
 
       {/* Status bar */}
-      <div className="flex h-8 shrink-0 items-center gap-4 border-t border-gray-200 bg-white px-5 text-xs text-gray-400">
-        <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-green-500" /> Up to date · saves automatically</span>
+      <div className="flex h-8 shrink-0 items-center gap-4 border-t border-line bg-card/80 px-5 text-xs text-dim">
+        <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-grass" /> Up to date · saves automatically</span>
         <span className="ml-auto font-mono">{playId}</span>
       </div>
     </div>
@@ -497,7 +496,7 @@ export default function PlayEditor({ callId, onClose }: { callId: string; onClos
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="mb-3">
-      <label className="block text-[11px] font-semibold text-gray-400 mb-1">{label}</label>
+      <label className="block text-[11px] font-semibold text-dim mb-1">{label}</label>
       {children}
     </div>
   );
