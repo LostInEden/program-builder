@@ -619,9 +619,9 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
-        const state = persisted as { calls?: Call[] };
+        const state = persisted as { calls?: Call[]; formationTemplates?: Record<string, OffMarker[]> };
         if (version < 2 && state?.calls) {
           // v1 offensive looks lived at y 58–86 (OL at 82): remap into the
           // offense-at-bottom space and add the drawing fields.
@@ -655,6 +655,21 @@ export const useStore = create<Store>()(
               Object.entries(c.defOffsets ?? {}).map(([k, [dx, dy]]) => [k, [dx, -dy] as [number, number]]),
             ),
           }));
+        }
+        if (version < 4) {
+          // v4 relabels the OL from the OFFENSE's perspective (they face our
+          // defense, so their RT sits on our left). Labels only — marker ids
+          // stay put so anchored lines keep working.
+          const OL_SWAP: Record<string, string> = { LT: "RT", LG: "RG", RG: "LG", RT: "LT" };
+          const relabel = (m: OffMarker) => (OL_SWAP[m.label] ? { ...m, label: OL_SWAP[m.label] } : m);
+          if (state?.calls) {
+            state.calls = state.calls.map((c) => ({ ...c, offLook: (c.offLook ?? []).map(relabel) }));
+          }
+          if (state?.formationTemplates) {
+            state.formationTemplates = Object.fromEntries(
+              Object.entries(state.formationTemplates).map(([name, look]) => [name, look.map(relabel)]),
+            );
+          }
         }
         return state;
       },

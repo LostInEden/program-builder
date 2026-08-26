@@ -43,7 +43,7 @@ Node is at `C:\Program Files\nodejs` and NOT on PATH (bash: `export PATH="/c/Pro
 - Canvas space: x 0–100, y 0–75 (`FIELD_H`), uniform scale on a 4:3 box. **LOS_Y = 42.**
 - **DEFENSE AT THE BOTTOM** (our team's perspective — the coach's explicit call), opponent offense on top. `defenseCanvasY(slotY) = 38 + slotY*0.45`. Offense presets: OL row y=39, backs shallower (smaller y). Yard numbers count down going DOWN (offense drives toward bottom goal). `YD = 2.2` units/yard.
 - Lines are anchored: `anchor: "off:<markerId>" | "def:<slotIndex>"`, `points` are RELATIVE to the anchor so moving a player moves its lines.
-- Fronts are aligned to the OL by technique (N 0-tech at x50 head-up on C; 3-tech 42.5/57.5; 5-tech 35.5/64.5; 4i 39.5/60.5). OL: LT38 LG44 C50 RG56 RT62.
+- Fronts are aligned to the OL by technique (N 0-tech at x50 head-up on C; 3-tech 42.5/57.5; 5-tech 35.5/64.5; 4i 39.5/60.5). OL labeled from the OFFENSE's perspective (coach's call, Aug 26): RT38 RG44 C50 LG56 LT62 — their RT is on our left. Persist v4 migration relabeled stored looks/templates (labels only, ids untouched).
 
 ### Editor interaction model (built to the coach's spec + research)
 - Click-to-complete: pick tool (1-8 or v/l/r/m/b/t/z/p) → click player (arms, orange) → ONE field click draws the complete line+arrow and selects it. Press-drag-release also works.
