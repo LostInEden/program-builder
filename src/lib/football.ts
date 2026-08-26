@@ -141,7 +141,15 @@ export const defenseCanvasY = (slotY: number) => 46 - slotY * 0.5; // front ≈3
 // renames, adds, or removes players. Coordinates are canvas space (offense
 // below the LOS, larger y = deeper in the backfield).
 
-export type OffMarker = { id: string; label: string; x: number; y: number };
+export type OffMarker = {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  jersey?: string;
+  ptype?: string; // position type e.g. "Running Back"
+  showLabel?: boolean; // default true
+};
 
 const om = (label: string, x: number, y: number, i: number): OffMarker => ({
   id: `${label}-${i}`,
@@ -217,13 +225,27 @@ export const FIELD_PRESETS: { id: FieldPreset; label: string; losYardline: numbe
 ];
 export const YD = 2.2; // canvas units per yard
 
+export type LineStyle = "solid" | "dashed" | "dotted";
+
 export type DrawLine = {
   id: string;
   anchor: string; // "off:<markerId>" | "def:<slotIndex>" | "free"
   points: [number, number][];
   kind: LineKind;
   smooth?: boolean; // render as a curved (Catmull-Rom) path
+  color?: string; // overrides side default
+  style?: LineStyle; // overrides kind default
+  showArrow?: boolean; // default: kind !== "block"
 };
+
+export type TextNote = { id: string; x: number; y: number; text: string };
+
+export const ROUTE_COLORS = ["#111827", "#eab308", "#ef4444", "#3b82f6", "#22c55e"];
+
+export function lineDash(l: { kind: LineKind; style?: LineStyle }): string | undefined {
+  const style = l.style ?? (l.kind === "motion" ? "dashed" : l.kind === "pitch" ? "dotted" : "solid");
+  return style === "dashed" ? "1.5 1.1" : style === "dotted" ? "0.35 0.9" : undefined;
+}
 
 // Catmull-Rom spline → SVG cubic path, for smooth curved routes.
 export function smoothPath(pts: [number, number][]): string {

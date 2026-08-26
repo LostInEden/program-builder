@@ -5,10 +5,12 @@ import {
   getStructure,
   defenseCanvasY,
   smoothPath,
+  lineDash,
   FIELD_H,
   LOS_Y,
   YD,
   FIELD_PRESETS,
+  ROUTE_COLORS,
 } from "@/lib/football";
 import { slotLabelOf, type Call, type Overrides } from "@/lib/store";
 
@@ -66,7 +68,7 @@ export default function PlayCardSVG({
   return (
     <svg viewBox={`0 0 100 ${FIELD_H}`} className="w-full h-auto rounded border border-gray-300 bg-white">
       <defs>
-        {[OFF, DEF].map((c) => (
+        {[OFF, DEF, ...ROUTE_COLORS, "#6b7280"].map((c) => (
           <marker key={c} id={arrId(c)} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
             <path d="M0,0 L6,3 L0,6 z" fill={c} />
           </marker>
@@ -104,7 +106,8 @@ export default function PlayCardSVG({
         if (!a) return null;
         const pts: [number, number][] = [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as [number, number])];
         if (pts.length < 2) return null;
-        const color = l.anchor.startsWith("def:") ? DEF : OFF;
+        const color = l.color ?? (l.anchor.startsWith("def:") ? DEF : OFF);
+        const showArrow = l.showArrow ?? l.kind !== "block";
         const d = l.smooth ? smoothPath(pts) : pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
         let bar = null;
         if (l.kind === "block") {
@@ -119,8 +122,8 @@ export default function PlayCardSVG({
           <g key={l.id}>
             <path
               d={d} fill="none" stroke={color} strokeWidth="0.42" strokeLinejoin="round" strokeLinecap="round"
-              strokeDasharray={l.kind === "motion" ? "1.5 1.1" : l.kind === "pitch" ? "0.35 0.9" : undefined}
-              markerEnd={l.kind === "block" ? undefined : `url(#${arrId(color)})`}
+              strokeDasharray={lineDash(l)}
+              markerEnd={showArrow ? `url(#${arrId(color)})` : undefined}
             />
             {bar && <line {...bar} stroke={color} strokeWidth="0.42" strokeLinecap="round" />}
           </g>
@@ -145,6 +148,10 @@ export default function PlayCardSVG({
           </g>
         );
       })}
+
+      {(call.texts ?? []).map((t) => (
+        <text key={t.id} x={t.x} y={t.y} textAnchor="middle" fontSize="2" fontWeight="600" fill="#4b5563">{t.text}</text>
+      ))}
 
       {call.offLook.map((o) => {
         const isCenter = o.label.toUpperCase() === "C";

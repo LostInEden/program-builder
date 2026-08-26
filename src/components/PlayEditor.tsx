@@ -1,224 +1,504 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-import { useStore, slotLabelOf } from "@/lib/store";
-import { getStructure, offensivePresets } from "@/lib/football";
-import PlayCanvas from "@/components/PlayCanvas";
+import { useEffect, useMemo, useState } from "react";
+import {
+  X,
+  Search,
+  Check,
+  Share2,
+  LayoutGrid,
+  Lightbulb,
+  Tags,
+  SlidersHorizontal,
+  Star,
+  Play,
+  Settings2,
+  Lock,
+} from "lucide-react";
+import { useStore, slotLabelOf, type Call } from "@/lib/store";
+import {
+  getStructure,
+  structures,
+  offensivePresets,
+  FIELD_PRESETS,
+  ROUTE_COLORS,
+  type FieldPreset,
+  type LineStyle,
+  type LineKind,
+} from "@/lib/football";
+import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
+import PlayCardSVG from "@/components/PlayCardSVG";
 
-// Full-screen play editor — big canvas, big targets (Hudl-style authoring view).
+const PTYPES = ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Offensive Line", "Other"];
+const INSPECTOR_TABS = ["Object", "Notes", "Animation"] as const;
+
 export default function PlayEditor({ callId, onClose }: { callId: string; onClose: () => void }) {
-  const { calls, updateCall, groups, activeGroupId, players, overrides, formationTemplates, saveFormationTemplate } = useStore();
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [selectedOff, setSelectedOff] = useState<string | null>(null);
+  const {
+    calls, updateCall, groups, activeGroupId, players, overrides,
+    formationTemplates, saveFormationTemplate, setGroupStructure,
+  } = useStore();
+  const [selection, setSelection] = useState<Selection>(null);
+  const [tab, setTab] = useState<(typeof INSPECTOR_TABS)[number]>("Object");
+  const [libTab, setLibTab] = useState<"Offense" | "Defense">("Offense");
+  const [q, setQ] = useState("");
+  const [gearOpen, setGearOpen] = useState(false);
 
   const call = calls.find((c) => c.id === callId);
   const group = groups.find((g) => g.id === activeGroupId) ?? groups[0];
   const structure = getStructure(group.structureId);
   const label = (i: number) => slotLabelOf(overrides, group.structureId, i);
-  const byId = new Map(players.map((p) => [p.id, p]));
+  const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
-  // Lock background scroll while open.
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return () => { document.body.style.overflow = prev; };
   }, []);
 
   if (!call) return null;
-  const selOffMarker = call.offLook.find((m) => m.id === selectedOff) ?? null;
+
+  const formations = [
+    ...Object.keys(formationTemplates).map((n) => ({ name: n, source: "Yours" })),
+    ...Object.keys(offensivePresets).map((n) => ({ name: n, source: "Built-in" })),
+  ].filter((f) => f.name.toLowerCase().includes(q.trim().toLowerCase()));
+
+  const loadFormation = (name: string) => {
+    const look = formationTemplates[name] ?? offensivePresets[name];
+    if (look) updateCall(call.id, { offLook: look.map((m) => ({ ...m })), offForm: call.offForm || name });
+  };
+
+  const selOff = selection?.kind === "off" ? call.offLook.find((m) => m.id === selection.id) : null;
+  const selLine = selection?.kind === "line" ? call.lines.find((l) => l.id === selection.id) : null;
+  const selText = selection?.kind === "text" ? (call.texts ?? []).find((t) => t.id === selection.id) : null;
+  const selDef = selection?.kind === "def" ? selection.slot : null;
+
+  const playId = `PB-${group.name.replace(/\s+/g, "").toUpperCase()}-${call.name.replace(/\s+/g, "-").toUpperCase()}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-pitch stadium-bg">
-      {/* Top metadata bar */}
-      <div className="flex flex-wrap items-center gap-3 border-b border-line bg-black/40 px-5 py-3">
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#f6f7f9] text-gray-900" style={{ colorScheme: "light" }}>
+      {/* Dark app bar */}
+      <div className="flex h-12 shrink-0 items-center gap-6 bg-[#0b1220] px-4 text-white">
+        <span className="display text-xl font-bold"><span className="text-grass">P</span>B</span>
+        {["Dashboard", "Team", "Scouting", "Playbooks"].map((n) => (
+          <span key={n} className={`text-sm ${n === "Playbooks" ? "font-semibold border-b-2 border-grass pb-0.5" : "text-white/60"}`}>{n}</span>
+        ))}
+        <div className="ml-auto flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white/60">
+          <Search size={14} /> Search plays, tags…
+        </div>
+        <span className="grid size-8 place-items-center rounded-full bg-grass/20 text-grass text-xs font-bold">CC</span>
+      </div>
+
+      {/* Breadcrumb bar */}
+      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-gray-200 bg-white px-5 py-2.5">
+        <span className="text-sm text-gray-400">Playbook</span>
+        <span className="text-gray-300">/</span>
+        <span className="text-sm text-gray-500">{call.section}</span>
+        <span className="text-gray-300">/</span>
         <input
           value={call.name}
           onChange={(e) => updateCall(call.id, { name: e.target.value })}
-          className="display rounded-lg border border-line bg-black/25 px-3 py-2 text-2xl font-bold w-56"
-          placeholder="Play name"
+          className="rounded-md border border-transparent px-2 py-1 text-sm font-bold hover:border-gray-200 focus:border-blue-400 focus:outline-none w-44"
         />
-        <div>
-          <label className="block text-[10px] text-dim">Offensive formation</label>
-          <input
-            value={call.offForm}
-            onChange={(e) => updateCall(call.id, { offForm: e.target.value })}
-            placeholder="Trips Right"
-            className="rounded-lg border border-line bg-black/25 px-3 py-1.5 text-sm w-44"
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] text-dim">Concept</label>
-          <input
-            value={call.offConcept}
-            onChange={(e) => updateCall(call.id, { offConcept: e.target.value })}
-            placeholder="Inside zone"
-            className="rounded-lg border border-line bg-black/25 px-3 py-1.5 text-sm w-40"
-          />
-        </div>
-        <div>
-          <label className="block text-[10px] text-dim">Load formation</label>
-          <select
-            value=""
-            onChange={(e) => {
-              if (!e.target.value) return;
-              const look = offensivePresets[e.target.value] ?? formationTemplates[e.target.value];
-              if (look) updateCall(call.id, { offLook: look.map((m) => ({ ...m })) });
-            }}
-            className="rounded-lg border border-line bg-black/25 px-3 py-1.5 text-sm w-40"
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+          <Check size={12} /> Saved
+        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => navigator.clipboard?.writeText(window.location.origin + "/scheme/playbook").catch(() => {})}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
           >
-            <option value="">Choose…</option>
-            {Object.keys(formationTemplates).length > 0 && (
-              <optgroup label="Your formations">
-                {Object.keys(formationTemplates).map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </optgroup>
-            )}
-            <optgroup label="Built-in">
-              {Object.keys(offensivePresets).map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </optgroup>
-          </select>
+            <Share2 size={14} /> Share
+          </button>
+          <button
+            onClick={onClose}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Publish Play
+          </button>
+          <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100">
+            <X size={18} />
+          </button>
         </div>
-        <button
-          onClick={() => {
-            const name = call.offForm.trim() || window.prompt("Formation name to save this look as:")?.trim();
-            if (name) {
-              saveFormationTemplate(name, call.offLook);
-              if (!call.offForm.trim()) updateCall(call.id, { offForm: name });
-            }
-          }}
-          className="self-end rounded-lg border border-grass/40 px-3 py-1.5 text-sm text-grass hover:bg-grass/10"
-          title="Save this offensive look under the formation name"
-        >
-          Save formation
-        </button>
-        <span className="text-sm text-dim">{group.name} · {structure.name} · saves automatically</span>
-        <button
-          onClick={onClose}
-          className="ml-auto display inline-flex items-center gap-2 rounded-full bg-grass px-6 py-2.5 text-sm font-bold text-pitch transition hover:brightness-110"
-        >
-          <X size={16} /> Done
-        </button>
       </div>
 
       {/* Body */}
-      <div className="flex min-h-0 flex-1 gap-4 p-4">
-        <div className="flex min-w-0 flex-1 flex-col">
-          <PlayCanvas
+      <div className="flex min-h-0 flex-1">
+        {/* Icon rail */}
+        <div className="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-gray-200 bg-white py-3">
+          {[
+            { icon: LayoutGrid, l: "Library", active: true },
+            { icon: Lightbulb, l: "Concepts" },
+            { icon: Tags, l: "Tags" },
+            { icon: SlidersHorizontal, l: "Filters" },
+          ].map(({ icon: I, l, active }) => (
+            <span
+              key={l}
+              title={l}
+              className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-[9px] font-medium ${
+                active ? "bg-blue-50 text-blue-700" : "text-gray-400"
+              }`}
+            >
+              <I size={17} />
+              {l}
+            </span>
+          ))}
+        </div>
+
+        {/* Formation library */}
+        <div className="flex w-60 shrink-0 flex-col border-r border-gray-200 bg-white">
+          <div className="p-3 pb-2">
+            <div className="display text-[11px] font-semibold tracking-widest text-gray-400 mb-2">Formation Library</div>
+            <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 mb-2">
+              <Search size={13} className="text-gray-400" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search formations…" className="w-full bg-transparent text-sm outline-none placeholder:text-gray-400" />
+            </div>
+            <div className="flex rounded-lg bg-gray-100 p-0.5 text-xs font-medium">
+              {(["Offense", "Defense"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setLibTab(t)}
+                  className={`flex-1 rounded-md py-1.5 ${libTab === t ? "bg-white shadow-sm text-gray-900" : "text-gray-500"}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3">
+            {libTab === "Offense" ? (
+              <>
+                {["Yours", "Built-in"].map((src) => {
+                  const items = formations.filter((f) => f.source === src);
+                  if (!items.length) return null;
+                  return (
+                    <div key={src} className="mb-2">
+                      <div className="px-1 py-1 text-[11px] font-semibold text-gray-400">
+                        {src === "Yours" ? "Your formations" : "Built-in"} ({items.length})
+                      </div>
+                      {items.map((f) => (
+                        <button
+                          key={f.name}
+                          onClick={() => loadFormation(f.name)}
+                          className="group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-800"
+                        >
+                          <span className="size-1.5 rounded-full bg-gray-300 group-hover:bg-blue-400" />
+                          <span className="flex-1 truncate">{f.name}</span>
+                          <Star size={12} className="text-gray-300 opacity-0 group-hover:opacity-100" />
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
+                <button
+                  onClick={() => {
+                    const name = window.prompt("Save current look as formation:", call.offForm)?.trim();
+                    if (name) saveFormationTemplate(name, call.offLook);
+                  }}
+                  className="mt-1 w-full rounded-lg border border-dashed border-gray-300 px-2 py-1.5 text-sm text-gray-500 hover:border-blue-300 hover:text-blue-700"
+                >
+                  + Save current as formation
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="px-1 py-1 text-[11px] font-semibold text-gray-400">Defensive structures</div>
+                {structures.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => {
+                      if (s.id !== group.structureId && window.confirm(`Switch ${group.name} to ${s.name}? Depth chart assignments for this package will reset.`))
+                        setGroupStructure(group.id, s.id);
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                      s.id === group.structureId ? "bg-blue-50 font-semibold text-blue-800" : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className={`size-1.5 rounded-full ${s.id === group.structureId ? "bg-blue-500" : "bg-gray-300"}`} />
+                    {s.name}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Canvas column */}
+        <div className="flex min-w-0 flex-1 flex-col px-5 py-3">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold shadow-sm">
+              {call.offForm || "No formation"} {call.offConcept ? `· ${call.offConcept}` : ""}
+            </span>
+            <div className="relative ml-auto">
+              <button
+                onClick={() => setGearOpen((g) => !g)}
+                className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 shadow-sm hover:text-gray-800"
+                aria-label="Field settings"
+              >
+                <Settings2 size={15} />
+              </button>
+              {gearOpen && (
+                <div className="absolute right-0 top-10 z-10 w-52 rounded-xl border border-gray-200 bg-white p-3 shadow-xl">
+                  <label className="block text-[11px] font-semibold text-gray-400 mb-1">Field position</label>
+                  <select
+                    value={call.fieldPreset ?? "midfield"}
+                    onChange={(e) => updateCall(call.id, { fieldPreset: e.target.value as FieldPreset })}
+                    className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm"
+                    style={{ colorScheme: "light" }}
+                  >
+                    {FIELD_PRESETS.map((p) => (
+                      <option key={p.id} value={p.id}>{p.label}</option>
+                    ))}
+                  </select>
+                  <label className="block text-[11px] font-semibold text-gray-400 mb-1">Concept</label>
+                  <input
+                    value={call.offConcept}
+                    onChange={(e) => updateCall(call.id, { offConcept: e.target.value })}
+                    placeholder="Inside zone"
+                    className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <StudioCanvas
             call={call}
             structureId={group.structureId}
             groupSlots={group.slots}
             players={players}
             labelFor={label}
-            selectedSlot={selectedSlot}
-            onSelectSlot={setSelectedSlot}
-            selectedOff={selectedOff}
-            onSelectOff={setSelectedOff}
-            large
+            selection={selection}
+            onSelect={setSelection}
           />
+
+          {/* Frames strip */}
+          <div className="mt-3 flex items-center gap-3">
+            <div>
+              <div className="display text-[10px] font-semibold tracking-widest text-gray-400 mb-1">Frames</div>
+              <div className="flex gap-2">
+                <div className="w-20 rounded-lg border-2 border-blue-500 bg-white p-0.5">
+                  <PlayCardSVG call={call} structureId={group.structureId} overrides={overrides} defStyle="letters" />
+                </div>
+                <button
+                  disabled
+                  title="Play animation — coming soon"
+                  className="grid w-20 place-items-center rounded-lg border-2 border-dashed border-gray-300 text-[11px] text-gray-400"
+                >
+                  + Add Frame
+                </button>
+              </div>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="display text-[10px] font-semibold tracking-widest text-gray-400">Animation</span>
+              <button disabled title="Coming soon" className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-400">
+                <Play size={13} /> Play
+              </button>
+              <span className="text-xs text-gray-400">1x · coming soon</span>
+            </div>
+          </div>
         </div>
 
-        {/* Right rail */}
-        <div className="w-80 shrink-0 overflow-y-auto rounded-xl border border-line bg-card/80 p-5">
-          {selOffMarker ? (
-            <>
-              <div className="display text-sm font-semibold tracking-[0.2em] text-dim mb-3">Offensive player</div>
-              <div className="flex items-center gap-2 mb-3">
-                <input
-                  value={selOffMarker.label}
-                  onChange={(e) =>
-                    updateCall(call.id, {
-                      offLook: call.offLook.map((m) =>
-                        m.id === selOffMarker.id ? { ...m, label: e.target.value.slice(0, 3) } : m,
-                      ),
-                    })
-                  }
-                  className="display w-24 rounded-lg border border-line bg-black/25 px-3 py-2.5 text-2xl font-bold text-red-400"
-                />
-                <button
-                  onClick={() => {
-                    updateCall(call.id, {
-                      offLook: call.offLook.filter((m) => m.id !== selOffMarker.id),
-                      lines: call.lines.filter((l) => l.anchor !== `off:${selOffMarker.id}`),
-                    });
-                    setSelectedOff(null);
-                  }}
-                  className="rounded-full border border-red-500/40 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10"
-                >
-                  Remove
-                </button>
-              </div>
-              <p className="text-sm text-dim">
-                Double-click a defender to draw a block from this player. Drag to reposition.
-              </p>
-            </>
-          ) : selectedSlot !== null ? (
-            <>
-              <div className="display text-sm font-semibold tracking-[0.2em] text-dim mb-3">Assignment</div>
-              <div className="mb-2 flex items-baseline gap-2">
-                <span className="display text-3xl font-bold text-ember">{label(selectedSlot)}</span>
-                {(group.slots[selectedSlot] ?? [])[0] && (
-                  <span className="text-sm text-dim">
-                    #{byId.get(group.slots[selectedSlot][0])?.jersey} {byId.get(group.slots[selectedSlot][0])?.name}
-                  </span>
-                )}
-              </div>
-              <textarea
-                rows={6}
-                value={call.assignments[selectedSlot] ?? ""}
-                onChange={(e) =>
-                  updateCall(call.id, { assignments: { ...call.assignments, [selectedSlot]: e.target.value } })
-                }
-                placeholder="Responsibility on this call — gap, leverage, drop, rules…"
-                className="w-full rounded-lg border border-line bg-black/25 px-3 py-2.5 text-base resize-y"
-              />
-            </>
-          ) : (
-            <>
-              <div className="display text-sm font-semibold tracking-[0.2em] text-dim mb-3">How to draw</div>
-              <ol className="flex flex-col gap-2.5 text-sm text-dim list-decimal pl-4">
-                <li>Pick a line style — Route, Block, Motion, or Pitch.</li>
-                <li>Click the player the line starts from.</li>
-                <li>Click each point of the path, or hold and drag to draw freehand.</li>
-                <li>Double-click (or press Enter) to finish.</li>
-                <li><span className="text-ink">Block shortcut:</span> in Select, click an O player, then double-click the defender he blocks.</li>
-                <li>Click any line to edit it — drag the dots, double-click a dot to remove it.</li>
-              </ol>
-            </>
-          )}
-
-          <div className="display text-sm font-semibold tracking-[0.2em] text-dim mt-6 mb-2">Assignments</div>
-          <div className="flex flex-col gap-1.5">
-            {structure.slots.map((slot, i) =>
-              call.assignments[i] ? (
-                <button
-                  key={i}
-                  onClick={() => { setSelectedSlot(i); setSelectedOff(null); }}
-                  className="rounded-lg border border-line bg-black/20 px-3 py-2 text-left text-sm hover:border-sky/40"
-                >
-                  <span className="display font-bold text-sky mr-2">{label(i)}</span>
-                  <span className="text-dim">{call.assignments[i]}</span>
-                </button>
-              ) : null,
-            )}
+        {/* Inspector */}
+        <div className="flex w-72 shrink-0 flex-col border-l border-gray-200 bg-white">
+          <div className="flex border-b border-gray-200 px-2">
+            {INSPECTOR_TABS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-3 py-2.5 text-sm font-medium ${tab === t ? "border-b-2 border-blue-600 text-blue-700" : "text-gray-400"}`}
+              >
+                {t}
+              </button>
+            ))}
           </div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            {tab === "Object" && (
+              <>
+                {selOff ? (
+                  <>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="grid size-8 place-items-center rounded-full bg-gray-900 text-xs font-bold text-white">{selOff.label}</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-bold">{selOff.label} {selOff.ptype ? `(${selOff.ptype})` : ""}</div>
+                        <div className="text-xs text-gray-400">{selOff.ptype ?? "Offensive player"}</div>
+                      </div>
+                      <Lock size={13} className="text-gray-300" />
+                    </div>
+                    <Field label="Type">
+                      <select
+                        value={selOff.ptype ?? ""}
+                        onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, ptype: e.target.value || undefined } : m)) })}
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm" style={{ colorScheme: "light" }}
+                      >
+                        <option value="">—</option>
+                        {PTYPES.map((p) => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Label">
+                      <input
+                        value={selOff.label}
+                        onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, label: e.target.value.slice(0, 3) } : m)) })}
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm"
+                      />
+                    </Field>
+                    <Field label="Jersey">
+                      <input
+                        value={selOff.jersey ?? ""}
+                        onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, jersey: e.target.value } : m)) })}
+                        placeholder="—"
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm"
+                      />
+                    </Field>
+                    <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={selOff.showLabel ?? true}
+                        onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, showLabel: e.target.checked } : m)) })}
+                      />
+                      Show Label
+                    </label>
+                  </>
+                ) : selLine ? (
+                  <>
+                    <div className="mb-3 text-sm font-bold">Route</div>
+                    <Field label="Type">
+                      <select
+                        value={selLine.kind}
+                        onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, kind: e.target.value as LineKind } : l)) })}
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm capitalize" style={{ colorScheme: "light" }}
+                      >
+                        {(["route", "block", "motion", "pitch"] as LineKind[]).map((k) => <option key={k} value={k}>{k}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Route Color">
+                      <div className="flex gap-1.5">
+                        {ROUTE_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, color: c } : l)) })}
+                            className={`size-6 rounded-full ${selLine.color === c ? "ring-2 ring-blue-400 ring-offset-1" : ""}`}
+                            style={{ backgroundColor: c }}
+                            aria-label={c}
+                          />
+                        ))}
+                      </div>
+                    </Field>
+                    <Field label="Line Style">
+                      <select
+                        value={selLine.style ?? "solid"}
+                        onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, style: e.target.value as LineStyle } : l)) })}
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm capitalize" style={{ colorScheme: "light" }}
+                      >
+                        {["solid", "dashed", "dotted"].map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </Field>
+                    <label className="mt-1 flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={selLine.showArrow ?? selLine.kind !== "block"}
+                        onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, showArrow: e.target.checked } : l)) })}
+                      />
+                      Show Arrow
+                    </label>
+                    <label className="mt-1 flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={selLine.smooth ?? false}
+                        onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, smooth: e.target.checked } : l)) })}
+                      />
+                      Curved
+                    </label>
+                  </>
+                ) : selDef !== null ? (
+                  <>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="grid size-8 place-items-center rounded-full bg-gray-900 text-xs font-bold text-white">{label(selDef)}</span>
+                      <div>
+                        <div className="text-sm font-bold">{label(selDef)}</div>
+                        <div className="text-xs text-gray-400">
+                          {(group.slots[selDef] ?? [])[0] ? `#${byId.get(group.slots[selDef][0])?.jersey} ${byId.get(group.slots[selDef][0])?.name}` : "Unassigned"}
+                        </div>
+                      </div>
+                    </div>
+                    <Field label="Assignment">
+                      <textarea
+                        rows={5}
+                        value={call.assignments[selDef] ?? ""}
+                        onChange={(e) => updateCall(call.id, { assignments: { ...call.assignments, [selDef]: e.target.value } })}
+                        placeholder="Gap, leverage, drop, rules…"
+                        className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm resize-y"
+                      />
+                    </Field>
+                    <p className="text-xs text-gray-400">Tip: select an O player, then double-click this defender to draw a block.</p>
+                  </>
+                ) : selText ? (
+                  <>
+                    <div className="mb-3 text-sm font-bold">Text</div>
+                    <textarea
+                      rows={3}
+                      value={selText.text}
+                      onChange={(e) => updateCall(call.id, { texts: (call.texts ?? []).map((t) => (t.id === selText.id ? { ...t, text: e.target.value } : t)) })}
+                      className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm resize-y"
+                    />
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-400">Select a player, route, zone, or text on the field to edit its properties.</p>
+                )}
+              </>
+            )}
 
-          <div className="mt-5">
-            <label className="block text-xs text-dim mb-1">Call notes</label>
-            <textarea
-              rows={3}
-              value={call.notes}
-              onChange={(e) => updateCall(call.id, { notes: e.target.value })}
-              className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm resize-y"
-            />
+            {tab === "Notes" && (
+              <>
+                <Field label="Play notes">
+                  <textarea
+                    rows={5}
+                    value={call.notes}
+                    onChange={(e) => updateCall(call.id, { notes: e.target.value })}
+                    className="w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm resize-y"
+                  />
+                </Field>
+                <div className="display text-[11px] font-semibold tracking-widest text-gray-400 mt-4 mb-2">Assignments</div>
+                <div className="flex flex-col gap-1.5">
+                  {structure.slots.map((slot, i) =>
+                    call.assignments[i] ? (
+                      <button
+                        key={i}
+                        onClick={() => { setSelection({ kind: "def", slot: i }); setTab("Object"); }}
+                        className="rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-left text-xs hover:border-blue-300"
+                      >
+                        <span className="font-bold text-blue-700 mr-1.5">{label(i)}</span>
+                        <span className="text-gray-500">{call.assignments[i]}</span>
+                      </button>
+                    ) : null,
+                  )}
+                </div>
+              </>
+            )}
+
+            {tab === "Animation" && (
+              <div className="text-sm text-gray-400">
+                <p className="font-medium text-gray-500 mb-1">Play animation</p>
+                <p>Frame-by-frame animation is on the roadmap — draw the play now and it will animate here later.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Status bar */}
+      <div className="flex h-8 shrink-0 items-center gap-4 border-t border-gray-200 bg-white px-5 text-xs text-gray-400">
+        <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-green-500" /> Up to date · saves automatically</span>
+        <span className="ml-auto font-mono">{playId}</span>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-3">
+      <label className="block text-[11px] font-semibold text-gray-400 mb-1">{label}</label>
+      {children}
     </div>
   );
 }

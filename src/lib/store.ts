@@ -67,6 +67,7 @@ export type Call = {
   fieldPreset?: "midfield" | "redzone" | "goalline" | "backedup";
   lines: DrawLine[]; // drawn routes / blocks / motions (both sides)
   zones: Zone[]; // coverage / responsibility areas
+  texts?: { id: string; x: number; y: number; text: string }[]; // canvas annotations
   defOffsets: Record<number, [number, number]>; // per-call defensive alignment nudges
   assignments: Record<number, string>; // slot index -> responsibility text
   notes: string;
