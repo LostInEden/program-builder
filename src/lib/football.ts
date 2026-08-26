@@ -125,9 +125,21 @@ export function getStructure(id: string): Structure {
   return structures.find((s) => s.id === id) ?? structures[0];
 }
 
+// ── Playbook canvas geometry ─────────────────────────────────────────────────
+// Canvas space: x 0–100 across the field, y 0–75 down the page (matches a 4:3
+// canvas with uniform scaling). Diagrams follow coaching convention: OFFENSE at
+// the bottom driving up the page, DEFENSE on top, LOS between them.
+
+export const FIELD_H = 75;
+export const LOS_Y = 42;
+
+// Defense structure slots (y 14 front → 76 deep) map above the LOS:
+export const defenseCanvasY = (slotY: number) => 46 - slotY * 0.5; // front ≈39, deep ≈8
+
 // ── Offensive looks for the Playbook canvas ──────────────────────────────────
 // Per-call and fully editable: presets seed a look, then the coach drags,
-// renames, adds, or removes players.
+// renames, adds, or removes players. Coordinates are canvas space (offense
+// below the LOS, larger y = deeper in the backfield).
 
 export type OffMarker = { id: string; label: string; x: number; y: number };
 
@@ -138,51 +150,74 @@ const om = (label: string, x: number, y: number, i: number): OffMarker => ({
   y,
 });
 
-const line = (y: number): OffMarker[] => [
-  om("LT", 38, y, 1),
-  om("LG", 44, y, 2),
-  om("C", 50, y, 3),
-  om("RG", 56, y, 4),
-  om("RT", 62, y, 5),
+const line = (): OffMarker[] => [
+  om("LT", 38, 46, 1),
+  om("LG", 44, 46, 2),
+  om("C", 50, 46, 3),
+  om("RG", 56, 46, 4),
+  om("RT", 62, 46, 5),
 ];
 
 export const offensivePresets: Record<string, OffMarker[]> = {
   "Gun Spread (2x2)": [
-    ...line(82),
-    om("X", 8, 78, 6),
-    om("H", 20, 74, 7),
-    om("Y", 80, 74, 8),
-    om("Z", 93, 78, 9),
-    om("Q", 50, 64, 10),
-    om("T", 44, 62, 11),
+    ...line(),
+    om("X", 8, 45.5, 6),
+    om("H", 20, 48, 7),
+    om("Y", 80, 48, 8),
+    om("Z", 93, 45.5, 9),
+    om("Q", 50, 54, 10),
+    om("T", 44, 56, 11),
   ],
   "Trips Right (3x1)": [
-    ...line(82),
-    om("X", 6, 78, 6),
-    om("H", 72, 74, 7),
-    om("Y", 80, 76, 8),
-    om("Z", 92, 78, 9),
-    om("Q", 50, 64, 10),
-    om("T", 56, 62, 11),
+    ...line(),
+    om("X", 6, 45.5, 6),
+    om("H", 72, 48, 7),
+    om("Y", 80, 46.5, 8),
+    om("Z", 92, 45.5, 9),
+    om("Q", 50, 54, 10),
+    om("T", 56, 56, 11),
   ],
   "I-Form (21)": [
-    ...line(82),
-    om("X", 10, 78, 6),
-    om("Y", 68, 80, 7),
-    om("Z", 90, 78, 8),
-    om("Q", 50, 76, 9),
-    om("F", 50, 66, 10),
-    om("T", 50, 58, 11),
+    ...line(),
+    om("X", 10, 45.5, 6),
+    om("Y", 68, 46, 7),
+    om("Z", 90, 45.5, 8),
+    om("Q", 50, 47.5, 9),
+    om("F", 50, 54, 10),
+    om("T", 50, 58.5, 11),
   ],
   "Empty (3x2)": [
-    ...line(82),
-    om("X", 6, 78, 6),
-    om("H", 16, 74, 7),
-    om("W", 72, 74, 8),
-    om("Y", 82, 74, 9),
-    om("Z", 93, 78, 10),
-    om("Q", 50, 64, 11),
+    ...line(),
+    om("X", 6, 45.5, 6),
+    om("H", 16, 48, 7),
+    om("W", 72, 48, 8),
+    om("Y", 82, 48, 9),
+    om("Z", 93, 45.5, 10),
+    om("Q", 50, 54, 11),
   ],
 };
 
 export const defaultPresetName = "Gun Spread (2x2)";
+
+// ── Play drawing model ───────────────────────────────────────────────────────
+// Lines anchor to a player ("off:<markerId>" or "def:<slotIndex>") with points
+// stored RELATIVE to the anchor, so moving the player moves the whole drawing.
+// "free" anchors store absolute canvas coordinates.
+
+export type LineKind = "route" | "block" | "motion";
+
+export type DrawLine = {
+  id: string;
+  anchor: string; // "off:<markerId>" | "def:<slotIndex>" | "free"
+  points: [number, number][];
+  kind: LineKind;
+};
+
+export type Zone = {
+  id: string;
+  x: number;
+  y: number;
+  rx: number;
+  ry: number;
+  side: "off" | "def";
+};

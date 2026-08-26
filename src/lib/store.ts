@@ -9,6 +9,8 @@ import {
   defaultPresetName,
   type OffMarker,
   type Concept,
+  type DrawLine,
+  type Zone,
 } from "@/lib/football";
 import type { StrengthRule } from "@/lib/recognize";
 
@@ -62,6 +64,9 @@ export type Call = {
   offForm: string;
   offConcept: string;
   offLook: OffMarker[]; // editable offensive look for this call
+  lines: DrawLine[]; // drawn routes / blocks / motions (both sides)
+  zones: Zone[]; // coverage / responsibility areas
+  defOffsets: Record<number, [number, number]>; // per-call defensive alignment nudges
   assignments: Record<number, string>; // slot index -> responsibility text
   notes: string;
 };
@@ -132,6 +137,12 @@ const seedGroups: PersonnelGroup[] = [
 ];
 
 const look = (preset: string) => offensivePresets[preset].map((m) => ({ ...m }));
+const L = (id: string, anchor: string, kind: DrawLine["kind"], points: [number, number][]): DrawLine => ({
+  id,
+  anchor,
+  kind,
+  points,
+});
 
 const seedCalls: Call[] = [
   {
@@ -141,6 +152,15 @@ const seedCalls: Call[] = [
     offForm: "Trips Right",
     offConcept: "Inside zone",
     offLook: look("Trips Right (3x1)"),
+    // 3-4 slot order: 0 WE, 1 T, 2 N, 3 SE — squeeze/penetrate arrows.
+    lines: [
+      L("l-okie-1", "def:0", "route", [[1.5, 2.5]]),
+      L("l-okie-2", "def:1", "route", [[1, 3]]),
+      L("l-okie-3", "def:2", "route", [[0, 3]]),
+      L("l-okie-4", "def:3", "route", [[-1.5, 2.5]]),
+    ],
+    zones: [],
+    defOffsets: {},
     assignments: { 0: "5-tech, C gap, squeeze down blocks", 1: "3-tech, B gap penetrate", 2: "0-tech, 2-gap A gaps", 3: "5-tech, C gap, force on flow" },
     notes: "Base front vs 11/12 personnel.",
   },
@@ -151,6 +171,16 @@ const seedCalls: Call[] = [
     offForm: "Doubles",
     offConcept: "Quick game",
     offLook: look("Gun Spread (2x2)"),
+    lines: [
+      L("l-sky-ss", "def:9", "motion", [[-12, 18]]), // SS rotates down to the flat
+      L("l-sky-fs", "def:10", "motion", [[-6, -3]]),
+    ],
+    zones: [
+      { id: "z-sky-1", x: 15, y: 12, rx: 13, ry: 6, side: "def" },
+      { id: "z-sky-2", x: 50, y: 10, rx: 13, ry: 6, side: "def" },
+      { id: "z-sky-3", x: 85, y: 12, rx: 13, ry: 6, side: "def" },
+    ],
+    defOffsets: {},
     assignments: { 7: "Deep 1/3, outside leverage", 8: "Deep 1/3", 9: "Flat / force, sky support", 10: "Middle 1/3" },
     notes: "Strong safety rotates down. Beats quick game and RPO.",
   },
@@ -161,6 +191,13 @@ const seedCalls: Call[] = [
     offForm: "Gun Spread",
     offConcept: "Dropback",
     offLook: look("Gun Spread (2x2)"),
+    lines: [
+      L("l-smk-w", "def:4", "route", [[8, 4], [11, 8]]), // W shoots the A gap
+      L("l-smk-m", "def:5", "route", [[-2, 5]]),
+      L("l-smk-s", "def:6", "motion", [[6, -6]]), // S walls #2
+    ],
+    zones: [],
+    defOffsets: {},
     assignments: { 4: "A-gap blitz, contain rules off", 5: "Green dog vs back block", 6: "Wall #2, seam carry" },
     notes: "Fire zone behind it — 3 under, 3 deep.",
   },
@@ -171,6 +208,9 @@ const seedCalls: Call[] = [
     offForm: "Any 2x2 to boundary",
     offConcept: "—",
     offLook: look("Empty (3x2)"),
+    lines: [],
+    zones: [],
+    defOffsets: {},
     assignments: { 7: "Cloud: squat flat, corner force", 9: "Push to deep half over #2" },
     notes: "Auto-check vs condensed boundary sets.",
   },
@@ -326,6 +366,9 @@ export const useStore = create<Store>()(
               offForm: "",
               offConcept: "",
               offLook: look(defaultPresetName),
+              lines: [],
+              zones: [],
+              defOffsets: {},
               assignments: {},
               notes: "",
             },
@@ -343,7 +386,15 @@ export const useStore = create<Store>()(
         set((s) => ({
           calls: [
             ...s.calls,
-            { ...c, id: nid, name: `${c.name} (copy)`, offLook: c.offLook.map((m) => ({ ...m })) },
+            {
+              ...c,
+              id: nid,
+              name: `${c.name} (copy)`,
+              offLook: c.offLook.map((m) => ({ ...m })),
+              lines: c.lines.map((l) => ({ ...l, points: l.points.map((p) => [...p] as [number, number]) })),
+              zones: c.zones.map((z) => ({ ...z })),
+              defOffsets: { ...c.defOffsets },
+            },
           ],
           activeCallId: nid,
         }));
@@ -357,7 +408,29 @@ export const useStore = create<Store>()(
 
       setOpponent: (patch) => set((s) => ({ opponent: { ...s.opponent, ...patch } })),
     }),
-    { name: "program-builder-v3" },
+    {
+      name: "program-builder-v3",
+      version: 2,
+      migrate: (persisted, version) => {
+        const state = persisted as { calls?: Call[] };
+        if (version < 2 && state?.calls) {
+          // v1 offensive looks lived ABOVE the LOS (y 58–86, OL at 82). The field
+          // was flipped to coaching convention (offense at the bottom): remap y
+          // and add the drawing fields.
+          state.calls = state.calls.map((c) => ({
+            ...c,
+            offLook: (c.offLook ?? []).map((m) => ({
+              ...m,
+              y: Math.min(72, Math.max(43, 46 + (82 - m.y) * 0.55)),
+            })),
+            lines: c.lines ?? [],
+            zones: c.zones ?? [],
+            defOffsets: c.defOffsets ?? {},
+          }));
+        }
+        return state;
+      },
+    },
   ),
 );
 

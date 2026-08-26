@@ -1,19 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
 import { useStore, useHydrated, slotLabelOf, type PlaybookSection } from "@/lib/store";
-import { getStructure, offensivePresets } from "@/lib/football";
+import { getStructure, offensivePresets, LOS_Y } from "@/lib/football";
 import { recognizeFormation, formationLabel } from "@/lib/recognize";
+import PlayCanvas from "@/components/PlayCanvas";
 
 const SECTIONS: PlaybookSection[] = ["Fronts", "Coverages", "Pressures", "Checks & Adjustments"];
-
-// Offense occupies the top of the canvas: marker y (58–86 in "offense space")
-// maps to top% via t = (100 - y) * 0.42. LOS sits at 44%.
-const yToTop = (y: number) => (100 - y) * 0.42;
-const topToY = (t: number) => 100 - t / 0.42;
 
 export default function PlaybookPage() {
   const hydrated = useHydrated();
@@ -24,8 +20,6 @@ export default function PlaybookPage() {
   const [section, setSection] = useState<PlaybookSection>("Fronts");
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [selectedOff, setSelectedOff] = useState<string | null>(null);
-  const fieldRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ id: string; moved: boolean } | null>(null);
 
   if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
 
@@ -35,30 +29,8 @@ export default function PlaybookPage() {
   const sectionCalls = calls.filter((c) => c.section === section);
   const call = calls.find((c) => c.id === activeCallId && c.section === section) ?? sectionCalls[0] ?? null;
   const label = (i: number) => slotLabelOf(overrides, group.structureId, i);
-
-  const onFieldPointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current || !call || !fieldRef.current) return;
-    dragRef.current.moved = true;
-    const r = fieldRef.current.getBoundingClientRect();
-    const x = Math.min(97, Math.max(3, ((e.clientX - r.left) / r.width) * 100));
-    const top = Math.min(41, Math.max(2, ((e.clientY - r.top) / r.height) * 100));
-    updateCall(call.id, {
-      offLook: call.offLook.map((m) =>
-        m.id === dragRef.current!.id ? { ...m, x, y: topToY(top) } : m,
-      ),
-    });
-  };
-
-  const endDrag = () => {
-    if (dragRef.current && !dragRef.current.moved) {
-      setSelectedOff(dragRef.current.id);
-      setSelectedSlot(null);
-    }
-    dragRef.current = null;
-  };
-
-  const selOffMarker = call?.offLook.find((m) => m.id === selectedOff) ?? null;
   const rec = call ? recognizeFormation(call.offLook, strengthRule) : null;
+  const selOffMarker = call?.offLook.find((m) => m.id === selectedOff) ?? null;
 
   return (
     <div className="px-6 py-8 max-w-7xl mx-auto">
@@ -83,7 +55,7 @@ export default function PlaybookPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[240px_1fr_290px] items-start">
+      <div className="grid gap-5 lg:grid-cols-[220px_1fr_280px] items-start">
         {/* Call list */}
         <div className="rounded-xl border border-line bg-card/80 p-3 flex flex-col gap-1.5">
           {sectionCalls.map((c) => (
@@ -161,7 +133,7 @@ export default function PlaybookPage() {
                     updateCall(call.id, {
                       offLook: [
                         ...call.offLook,
-                        { id: Math.random().toString(36).slice(2, 8), label: "?", x: 50, y: 70 },
+                        { id: Math.random().toString(36).slice(2, 8), label: "?", x: 50, y: LOS_Y + 14 },
                       ],
                     })
                   }
@@ -169,63 +141,19 @@ export default function PlaybookPage() {
                 >
                   + Add player
                 </button>
-                <span className="text-dim">Drag to move · click to rename</span>
               </div>
 
-              {/* Field: offense above LOS (draggable), defense below */}
-              <div
-                ref={fieldRef}
-                onPointerMove={onFieldPointerMove}
-                onPointerUp={endDrag}
-                onPointerLeave={endDrag}
-                className="relative field-lines rounded-xl border border-line bg-[#0d130f] aspect-4/3 overflow-hidden touch-none"
-              >
-                {call.offLook.map((o) => (
-                  <span
-                    key={o.id}
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      dragRef.current = { id: o.id, moved: false };
-                    }}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 grid size-8 cursor-grab place-items-center rounded-full border text-[11px] display font-bold select-none ${
-                      selectedOff === o.id
-                        ? "border-ember bg-ember/20 text-ember"
-                        : "border-red-400/60 bg-pitch text-red-400"
-                    }`}
-                    style={{ left: `${o.x}%`, top: `${yToTop(o.y)}%` }}
-                  >
-                    {o.label}
-                  </span>
-                ))}
-                <div className="absolute inset-x-0 top-[44%] h-px bg-grass/50" />
-                {structure.slots.map((slot, i) => {
-                  const ids = group.slots[i] ?? [];
-                  const pl = ids[0] ? byId.get(ids[0]) : undefined;
-                  const has = call.assignments[i];
-                  const sel = selectedSlot === i;
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => { setSelectedSlot(i); setSelectedOff(null); }}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 text-center"
-                      style={{ left: `${slot.x}%`, top: `${46 + slot.y * 0.5}%` }}
-                    >
-                      <span
-                        className={`grid size-9 place-items-center rounded-full border-2 display text-xs font-bold transition ${
-                          sel
-                            ? "border-ember bg-ember/20 text-ember"
-                            : has
-                              ? "border-sky bg-pitch text-sky"
-                              : "border-dim/60 bg-pitch text-dim hover:border-sky/60"
-                        }`}
-                      >
-                        {label(i)}
-                      </span>
-                      {pl && <span className="mt-0.5 block text-[10px] text-dim">#{pl.jersey}</span>}
-                    </button>
-                  );
-                })}
-              </div>
+              <PlayCanvas
+                call={call}
+                structureId={group.structureId}
+                groupSlots={group.slots}
+                players={players}
+                labelFor={label}
+                selectedSlot={selectedSlot}
+                onSelectSlot={setSelectedSlot}
+                selectedOff={selectedOff}
+                onSelectOff={setSelectedOff}
+              />
 
               {rec && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-line bg-card/80 px-4 py-2.5 text-sm">
@@ -295,7 +223,10 @@ export default function PlaybookPage() {
                 />
                 <button
                   onClick={() => {
-                    updateCall(call.id, { offLook: call.offLook.filter((m) => m.id !== selOffMarker.id) });
+                    updateCall(call.id, {
+                      offLook: call.offLook.filter((m) => m.id !== selOffMarker.id),
+                      lines: call.lines.filter((l) => l.anchor !== `off:${selOffMarker.id}`),
+                    });
                     setSelectedOff(null);
                   }}
                   className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10"
@@ -303,7 +234,10 @@ export default function PlaybookPage() {
                   <X size={13} /> Remove
                 </button>
               </div>
-              <p className="text-xs text-dim">Drag the marker on the field to reposition.</p>
+              <p className="text-xs text-dim">
+                Drag to reposition (Select tool). Draw a route, block, or motion from this player with the tools
+                above the field.
+              </p>
             </>
           ) : (
             <>
@@ -333,7 +267,8 @@ export default function PlaybookPage() {
                 </>
               ) : (
                 <p className="text-sm text-dim mb-3">
-                  Click a defender for their responsibility, or an offensive player to edit the look.
+                  Select a defender for their responsibility, or use the drawing tools to put routes, blocks,
+                  motions, and zones on the field.
                 </p>
               )}
             </>
