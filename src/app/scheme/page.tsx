@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { BookOpen, ShieldCheck, Pencil, Check, ChevronRight } from "lucide-react";
+import { BookOpen, ShieldCheck, Layers, Pencil, Check, ChevronRight } from "lucide-react";
 import { useStore, useHydrated } from "@/lib/store";
 import PageHeader from "@/components/PageHeader";
 
@@ -102,6 +102,30 @@ export default function SchemePage() {
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-grass">
               Review scheme soundness <ChevronRight size={15} className="transition group-hover:translate-x-0.5" />
             </span>
+          </Link>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="sm:col-span-2"
+        >
+          <Link
+            href="/scheme/coverages"
+            className="group flex items-start gap-5 rounded-2xl border border-ember/40 bg-gradient-to-b from-ember/10 to-transparent p-6 transition hover:border-ember hover:-translate-y-0.5"
+          >
+            <Layers size={30} className="text-ember shrink-0 mt-1" />
+            <div className="flex-1">
+              <h2 className="display text-2xl font-bold">Coverage Library</h2>
+              <p className="mt-1 text-sm text-dim">
+                30 match coverages — Cover 0 through Cut/Cross — with every defender&apos;s alignment, help,
+                leverage, keys, and match rules. Includes the Master Software Rule every assignment is written
+                against.
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-ember">
+                Open Coverage Library <ChevronRight size={15} className="transition group-hover:translate-x-0.5" />
+              </span>
+            </div>
           </Link>
         </motion.div>
       </div>
