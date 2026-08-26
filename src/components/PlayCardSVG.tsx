@@ -53,7 +53,7 @@ export default function PlayCardSVG({
   const yardLines: { y: number; label: string | null; goal: boolean }[] = [];
   for (let k = -14; k <= 14; k++) {
     const dist = preset.losYardline - k * 5;
-    const y = LOS_Y - k * 5 * YD;
+    const y = LOS_Y + k * 5 * YD;
     if (y < 1 || y > FIELD_H - 1 || dist < 0 || dist > 100) continue;
     const fieldNum = dist > 50 ? 100 - dist : dist;
     yardLines.push({

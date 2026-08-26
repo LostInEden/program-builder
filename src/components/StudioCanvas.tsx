@@ -261,7 +261,7 @@ export default function StudioCanvas({
       const [x, y] = toCanvas(e);
       snapshot();
       const id = uid();
-      updateCall(call.id, { offLook: [...call.offLook, { id, label: "?", x, y: Math.max(LOS_Y + 1.2, y) }] });
+      updateCall(call.id, { offLook: [...call.offLook, { id, label: "?", x, y: Math.min(LOS_Y - 1.2, y) }] });
       onSelect({ kind: "off", id });
       setTool("select");
       return;
@@ -279,12 +279,12 @@ export default function StudioCanvas({
     const [x, y] = toCanvas(e);
     if (d.type === "off") {
       updateCall(call.id, {
-        offLook: call.offLook.map((m) => (m.id === d.id ? { ...m, x, y: Math.min(72, Math.max(LOS_Y + 1.2, y)) } : m)),
+        offLook: call.offLook.map((m) => (m.id === d.id ? { ...m, x, y: Math.max(4, Math.min(LOS_Y - 1.2, y)) } : m)),
       });
     } else if (d.type === "def") {
       const slot = structure.slots[d.slot];
       updateCall(call.id, {
-        defOffsets: { ...call.defOffsets, [d.slot]: [x - slot.x, Math.min(LOS_Y - 1.2, y) - defenseCanvasY(slot.y)] },
+        defOffsets: { ...call.defOffsets, [d.slot]: [x - slot.x, Math.max(LOS_Y + 1.2, Math.min(72, y)) - defenseCanvasY(slot.y)] },
       });
     } else if (d.type === "text") {
       updateCall(call.id, { texts: texts.map((t) => (t.id === d.id ? { ...t, x, y } : t)) });
@@ -327,7 +327,7 @@ export default function StudioCanvas({
         const cy = (y + zoneStart[1]) / 2;
         snapshot();
         const id = uid();
-        updateCall(call.id, { zones: [...call.zones, { id, x: cx, y: cy, rx, ry, side: cy < LOS_Y ? "def" : "off" }] });
+        updateCall(call.id, { zones: [...call.zones, { id, x: cx, y: cy, rx, ry, side: cy < LOS_Y ? "off" : "def" }] });
         onSelect({ kind: "zone", id });
       }
       setZoneStart(null);
@@ -422,7 +422,7 @@ export default function StudioCanvas({
   const yardLines: { y: number; label: string | null; goal: boolean }[] = [];
   for (let k = -14; k <= 14; k++) {
     const dist = preset.losYardline - k * 5;
-    const y = LOS_Y - k * 5 * YD;
+    const y = LOS_Y + k * 5 * YD;
     if (y < 1 || y > FIELD_H - 1 || dist < 0 || dist > 100) continue;
     const fieldNum = dist > 50 ? 100 - dist : dist;
     yardLines.push({ y, label: dist % 10 === 0 && fieldNum !== 0 ? String(fieldNum) : null, goal: dist === 0 || dist === 100 });

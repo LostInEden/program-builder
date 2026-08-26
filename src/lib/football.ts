@@ -38,10 +38,10 @@ export const structures: Structure[] = [
     id: "3-4",
     name: "3-4",
     slots: [
-      { pos: "WE", x: 32, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "WE", x: 35.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "T", x: 44, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "N", x: 56, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "SE", x: 68, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "N", x: 50, y: 14, level: "front", concept: "Interior DL" },
+      { pos: "SE", x: 64.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "W", x: 34, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "M", x: 50, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "S", x: 66, y: 40, level: "second", concept: "Off-ball LB" },
@@ -55,10 +55,10 @@ export const structures: Structure[] = [
     id: "4-2-5",
     name: "4-2-5",
     slots: [
-      { pos: "DE", x: 28, y: 14, level: "front", concept: "Edge rusher" },
-      { pos: "DT", x: 42, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "DT", x: 58, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "DE", x: 72, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DE", x: 35.5, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DT", x: 42.5, y: 14, level: "front", concept: "Interior DL" },
+      { pos: "DT", x: 57.5, y: 14, level: "front", concept: "Interior DL" },
+      { pos: "DE", x: 64.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "M", x: 42, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "W", x: 58, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "NB", x: 16, y: 38, level: "second", concept: "Slot / Nickel" },
@@ -72,10 +72,10 @@ export const structures: Structure[] = [
     id: "4-3",
     name: "4-3",
     slots: [
-      { pos: "DE", x: 28, y: 14, level: "front", concept: "Edge rusher" },
-      { pos: "DT", x: 42, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "DT", x: 58, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "DE", x: 72, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DE", x: 35.5, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DT", x: 42.5, y: 14, level: "front", concept: "Interior DL" },
+      { pos: "DT", x: 57.5, y: 14, level: "front", concept: "Interior DL" },
+      { pos: "DE", x: 64.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "S", x: 34, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "M", x: 50, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "W", x: 66, y: 40, level: "second", concept: "Off-ball LB" },
@@ -89,9 +89,9 @@ export const structures: Structure[] = [
     id: "3-3-5",
     name: "3-3-5",
     slots: [
-      { pos: "DE", x: 34, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DE", x: 39.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "N", x: 50, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "DE", x: 66, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DE", x: 60.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "W", x: 36, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "M", x: 50, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "S", x: 64, y: 40, level: "second", concept: "Off-ball LB" },
@@ -106,9 +106,9 @@ export const structures: Structure[] = [
     id: "3-2-6",
     name: "3-2-6",
     slots: [
-      { pos: "DE", x: 34, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DE", x: 39.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "N", x: 50, y: 14, level: "front", concept: "Interior DL" },
-      { pos: "DE", x: 66, y: 14, level: "front", concept: "Edge rusher" },
+      { pos: "DE", x: 60.5, y: 14, level: "front", concept: "Edge rusher" },
       { pos: "M", x: 42, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "W", x: 58, y: 40, level: "second", concept: "Off-ball LB" },
       { pos: "C", x: 6, y: 30, level: "deep", concept: "Corner" },
@@ -127,19 +127,20 @@ export function getStructure(id: string): Structure {
 
 // ── Playbook canvas geometry ─────────────────────────────────────────────────
 // Canvas space: x 0–100 across the field, y 0–75 down the page (matches a 4:3
-// canvas with uniform scaling). Diagrams follow coaching convention: OFFENSE at
-// the bottom driving up the page, DEFENSE on top, LOS between them.
+// canvas with uniform scaling).
 
 export const FIELD_H = 75;
 export const LOS_Y = 42;
 
-// Defense structure slots (y 14 front → 76 deep) map above the LOS:
-export const defenseCanvasY = (slotY: number) => 46 - slotY * 0.5; // front ≈39, deep ≈8
+// The diagram is drawn from OUR team's perspective: DEFENSE at the bottom of
+// the card, opponent offense on top, LOS between them.
+// Defense structure slots (y 14 front → 76 deep) map below the LOS:
+export const defenseCanvasY = (slotY: number) => 38 + slotY * 0.45; // front ≈44.5, deep ≈72
 
 // ── Offensive looks for the Playbook canvas ──────────────────────────────────
 // Per-call and fully editable: presets seed a look, then the coach drags,
 // renames, adds, or removes players. Coordinates are canvas space (offense
-// below the LOS, larger y = deeper in the backfield).
+// ABOVE the LOS, smaller y = deeper in the backfield).
 
 export type OffMarker = {
   id: string;
@@ -159,49 +160,49 @@ const om = (label: string, x: number, y: number, i: number): OffMarker => ({
 });
 
 const line = (): OffMarker[] => [
-  om("LT", 38, 46, 1),
-  om("LG", 44, 46, 2),
-  om("C", 50, 46, 3),
-  om("RG", 56, 46, 4),
-  om("RT", 62, 46, 5),
+  om("LT", 38, 39, 1),
+  om("LG", 44, 39, 2),
+  om("C", 50, 39, 3),
+  om("RG", 56, 39, 4),
+  om("RT", 62, 39, 5),
 ];
 
 export const offensivePresets: Record<string, OffMarker[]> = {
   "Gun Spread (2x2)": [
     ...line(),
-    om("X", 8, 45.5, 6),
-    om("H", 20, 48, 7),
-    om("Y", 80, 48, 8),
-    om("Z", 93, 45.5, 9),
-    om("Q", 50, 54, 10),
-    om("T", 44, 56, 11),
+    om("X", 8, 39.5, 6),
+    om("H", 20, 37, 7),
+    om("Y", 80, 37, 8),
+    om("Z", 93, 39.5, 9),
+    om("Q", 50, 31, 10),
+    om("T", 44, 29, 11),
   ],
   "Trips Right (3x1)": [
     ...line(),
-    om("X", 6, 45.5, 6),
-    om("H", 72, 48, 7),
-    om("Y", 80, 46.5, 8),
-    om("Z", 92, 45.5, 9),
-    om("Q", 50, 54, 10),
-    om("T", 56, 56, 11),
+    om("X", 6, 39.5, 6),
+    om("H", 72, 37, 7),
+    om("Y", 80, 38.5, 8),
+    om("Z", 92, 39.5, 9),
+    om("Q", 50, 31, 10),
+    om("T", 56, 29, 11),
   ],
   "I-Form (21)": [
     ...line(),
-    om("X", 10, 45.5, 6),
-    om("Y", 68, 46, 7),
-    om("Z", 90, 45.5, 8),
-    om("Q", 50, 47.5, 9),
-    om("F", 50, 54, 10),
-    om("T", 50, 58.5, 11),
+    om("X", 10, 39.5, 6),
+    om("Y", 68, 39, 7),
+    om("Z", 90, 39.5, 8),
+    om("Q", 50, 37.5, 9),
+    om("F", 50, 31, 10),
+    om("T", 50, 26.5, 11),
   ],
   "Empty (3x2)": [
     ...line(),
-    om("X", 6, 45.5, 6),
-    om("H", 16, 48, 7),
-    om("W", 72, 48, 8),
-    om("Y", 82, 48, 9),
-    om("Z", 93, 45.5, 10),
-    om("Q", 50, 54, 11),
+    om("X", 6, 39.5, 6),
+    om("H", 16, 37, 7),
+    om("W", 72, 37, 8),
+    om("Y", 82, 37, 9),
+    om("Z", 93, 39.5, 10),
+    om("Q", 50, 31, 11),
   ],
 };
 

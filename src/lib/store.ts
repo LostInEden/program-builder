@@ -156,10 +156,10 @@ const seedCalls: Call[] = [
     offLook: look("Trips Right (3x1)"),
     // 3-4 slot order: 0 WE, 1 T, 2 N, 3 SE — squeeze/penetrate arrows.
     lines: [
-      L("l-okie-1", "def:0", "route", [[1.5, 2.5]]),
-      L("l-okie-2", "def:1", "route", [[1, 3]]),
-      L("l-okie-3", "def:2", "route", [[0, 3]]),
-      L("l-okie-4", "def:3", "route", [[-1.5, 2.5]]),
+      L("l-okie-1", "def:0", "route", [[1.5, -2.5]]),
+      L("l-okie-2", "def:1", "route", [[1, -3]]),
+      L("l-okie-3", "def:2", "route", [[0, -3]]),
+      L("l-okie-4", "def:3", "route", [[-1.5, -2.5]]),
     ],
     zones: [],
     defOffsets: {},
@@ -174,13 +174,13 @@ const seedCalls: Call[] = [
     offConcept: "Quick game",
     offLook: look("Gun Spread (2x2)"),
     lines: [
-      L("l-sky-ss", "def:9", "motion", [[-12, 18]]), // SS rotates down to the flat
-      L("l-sky-fs", "def:10", "motion", [[-6, -3]]),
+      L("l-sky-ss", "def:9", "motion", [[-12, -18]]), // SS rotates up to the flat
+      L("l-sky-fs", "def:10", "motion", [[-6, 3]]),
     ],
     zones: [
-      { id: "z-sky-1", x: 15, y: 12, rx: 13, ry: 6, side: "def" },
-      { id: "z-sky-2", x: 50, y: 10, rx: 13, ry: 6, side: "def" },
-      { id: "z-sky-3", x: 85, y: 12, rx: 13, ry: 6, side: "def" },
+      { id: "z-sky-1", x: 15, y: 66, rx: 13, ry: 6, side: "def" },
+      { id: "z-sky-2", x: 50, y: 68, rx: 13, ry: 6, side: "def" },
+      { id: "z-sky-3", x: 85, y: 66, rx: 13, ry: 6, side: "def" },
     ],
     defOffsets: {},
     assignments: { 7: "Deep 1/3, outside leverage", 8: "Deep 1/3", 9: "Flat / force, sky support", 10: "Middle 1/3" },
@@ -194,9 +194,9 @@ const seedCalls: Call[] = [
     offConcept: "Dropback",
     offLook: look("Gun Spread (2x2)"),
     lines: [
-      L("l-smk-w", "def:4", "route", [[8, 4], [11, 8]]), // W shoots the A gap
-      L("l-smk-m", "def:5", "route", [[-2, 5]]),
-      L("l-smk-s", "def:6", "motion", [[6, -6]]), // S walls #2
+      L("l-smk-w", "def:4", "route", [[8, -4], [11, -8]]), // W shoots the A gap
+      L("l-smk-m", "def:5", "route", [[-2, -5]]),
+      L("l-smk-s", "def:6", "motion", [[6, 6]]), // S walls #2
     ],
     zones: [],
     defOffsets: {},
@@ -423,13 +423,12 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const state = persisted as { calls?: Call[] };
         if (version < 2 && state?.calls) {
-          // v1 offensive looks lived ABOVE the LOS (y 58–86, OL at 82). The field
-          // was flipped to coaching convention (offense at the bottom): remap y
-          // and add the drawing fields.
+          // v1 offensive looks lived at y 58–86 (OL at 82): remap into the
+          // offense-at-bottom space and add the drawing fields.
           state.calls = state.calls.map((c) => ({
             ...c,
             offLook: (c.offLook ?? []).map((m) => ({
@@ -439,6 +438,26 @@ export const useStore = create<Store>()(
             lines: c.lines ?? [],
             zones: c.zones ?? [],
             defOffsets: c.defOffsets ?? {},
+          }));
+        }
+        if (version < 3 && state?.calls) {
+          // v3 flips the card to OUR perspective: defense at the bottom,
+          // offense on top. Mirror everything across the LOS (y' = 84 - y).
+          state.calls = state.calls.map((c) => ({
+            ...c,
+            offLook: (c.offLook ?? []).map((m) => ({
+              ...m,
+              y: Math.min(40.8, Math.max(4, 84 - m.y)),
+            })),
+            lines: (c.lines ?? []).map((l) => ({
+              ...l,
+              points: l.points.map(([dx, dy]) => [dx, -dy] as [number, number]),
+            })),
+            zones: (c.zones ?? []).map((z) => ({ ...z, y: Math.min(73, Math.max(2, 84 - z.y)) })),
+            texts: (c.texts ?? []).map((t) => ({ ...t, y: Math.min(73, Math.max(2, 84 - t.y)) })),
+            defOffsets: Object.fromEntries(
+              Object.entries(c.defOffsets ?? {}).map(([k, [dx, dy]]) => [k, [dx, -dy] as [number, number]]),
+            ),
           }));
         }
         return state;

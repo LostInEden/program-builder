@@ -63,14 +63,15 @@ export type Recognition = {
   detail: string; // e.g. "3 removed right, 1 removed left, TE on ball right"
 };
 
-// Marker coords: canvas space — offense sits BELOW the LOS driving up the page,
-// so the OL row is the SHALLOWEST offensive y (~46) and backs have larger y.
+// Marker coords: canvas space — offense sits ABOVE the LOS (defense is drawn at
+// the bottom, our perspective), so the OL row is the DEEPEST offensive y (~39)
+// and backs are shallower (smaller y).
 export function recognizeFormation(look: OffMarker[], strengthRule: StrengthRule): Recognition | null {
   if (look.length < 6) return null;
 
-  const minY = Math.min(...look.map((m) => m.y));
-  // OL: shallowest-row markers in the middle of the field, up to 5 central ones.
-  const lineRow = look.filter((m) => m.y <= minY + 2 && m.x >= 28 && m.x <= 72).sort((a, b) => a.x - b.x);
+  const maxY = Math.max(...look.map((m) => m.y));
+  // OL: the row nearest the LOS (largest y), up to 5 central markers.
+  const lineRow = look.filter((m) => m.y >= maxY - 2 && m.x >= 28 && m.x <= 72).sort((a, b) => a.x - b.x);
   if (lineRow.length < 3) return null;
   const ol = lineRow.slice(0, 5);
   const leftEdge = ol[0].x;
@@ -78,14 +79,14 @@ export function recognizeFormation(look: OffMarker[], strengthRule: StrengthRule
   const center = (leftEdge + rightEdge) / 2;
 
   const others = look.filter((m) => !ol.includes(m));
-  const onBall = (m: OffMarker) => m.y <= minY + 5;
+  const onBall = (m: OffMarker) => m.y >= maxY - 5;
   const nearEdge = (m: OffMarker) =>
     (m.x > rightEdge && m.x <= rightEdge + 8) || (m.x < leftEdge && m.x >= leftEdge - 8);
 
   const tes = others.filter((m) => onBall(m) && nearEdge(m)); // on-ball TE
-  const wings = others.filter((m) => !onBall(m) && nearEdge(m) && m.y <= minY + 12); // wing / off-ball TE (H)
+  const wings = others.filter((m) => !onBall(m) && nearEdge(m) && m.y >= maxY - 12); // wing / off-ball TE (H)
   const backs = others.filter(
-    (m) => !tes.includes(m) && !wings.includes(m) && m.x > leftEdge - 6 && m.x < rightEdge + 6 && m.y > minY + 6,
+    (m) => !tes.includes(m) && !wings.includes(m) && m.x > leftEdge - 6 && m.x < rightEdge + 6 && m.y < maxY - 6,
   );
   const removed = others.filter((m) => !tes.includes(m) && !wings.includes(m) && !backs.includes(m));
 
