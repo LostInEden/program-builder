@@ -18,7 +18,7 @@
 | Backup mirror | https://lostineden.github.io/program-builder/ — manual: `GHPAGES=1 npm run build`, copy `vercel.json` + `.nojekyll` into `out/`, force-push `out/` as branch `gh-pages` |
 | Vercel | project `program-builder` on team `lostinedens-projects` (hobby). CLI logged in as `lostineden`, local folder linked. |
 | Research blueprint (market/AI/legal/schema) | Claude artifact: https://claude.ai/code/artifact/5d7dff92-6ec4-4377-8a04-23529a04296a |
-| Coach's spec PDFs | `C:\Users\matta\Downloads\`: `Program_Builder_My_Team_Page_Engineer_Spec (1).pdf`, `Program_Builder_My_Scheme_Engineer_Spec_v2.pdf`, `football_terminology_rules.pdf`, `counter_scheme_engineer_notes_v6.pdf` |
+| Coach's spec PDFs | `C:\Users\matta\Downloads\`: `Program_Builder_My_Team_Page_Engineer_Spec (1).pdf`, `Program_Builder_My_Scheme_Engineer_Spec_v2.pdf`, `football_terminology_rules.pdf`, `counter_scheme_engineer_notes_v6.pdf`, `Detailed_Match_Coverage_Library.pdf` |
 | Claude memory | `~/.claude/projects/C--Users-matta/memory/project_coach_iq_football.md` (detailed running log) |
 
 **Run dev**: `.claude/launch.json` entry `program-builder` (port 3100), or in PowerShell:
@@ -61,6 +61,8 @@ All four PDFs are implemented. Highlights per spec:
 2. **My Scheme v2**: written identity landing (structure + philosophy, no diagram), Playbook as the visual area, Sound Check (5 checks → Sound / Needs Review / Potential Conflict, "considerations not corrections", names affected positions), terminology never forced.
 3. **Terminology rules**: recognition from player location; coach labels via `/scheme/terminology` (Positions / Formations / Strength / Reference tabs); strength-rule setting; DL techniques + gaps tables; live "Recognized: Twins Right · Strength: Right" bar with "Use as formation name".
 4. **Counter Scheme v6**: Weight Room tab (CSV → player profiles), depth chart top-3 + position-filtered add (CONCEPT_POS map + "show entire roster" toggle), fronts renamed per scheme (4-down: **E,T,N,E**; 3-down: **E,N,E**; 3-4 is now TRUE 3-down with J/R edges + W/M ILBs), new **Tite/Mint** structure, season schedule (11 wks, 10 games + bye, calendar-driven), Playbook "all" tab + preset plays (Cover 2/4/1 Robber, Double A Gap, Edge Fire, Motion Bump — built against the active structure via concepts), more formations, **"Plus" tag appended once** ("Trips Right Plus"), **OL identified by label LT/LG/C/RG/RT and excluded from formation naming**.
+
+5. **Detailed Match Coverage Library** (Aug 2026): `/scheme/coverages` — all 30 coverages (Cover 0 → Cut/Cross) as structured data in `src/lib/coverages.ts` (per-position Alignment/Help/Leverage/Key/Rules, grouped into 7 families), searchable list + detail view, plus the "Master Software Rule" reference panel (receiver numbering, the 13 questions, Cover 3 Match overhang worked example). Linked as the third card on `/scheme`. Reference-only for now — future use: drive Sound Check / per-play coverage assignments off this data.
 
 Other shipped: ClickUp-style month calendar (week toggle, store-driven), print/PDF play cards, formation templates ("save as formation" — never draw twice), defense Letters/Triangles toggle, field presets (Midfield/Red Zone/Goal Line/Backed Up), flip horizontal, text + zone + add-player tools.
 
