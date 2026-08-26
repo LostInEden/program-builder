@@ -82,6 +82,12 @@ select option {
   background-color: #131a15;
   color: #e9efe9;
 }
+select optgroup {
+  background-color: #131a15;
+  color: #9aa59b;
+  font-style: normal;
+  font-weight: 600;
+}
 
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-thumb { background: #232d26; border-radius: 8px; }
