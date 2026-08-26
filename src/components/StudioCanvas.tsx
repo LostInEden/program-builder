@@ -218,20 +218,27 @@ export default function StudioCanvas({
     setHover(null);
   };
 
-  // Block gesture: stop the bar just IN FRONT of the target defender.
-  const blockTo = (slotIndex: number) => {
-    if (selection?.kind !== "off") return;
-    const from = anchorPos(`off:${selection.id}`);
-    const to = defPos(slotIndex);
-    if (!from) return;
+  // Block between two players: the bar stops just IN FRONT of the target,
+  // perpendicular to the blocker→target direction.
+  const blockBetween = (fromAnchor: string, toAnchor: string) => {
+    const from = anchorPos(fromAnchor);
+    const to = anchorPos(toAnchor);
+    if (!from || !to) return false;
     const dx = to[0] - from[0];
     const dy = to[1] - from[1];
     const len = Math.hypot(dx, dy) || 1;
     const k = Math.max(0.2, (len - 3.4) / len); // marker radius + gap
     snapshot();
+    const id = uid();
     updateCall(call.id, {
-      lines: [...call.lines, { id: uid(), anchor: `off:${selection.id}`, kind: "block", points: [[dx * k, dy * k]], style: "solid", showArrow: false }],
+      lines: [...call.lines, { id, anchor: fromAnchor, kind: "block", points: [[dx * k, dy * k]], style: "solid", showArrow: false }],
     });
+    onSelect({ kind: "line", id });
+    return true;
+  };
+  const blockTo = (slotIndex: number) => {
+    if (selection?.kind !== "off") return;
+    blockBetween(`off:${selection.id}`, `def:${slotIndex}`);
   };
 
   const onFieldPointerDown = (e: React.PointerEvent) => {
@@ -344,10 +351,21 @@ export default function StudioCanvas({
     e.preventDefault();
     e.stopPropagation();
     if (isDrawTool && kind !== "text") {
+      const anchor = kind === "off" ? `off:${id}` : `def:${slot}`;
+      // Block tool, second player clicked: draw the block INTO that player —
+      // T-bar in front of them, aimed from the blocker's direction.
+      if (tool === "block" && pending && pending !== anchor) {
+        if (blockBetween(pending, anchor)) {
+          setPending(null);
+          pendingFromDownRef.current = false;
+          setHover(null);
+          return;
+        }
+      }
       // arm this player — a release after dragging draws immediately (press-drag-release),
       // a plain click leaves it armed for the click-to-place model
       (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
-      setPending(kind === "off" ? `off:${id}` : `def:${slot}`);
+      setPending(anchor);
       setExtendId(null);
       pendingFromDownRef.current = true;
       return;
@@ -761,7 +779,11 @@ export default function StudioCanvas({
       </div>
       {(pending || extendId) && (
         <p className="mx-auto mt-1.5 text-xs font-medium text-grass">
-          {pending ? "Click the field to draw the line — it finishes where you click. Esc cancels." : "Click the field to add one segment. Esc cancels."}
+          {pending && tool === "block"
+            ? "Now click the player to block — the wall lands in front of them. (Or click the field to place it manually.)"
+            : pending
+              ? "Click the field to draw the line — it finishes where you click. Esc cancels."
+              : "Click the field to add one segment. Esc cancels."}
         </p>
       )}
     </div>
