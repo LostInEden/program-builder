@@ -3,24 +3,41 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Search, Upload, Plus, Pencil, X, ChevronRight, ArrowUp, ArrowDown, Check } from "lucide-react";
+import { Search, Upload, Plus, Pencil, X, ChevronRight, ArrowUp, ArrowDown, Check, Dumbbell, CalendarDays, LayoutGrid } from "lucide-react";
 import { useStore, useHydrated, slotLabelOf } from "@/lib/store";
-import { getStructure, structures } from "@/lib/football";
+import { getStructure, structures, type Concept } from "@/lib/football";
 import DepthChartCanvas from "@/components/DepthChartCanvas";
 import RosterImport from "@/components/RosterImport";
+import WeightRoomImport from "@/components/WeightRoomImport";
+
+// Which roster positions are eligible for a depth-chart spot, by the slot's
+// standardized concept. The "show all" toggle bypasses this.
+const CONCEPT_POS: Record<Concept, string[]> = {
+  "Edge rusher": ["DE", "EDGE", "OLB", "DL", "LB"],
+  "Interior DL": ["DT", "NT", "DL", "DE"],
+  "Off-ball LB": ["LB", "MLB", "ILB", "OLB"],
+  "Slot / Nickel": ["NB", "CB", "S", "SS", "FS", "DB"],
+  "Corner": ["CB", "DB"],
+  "Strong safety": ["SS", "S", "DB"],
+  "Free safety": ["FS", "S", "DB"],
+  "Hybrid / Overhang": ["LB", "S", "SS", "DB", "DE"],
+};
 
 export default function TeamPage() {
   const hydrated = useHydrated();
   const {
     players, groups, activeGroupId, overrides, opponent,
     setActiveGroup, setSlotPlayers, setGroupStructure, addGroup, addPlayer,
-    setSlotOverride, setOpponent,
+    setSlotOverride, setOpponent, seasonSchedule, updateScheduleWeek,
   } = useStore();
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [wrOpen, setWrOpen] = useState(false);
   const [editingOpp, setEditingOpp] = useState(false);
+  const [view, setView] = useState<"depth" | "weights" | "schedule">("depth");
+  const [showAllPlayers, setShowAllPlayers] = useState(false);
 
   const group = groups.find((g) => g.id === activeGroupId) ?? groups[0];
   const structure = getStructure(group?.structureId ?? "3-4");
@@ -121,6 +138,151 @@ export default function TeamPage() {
 
         {/* Depth chart + groups + schedule */}
         <div className="flex flex-col gap-5 min-w-0">
+          {/* View tabs */}
+          <div className="flex gap-1.5 rounded-full border border-line bg-card p-1 self-start">
+            {([
+              { id: "depth", label: "Depth Chart", icon: LayoutGrid },
+              { id: "weights", label: "Weight Room", icon: Dumbbell },
+              { id: "schedule", label: "Season Schedule", icon: CalendarDays },
+            ] as const).map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setView(t.id)}
+                className={`display inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                  view === t.id ? "bg-grass text-pitch" : "text-dim hover:text-ink"
+                }`}
+              >
+                <t.icon size={13} /> {t.label}
+              </button>
+            ))}
+          </div>
+
+          {view === "weights" && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="mb-2 flex items-center justify-between">
+                <div className="display text-xs font-semibold tracking-[0.2em] text-dim">
+                  Weight Room — syncs to player profiles
+                </div>
+                <button
+                  onClick={() => setWrOpen(true)}
+                  className="display inline-flex items-center gap-1.5 rounded-full border border-grass/50 px-4 py-1.5 text-xs font-semibold text-grass transition hover:bg-grass hover:text-pitch"
+                >
+                  <Upload size={13} /> Upload weight room data
+                </button>
+              </div>
+              <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-175">
+                    <thead>
+                      <tr className="display text-xs tracking-widest text-dim border-b border-line bg-black/30">
+                        <th className="text-left px-4 py-2.5">#</th>
+                        <th className="text-left px-4 py-2.5">Player</th>
+                        <th className="text-right px-4 py-2.5">Wt</th>
+                        <th className="text-right px-4 py-2.5">Squat</th>
+                        <th className="text-right px-4 py-2.5">Bench</th>
+                        <th className="text-right px-4 py-2.5">Clean</th>
+                        <th className="text-right px-4 py-2.5">Vert</th>
+                        <th className="text-right px-4 py-2.5">40</th>
+                        <th className="text-right px-4 py-2.5">5-10-5</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...players]
+                        .sort((a, b) => (a.jersey ?? 999) - (b.jersey ?? 999))
+                        .map((pl) => (
+                          <tr key={pl.id} className="border-b border-line/50 last:border-0 hover:bg-white/4">
+                            <td className="px-4 py-2 tabular-nums text-dim">{pl.jersey ?? "—"}</td>
+                            <td className="px-4 py-2">
+                              <Link href={`/team/player?id=${pl.id}`} className="font-semibold text-sky hover:underline">
+                                {pl.name}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-2 text-right tabular-nums">{pl.weightLb ?? "—"}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{pl.squat ?? "—"}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{pl.bench ?? "—"}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{pl.clean ?? "—"}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{pl.vertical ?? "—"}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{pl.forty ?? "—"}</td>
+                            <td className="px-4 py-2 text-right tabular-nums">{pl.shuttle ?? "—"}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {view === "schedule" && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-2">
+                Season Schedule — 10 games + bye over 11 weeks
+              </div>
+              <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="display text-xs tracking-widest text-dim border-b border-line bg-black/30">
+                      <th className="text-left px-4 py-2.5">Wk</th>
+                      <th className="text-left px-4 py-2.5">Date</th>
+                      <th className="text-left px-4 py-2.5">Opponent</th>
+                      <th className="text-left px-4 py-2.5">H/A</th>
+                      <th className="text-left px-4 py-2.5">Result</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {seasonSchedule.map((w) => (
+                      <tr key={w.week} className={`border-b border-line/50 last:border-0 ${w.opponent === null ? "bg-white/3" : ""}`}>
+                        <td className="px-4 py-2 display font-bold text-grass tabular-nums">{w.week}</td>
+                        <td className="px-4 py-2">
+                          <input
+                            type="date"
+                            value={w.date}
+                            onChange={(e) => updateScheduleWeek(w.week, { date: e.target.value })}
+                            className="rounded-lg border border-transparent bg-transparent px-1 py-1 tabular-nums hover:border-line focus:border-grass focus:outline-none"
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          <input
+                            value={w.opponent ?? ""}
+                            placeholder="BYE"
+                            onChange={(e) => updateScheduleWeek(w.week, { opponent: e.target.value || null })}
+                            className={`w-full rounded-lg border border-transparent bg-transparent px-1 py-1 hover:border-line focus:border-grass focus:outline-none ${
+                              w.opponent === null ? "display font-bold placeholder:text-ember" : "font-semibold"
+                            }`}
+                          />
+                        </td>
+                        <td className="px-4 py-2">
+                          {w.opponent !== null && (
+                            <button
+                              onClick={() => updateScheduleWeek(w.week, { homeAway: w.homeAway === "home" ? "away" : "home" })}
+                              className={`rounded-full border px-2.5 py-0.5 text-xs ${
+                                w.homeAway === "home" ? "border-grass/40 bg-grass/10 text-grass" : "border-line text-dim"
+                              }`}
+                            >
+                              {w.homeAway === "home" ? "Home" : "Away"}
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-4 py-2">
+                          {w.opponent !== null && (
+                            <input
+                              value={w.result ?? ""}
+                              placeholder="—"
+                              onChange={(e) => updateScheduleWeek(w.week, { result: e.target.value || undefined })}
+                              className="w-24 rounded-lg border border-transparent bg-transparent px-1 py-1 text-dim tabular-nums hover:border-line focus:border-grass focus:outline-none"
+                            />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-2 text-xs text-dim">Clear an opponent to mark a bye week. The calendar follows this schedule.</p>
+            </motion.div>
+          )}
+
+          {view === "depth" && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <div className="mb-2 flex items-center justify-between">
               <div className="display text-xs font-semibold tracking-[0.2em] text-dim">
@@ -229,24 +391,50 @@ export default function TeamPage() {
                             </div>
                           );
                         })}
-                        <select
-                          value=""
-                          onChange={(e) => {
-                            if (e.target.value)
-                              setSlotPlayers(group.id, selectedSlot, [...slotIds, e.target.value]);
-                          }}
-                          className="rounded-lg border border-dashed border-line bg-black/25 px-3 py-2 text-sm text-dim"
-                        >
-                          <option value="">+ Add player to this position…</option>
-                          {[...players]
+                        {(() => {
+                          const concept =
+                            overrides[group.structureId]?.[selectedSlot]?.concept ??
+                            structure.slots[selectedSlot].concept;
+                          const allowed = CONCEPT_POS[concept] ?? [];
+                          const eligible = [...players]
                             .filter((p) => !slotIds.includes(p.id))
-                            .sort((a, b) => (a.jersey ?? 999) - (b.jersey ?? 999))
-                            .map((p) => (
-                              <option key={p.id} value={p.id}>
-                                #{p.jersey ?? "—"} {p.name} ({p.positions.join("/") || "?"})
-                              </option>
-                            ))}
-                        </select>
+                            .filter(
+                              (p) =>
+                                showAllPlayers ||
+                                p.positions.length === 0 ||
+                                p.positions.some((pos) => allowed.includes(pos.toUpperCase())),
+                            )
+                            .sort((a, b) => (a.jersey ?? 999) - (b.jersey ?? 999));
+                          return (
+                            <>
+                              <select
+                                value=""
+                                onChange={(e) => {
+                                  if (e.target.value)
+                                    setSlotPlayers(group.id, selectedSlot, [...slotIds, e.target.value]);
+                                }}
+                                className="rounded-lg border border-dashed border-line bg-black/25 px-3 py-2 text-sm text-dim"
+                              >
+                                <option value="">
+                                  + Add player… ({eligible.length} {showAllPlayers ? "on roster" : `eligible ${concept.toLowerCase()}s`})
+                                </option>
+                                {eligible.map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    #{p.jersey ?? "—"} {p.name} ({p.positions.join("/") || "?"})
+                                  </option>
+                                ))}
+                              </select>
+                              <label className="flex items-center gap-1.5 text-xs text-dim">
+                                <input
+                                  type="checkbox"
+                                  checked={showAllPlayers}
+                                  onChange={(e) => setShowAllPlayers(e.target.checked)}
+                                />
+                                Show entire roster
+                              </label>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -254,8 +442,10 @@ export default function TeamPage() {
               </div>
             )}
           </motion.div>
+          )}
 
           {/* Personnel groups */}
+          {view === "depth" && (
           <div>
             <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-2">
               Personnel Groups
@@ -292,6 +482,7 @@ export default function TeamPage() {
               </button>
             </div>
           </div>
+          )}
 
           {/* Schedule */}
           <div className="rounded-xl border border-line bg-card/80 px-5 py-4 flex flex-wrap items-center gap-4">
@@ -335,6 +526,7 @@ export default function TeamPage() {
       </div>
 
       {importOpen && <RosterImport onClose={() => setImportOpen(false)} />}
+      {wrOpen && <WeightRoomImport onClose={() => setWrOpen(false)} />}
     </div>
   );
 }

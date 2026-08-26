@@ -44,7 +44,7 @@ export const FORMATION_TERMS = [
   "Closed",
   "Pro",
   "Trey",
-  "Trips Plus",
+  "Plus",
   "Bunch",
   "Stack",
   "Slot",
@@ -69,11 +69,18 @@ export type Recognition = {
 export function recognizeFormation(look: OffMarker[], strengthRule: StrengthRule): Recognition | null {
   if (look.length < 6) return null;
 
+  // OL rule: the five players labeled LT, LG, C, RG, RT ARE the offensive line.
+  // They render on the diagram but never count toward the formation name —
+  // recognition is based on the eligible skill positions only.
+  const OL_LABELS = new Set(["LT", "LG", "C", "RG", "RT"]);
+  let ol = look.filter((m) => OL_LABELS.has(m.label.toUpperCase())).sort((a, b) => a.x - b.x);
   const maxY = Math.max(...look.map((m) => m.y));
-  // OL: the row nearest the LOS (largest y), up to 5 central markers.
-  const lineRow = look.filter((m) => m.y >= maxY - 2 && m.x >= 28 && m.x <= 72).sort((a, b) => a.x - b.x);
-  if (lineRow.length < 3) return null;
-  const ol = lineRow.slice(0, 5);
+  if (ol.length < 3) {
+    // fallback: infer the line positionally (row nearest the LOS, central)
+    const lineRow = look.filter((m) => m.y >= maxY - 2 && m.x >= 28 && m.x <= 72).sort((a, b) => a.x - b.x);
+    if (lineRow.length < 3) return null;
+    ol = lineRow.slice(0, 5);
+  }
   const leftEdge = ol[0].x;
   const rightEdge = ol[ol.length - 1].x;
   const center = (leftEdge + rightEdge) / 2;
@@ -118,8 +125,10 @@ export function recognizeFormation(look: OffMarker[], strengthRule: StrengthRule
   if (base === "Trips" || base === "Trey") {
     const xs = sideRemoved.map((m) => m.x);
     if (xs.length >= 3 && Math.max(...xs) - Math.min(...xs) <= 9) tags.push("Bunch");
+    // "Plus" is a tag appended once to the base name (HB aligned to the trips
+    // side): "Trips Right Plus", never "Trips Right Trips Plus".
     const tripsBack = backs.find((m) => (side === "Right" ? m.x > center + 2 : m.x < center - 2));
-    if (tripsBack) tags.push("Trips Plus");
+    if (tripsBack) tags.push("Plus");
   }
   // Stack: two removed receivers nearly on top of each other.
   outer: for (let i = 0; i < removed.length; i++) {

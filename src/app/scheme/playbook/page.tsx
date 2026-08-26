@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
-import { useStore, useHydrated, slotLabelOf, type PlaybookSection } from "@/lib/store";
+import { useStore, useHydrated, slotLabelOf, PRESET_PLAYS, type PlaybookSection } from "@/lib/store";
 import {
   getStructure,
   offensivePresets,
@@ -16,6 +16,8 @@ import { recognizeFormation, formationLabel } from "@/lib/recognize";
 import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
 const SECTIONS: PlaybookSection[] = ["Fronts", "Coverages", "Pressures", "Checks & Adjustments"];
+type Tab = "Playbook" | PlaybookSection;
+const TABS: Tab[] = ["Playbook", ...SECTIONS];
 const PTYPES = ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Offensive Line", "Other"];
 
 export default function PlaybookPage() {
@@ -23,9 +25,9 @@ export default function PlaybookPage() {
   const {
     calls, activeCallId, setActiveCall, addCall, updateCall, duplicateCall, deleteCall,
     groups, activeGroupId, players, overrides, strengthRule, formationTerms,
-    formationTemplates, saveFormationTemplate,
+    formationTemplates, saveFormationTemplate, addPresetCall,
   } = useStore();
-  const [section, setSection] = useState<PlaybookSection>("Fronts");
+  const [section, setSection] = useState<Tab>("Playbook");
   const [selection, setSelection] = useState<Selection>(null);
 
   if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
@@ -33,8 +35,11 @@ export default function PlaybookPage() {
   const group = groups.find((g) => g.id === activeGroupId) ?? groups[0];
   const structure = getStructure(group.structureId);
   const byId = new Map(players.map((p) => [p.id, p]));
-  const sectionCalls = calls.filter((c) => c.section === section);
-  const call = calls.find((c) => c.id === activeCallId && c.section === section) ?? sectionCalls[0] ?? null;
+  const sectionCalls = section === "Playbook" ? calls : calls.filter((c) => c.section === section);
+  const call =
+    calls.find((c) => c.id === activeCallId && (section === "Playbook" || c.section === section)) ??
+    sectionCalls[0] ??
+    null;
   const label = (i: number) => slotLabelOf(overrides, group.structureId, i);
   const rec = call ? recognizeFormation(call.offLook, strengthRule) : null;
 
@@ -59,7 +64,7 @@ export default function PlaybookPage() {
         </Link>
         <span className="text-xs text-dim">{group.name} ({structure.name}) · saves automatically</span>
         <div className="ml-auto flex gap-1.5 rounded-full border border-line bg-card p-1">
-          {SECTIONS.map((s) => (
+          {TABS.map((s) => (
             <button
               key={s}
               onClick={() => { setSection(s); setSelection(null); }}
@@ -87,17 +92,40 @@ export default function PlaybookPage() {
               }`}
             >
               {c.name}
+              {section === "Playbook" && (
+                <span className="block text-[10px] text-dim">{c.section}</span>
+              )}
             </button>
           ))}
           {sectionCalls.length === 0 && (
             <p className="px-3 py-4 text-sm text-dim">No calls in {section} yet.</p>
           )}
           <button
-            onClick={() => addCall(section)}
+            onClick={() => addCall(section === "Playbook" ? "Fronts" : section)}
             className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-2.5 text-sm text-dim transition hover:text-ink hover:border-dim"
           >
             <Plus size={14} /> New call
           </button>
+          <select
+            value=""
+            onChange={(e) => {
+              if (e.target.value) addPresetCall(e.target.value);
+              setSelection(null);
+            }}
+            className="rounded-lg border border-dashed border-line bg-black/25 px-2.5 py-2 text-sm text-dim"
+          >
+            <option value="">Load preset play…</option>
+            {SECTIONS.map((sec) => {
+              const items = PRESET_PLAYS.filter((pp) => pp.section === sec);
+              return items.length ? (
+                <optgroup key={sec} label={sec}>
+                  {items.map((pp) => (
+                    <option key={pp.id} value={pp.id}>{pp.name}</option>
+                  ))}
+                </optgroup>
+              ) : null;
+            })}
+          </select>
         </div>
 
         {/* Editor */}
@@ -163,6 +191,27 @@ export default function PlaybookPage() {
                 </div>
               </div>
 
+              <div className="mb-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs text-dim mb-1">Offensive formation</label>
+                  <input
+                    value={call.offForm}
+                    onChange={(e) => updateCall(call.id, { offForm: e.target.value })}
+                    placeholder="Trips Right"
+                    className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-dim mb-1">Run / pass concept</label>
+                  <input
+                    value={call.offConcept}
+                    onChange={(e) => updateCall(call.id, { offConcept: e.target.value })}
+                    placeholder="Inside zone"
+                    className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
               <StudioCanvas
                 call={call}
                 structureId={group.structureId}
@@ -192,26 +241,6 @@ export default function PlaybookPage() {
                 </div>
               )}
 
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs text-dim mb-1">Offensive formation</label>
-                  <input
-                    value={call.offForm}
-                    onChange={(e) => updateCall(call.id, { offForm: e.target.value })}
-                    placeholder="Trips Right"
-                    className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-dim mb-1">Run / pass concept</label>
-                  <input
-                    value={call.offConcept}
-                    onChange={(e) => updateCall(call.id, { offConcept: e.target.value })}
-                    placeholder="Inside zone"
-                    className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
             </motion.div>
           ) : (
             <div className="grid place-items-center rounded-xl border border-dashed border-line py-24 text-dim">

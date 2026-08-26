@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
-import { seasonGames, seasonStart, seasonEnd } from "@/lib/data";
+import { seasonStart, seasonEnd } from "@/lib/data";
+import { useStore, useHydrated, type ScheduleWeek } from "@/lib/store";
 
 type EventKind = "practice" | "film" | "meeting" | "game" | "team";
 type CalEvent = { time: string; title: string; kind: EventKind };
@@ -26,9 +27,9 @@ const inSeason = (d: Date) => {
 };
 
 // Weekly rhythm + game schedule → events for any date. Deterministic, no stored state.
-function eventsFor(d: Date): CalEvent[] {
+function eventsFor(d: Date, games: ScheduleWeek[]): CalEvent[] {
   const events: CalEvent[] = [];
-  const game = seasonGames.find((g) => g.date === iso(d));
+  const game = games.find((g) => g.opponent && g.date === iso(d));
   if (game) {
     events.push({
       time: "7:00 PM",
@@ -39,7 +40,8 @@ function eventsFor(d: Date): CalEvent[] {
   if (!inSeason(d)) return events;
 
   const dow = d.getDay(); // 0 = Sunday
-  const gameThisWeek = seasonGames.some((g) => {
+  const gameThisWeek = games.some((g) => {
+    if (!g.opponent) return false;
     const gd = new Date(g.date + "T12:00:00");
     const diff = (gd.getTime() - d.getTime()) / 86400000;
     return diff >= 0 && diff < 7 - ((dow + 6) % 7);
@@ -92,6 +94,8 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function CalendarPage() {
+  const hydrated = useHydrated();
+  const games = useStore((s) => s.seasonSchedule);
   const today = useMemo(() => new Date(), []);
   const [view, setView] = useState<"month" | "week">("month");
   const [cursor, setCursor] = useState(() => new Date());
@@ -106,6 +110,8 @@ export default function CalendarPage() {
       return d;
     });
   }, [cursor]);
+
+  if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
 
   const nav = (dir: -1 | 1) => {
     const next = new Date(cursor);
@@ -178,7 +184,7 @@ export default function CalendarPage() {
               {week.map((d) => {
                 const isCurMonth = d.getMonth() === cursor.getMonth();
                 const isToday = iso(d) === iso(today);
-                const events = eventsFor(d);
+                const events = eventsFor(d, games);
                 const shown = events.slice(0, 3);
                 return (
                   <button
@@ -228,7 +234,7 @@ export default function CalendarPage() {
           className="grid gap-3 md:grid-cols-2 xl:grid-cols-7 xl:gap-2"
         >
           {weekOf.map((d) => {
-            const events = eventsFor(d);
+            const events = eventsFor(d, games);
             const isToday = iso(d) === iso(today);
             const hasGame = events.some((e) => e.kind === "game");
             return (

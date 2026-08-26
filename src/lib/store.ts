@@ -7,10 +7,12 @@ import {
   getStructure,
   offensivePresets,
   defaultPresetName,
+  defenseCanvasY,
   type OffMarker,
   type Concept,
   type DrawLine,
   type Zone,
+  type Structure,
 } from "@/lib/football";
 import type { StrengthRule } from "@/lib/recognize";
 
@@ -115,20 +117,43 @@ const seedPlayers: Player[] = [
   p(66, "S. Pruitt", "JR", ["NT", "OG"], { weightLb: 275 }),
 ];
 
-// 3-4 slot order in football.ts: WE,T,N,SE,W,M,S,C,C,SS,FS
+// 3-4 slot order in football.ts: E,N,E,J,R,W,M,C,C,SS,FS
 const baseSlots: Record<number, string[]> = {
-  0: ["pl-90"], // WE J. Lewis
-  1: ["pl-99", "pl-55"], // T A. Henry, D. King
-  2: ["pl-70", "pl-66"], // N A. Mack, S. Pruitt
-  3: ["pl-1"], // SE T. Allen
-  4: ["pl-10", "pl-44"], // W C. Locke, R. Ogles
-  5: ["pl-7"], // M T. Mathine
-  6: ["pl-5"], // S H. Amason
+  0: ["pl-99", "pl-55"], // E A. Henry, D. King
+  1: ["pl-70", "pl-66"], // N A. Mack, S. Pruitt
+  2: ["pl-1"], // E T. Allen
+  3: ["pl-90"], // J J. Lewis
+  4: ["pl-44"], // R R. Ogles
+  5: ["pl-10", "pl-5"], // W C. Locke, H. Amason
+  6: ["pl-7"], // M T. Mathine
   7: ["pl-9", "pl-24"], // C D. Ville, M. Turner
   8: ["pl-20", "pl-2"], // C P. Price, D. Smith
   9: ["pl-3", "pl-33"], // SS C. Beck, K. Byrd
   10: ["pl-11", "pl-14"], // FS E. Reed, L. White
 };
+
+export type ScheduleWeek = {
+  week: number;
+  date: string; // YYYY-MM-DD (bye weeks keep a date for calendar placement)
+  opponent: string | null; // null = bye
+  homeAway: "home" | "away";
+  result?: string;
+};
+
+// Default: 10 games + a bye across an 11-week regular season.
+const seedSchedule: ScheduleWeek[] = [
+  { week: 1, date: "2026-08-21", opponent: "Franklin East", homeAway: "away", result: "W 27\u201314" },
+  { week: 2, date: "2026-08-28", opponent: "Central", homeAway: "home", result: "W 21\u201317" },
+  { week: 3, date: "2026-09-04", opponent: "Miller Creek", homeAway: "away", result: "L 13\u201320" },
+  { week: 4, date: "2026-09-11", opponent: "Westview", homeAway: "home", result: "W 35\u20137" },
+  { week: 5, date: "2026-09-19", opponent: "Red Valley", homeAway: "home" },
+  { week: 6, date: "2026-09-26", opponent: null, homeAway: "home" },
+  { week: 7, date: "2026-10-02", opponent: "North Ridge", homeAway: "away" },
+  { week: 8, date: "2026-10-09", opponent: "Bellwood", homeAway: "home" },
+  { week: 9, date: "2026-10-16", opponent: "South Gate", homeAway: "away" },
+  { week: 10, date: "2026-10-23", opponent: "Pine Hill", homeAway: "home" },
+  { week: 11, date: "2026-10-30", opponent: "East Ridge", homeAway: "away" },
+];
 
 const seedGroups: PersonnelGroup[] = [
   { id: "base", name: "Base", structureId: "3-4", slots: baseSlots },
@@ -154,16 +179,17 @@ const seedCalls: Call[] = [
     offForm: "Trips Right",
     offConcept: "Inside zone",
     offLook: look("Trips Right (3x1)"),
-    // 3-4 slot order: 0 WE, 1 T, 2 N, 3 SE — squeeze/penetrate arrows.
+    // 3-4 slot order: 0 E, 1 N, 2 E, 3 J, 4 R — squeeze/penetrate arrows.
     lines: [
-      L("l-okie-1", "def:0", "route", [[1.5, -2.5]]),
-      L("l-okie-2", "def:1", "route", [[1, -3]]),
-      L("l-okie-3", "def:2", "route", [[0, -3]]),
-      L("l-okie-4", "def:3", "route", [[-1.5, -2.5]]),
+      L("l-okie-1", "def:0", "route", [[1, -3]]),
+      L("l-okie-2", "def:1", "route", [[0, -3]]),
+      L("l-okie-3", "def:2", "route", [[-1, -3]]),
+      L("l-okie-4", "def:3", "route", [[1.5, -2.5]]),
+      L("l-okie-5", "def:4", "route", [[-1.5, -2.5]]),
     ],
     zones: [],
     defOffsets: {},
-    assignments: { 0: "5-tech, C gap, squeeze down blocks", 1: "3-tech, B gap penetrate", 2: "0-tech, 2-gap A gaps", 3: "5-tech, C gap, force on flow" },
+    assignments: { 0: "4i, B gap, squeeze down blocks", 1: "0-tech, 2-gap A gaps", 2: "4i, B gap penetrate", 3: "Edge, C gap force", 4: "Edge, C gap, force on flow" },
     notes: "Base front vs 11/12 personnel.",
   },
   {
@@ -194,13 +220,13 @@ const seedCalls: Call[] = [
     offConcept: "Dropback",
     offLook: look("Gun Spread (2x2)"),
     lines: [
-      L("l-smk-w", "def:4", "route", [[8, -4], [11, -8]]), // W shoots the A gap
-      L("l-smk-m", "def:5", "route", [[-2, -5]]),
-      L("l-smk-s", "def:6", "motion", [[6, 6]]), // S walls #2
+      L("l-smk-w", "def:5", "route", [[8, -4], [11, -8]]), // W shoots the A gap
+      L("l-smk-m", "def:6", "route", [[-2, -5]]),
+      L("l-smk-s", "def:4", "motion", [[6, 6]]), // R walls #2
     ],
     zones: [],
     defOffsets: {},
-    assignments: { 4: "A-gap blitz, contain rules off", 5: "Green dog vs back block", 6: "Wall #2, seam carry" },
+    assignments: { 5: "A-gap blitz, contain rules off", 6: "Green dog vs back block", 4: "Wall #2, seam carry" },
     notes: "Fire zone behind it — 3 under, 3 deep.",
   },
   {
@@ -218,6 +244,111 @@ const seedCalls: Call[] = [
   },
 ];
 
+// Preset plays a coach can load into the playbook (built against whatever
+// structure the active package uses).
+export const PRESET_PLAYS: {
+  id: string;
+  name: string;
+  section: PlaybookSection;
+  build: (st: Structure) => Pick<Call, "zones" | "lines" | "assignments" | "notes">;
+}[] = [
+  {
+    id: "pp-cover2",
+    name: "Cover 2",
+    section: "Coverages",
+    build: () => ({
+      zones: [
+        { id: uid(), x: 28, y: 64, rx: 20, ry: 7, side: "def" },
+        { id: uid(), x: 72, y: 64, rx: 20, ry: 7, side: "def" },
+        { id: uid(), x: 10, y: 50, rx: 8, ry: 4.5, side: "def" },
+        { id: uid(), x: 90, y: 50, rx: 8, ry: 4.5, side: "def" },
+      ],
+      lines: [],
+      assignments: {},
+      notes: "Two deep halves, corners squat in the flats. Vulnerable in the deep middle hole.",
+    }),
+  },
+  {
+    id: "pp-cover4",
+    name: "Cover 4 Quarters",
+    section: "Coverages",
+    build: () => ({
+      zones: [
+        { id: uid(), x: 14, y: 65, rx: 11, ry: 6, side: "def" },
+        { id: uid(), x: 38, y: 65, rx: 11, ry: 6, side: "def" },
+        { id: uid(), x: 62, y: 65, rx: 11, ry: 6, side: "def" },
+        { id: uid(), x: 86, y: 65, rx: 11, ry: 6, side: "def" },
+      ],
+      lines: [],
+      assignments: {},
+      notes: "Four deep quarters \u2014 safeties read #2. Strong vs 4 verts and play action.",
+    }),
+  },
+  {
+    id: "pp-cover1",
+    name: "Cover 1 Robber",
+    section: "Coverages",
+    build: () => ({
+      zones: [
+        { id: uid(), x: 50, y: 68, rx: 15, ry: 6, side: "def" },
+        { id: uid(), x: 50, y: 52, rx: 8, ry: 4, side: "def" },
+      ],
+      lines: [],
+      assignments: {},
+      notes: "Man across, single high, robber sits on crossers at 10\u201312 yards.",
+    }),
+  },
+  {
+    id: "pp-doublea",
+    name: "Double A Gap",
+    section: "Pressures",
+    build: (st) => {
+      const lbs = st.slots.map((sl, i) => ({ sl, i })).filter((x) => x.sl.concept === "Off-ball LB").slice(0, 2);
+      return {
+        zones: [],
+        lines: lbs.map(({ sl, i }, k) => ({
+          id: uid(),
+          anchor: `def:${i}`,
+          kind: "route" as const,
+          points: [[(k === 0 ? 48 : 52) - sl.x, 40.5 - defenseCanvasY(sl.y)] as [number, number]],
+        })),
+        assignments: Object.fromEntries(lbs.map(({ i }) => [i, "A-gap blitz \u2014 hug the center hip"])),
+        notes: "Both backers show and shoot the A gaps. Check protection answers.",
+      };
+    },
+  },
+  {
+    id: "pp-edgefire",
+    name: "Edge Fire",
+    section: "Pressures",
+    build: (st) => {
+      const edges = st.slots.map((sl, i) => ({ sl, i })).filter((x) => x.sl.concept === "Edge rusher").slice(0, 2);
+      return {
+        zones: [],
+        lines: edges.map(({ sl, i }) => ({
+          id: uid(),
+          anchor: `def:${i}`,
+          kind: "route" as const,
+          points: [[sl.x < 50 ? 4 : -4, -5] as [number, number]],
+        })),
+        assignments: Object.fromEntries(edges.map(({ i }) => [i, "Speed rush \u2014 contain, close the pocket"])),
+        notes: "Edges fire off both sides. Coverage plays 3 under, 3 deep behind it.",
+      };
+    },
+  },
+  {
+    id: "pp-motioncheck",
+    name: "Motion Bump",
+    section: "Checks & Adjustments",
+    build: () => ({
+      zones: [],
+      lines: [],
+      assignments: {},
+      notes: "Vs across-the-formation motion: bump the second level, corners stay \u2014 no rotation.",
+    }),
+  },
+];
+
 type Store = {
   players: Player[];
   groups: PersonnelGroup[];
@@ -231,11 +362,13 @@ type Store = {
   calls: Call[];
   activeCallId: string | null;
   opponent: { name: string; kickoff: string };
+  seasonSchedule: ScheduleWeek[];
 
   addPlayer: (pl?: Partial<Player>) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
   removePlayer: (id: string) => void;
   importPlayers: (rows: Partial<Player>[]) => number;
+  applyWeightRoom: (rows: (Partial<Player> & { name?: string })[]) => number;
 
   setActiveGroup: (id: string) => void;
   setGroupStructure: (groupId: string, structureId: string) => void;
@@ -256,6 +389,8 @@ type Store = {
   setActiveCall: (id: string | null) => void;
 
   setOpponent: (patch: Partial<{ name: string; kickoff: string }>) => void;
+  updateScheduleWeek: (week: number, patch: Partial<ScheduleWeek>) => void;
+  addPresetCall: (presetId: string) => void;
 };
 
 export const useStore = create<Store>()(
@@ -277,6 +412,7 @@ export const useStore = create<Store>()(
       calls: seedCalls,
       activeCallId: seedCalls[0].id,
       opponent: { name: "Red Valley", kickoff: "Saturday, 7:00 PM" },
+      seasonSchedule: seedSchedule,
 
       addPlayer: (pl = {}) => {
         const id = uid();
@@ -420,6 +556,66 @@ export const useStore = create<Store>()(
       setActiveCall: (id) => set({ activeCallId: id }),
 
       setOpponent: (patch) => set((s) => ({ opponent: { ...s.opponent, ...patch } })),
+      updateScheduleWeek: (week, patch) =>
+        set((s) => ({
+          seasonSchedule: s.seasonSchedule.map((w) => (w.week === week ? { ...w, ...patch } : w)),
+        })),
+      applyWeightRoom: (rows) => {
+        let matched = 0;
+        const norm = (v: string) => v.toLowerCase().replace(/[^a-z]/g, "");
+        set((s) => ({
+          players: s.players.map((pl) => {
+            const pn = norm(pl.name);
+            const row = rows.find(
+              (r) =>
+                (r.jersey != null && r.jersey === pl.jersey) ||
+                (r.name && (pn.includes(norm(r.name).slice(-6)) || norm(r.name).includes(pn.slice(-6)))),
+            );
+            if (!row) return pl;
+            matched++;
+            const num = (v: number | null | undefined, prev: number | null | undefined) => (v != null ? v : prev);
+            return {
+              ...pl,
+              squat: num(row.squat, pl.squat),
+              bench: num(row.bench, pl.bench),
+              clean: num(row.clean, pl.clean),
+              vertical: num(row.vertical, pl.vertical),
+              broad: num(row.broad, pl.broad),
+              forty: num(row.forty, pl.forty),
+              flying10: num(row.flying10, pl.flying10),
+              shuttle: num(row.shuttle, pl.shuttle),
+              weightLb: num(row.weightLb, pl.weightLb),
+            };
+          }),
+        }));
+        return matched;
+      },
+      addPresetCall: (presetId) => {
+        const preset = PRESET_PLAYS.find((x) => x.id === presetId);
+        if (!preset) return;
+        const st = getStructure(get().groups.find((g) => g.id === get().activeGroupId)?.structureId ?? "3-4");
+        const built = preset.build(st);
+        const id = uid();
+        set((s) => ({
+          calls: [
+            ...s.calls,
+            {
+              id,
+              section: preset.section,
+              name: preset.name,
+              offForm: "",
+              offConcept: "",
+              offLook: offensivePresets[defaultPresetName].map((m) => ({ ...m })),
+              lines: built.lines,
+              zones: built.zones,
+              defOffsets: {},
+              assignments: built.assignments,
+              notes: built.notes,
+            },
+          ],
+          activeCallId: id,
+        }));
+      },
     }),
     {
       name: "program-builder-v3",

@@ -68,7 +68,16 @@ export default function DepthChartCanvas({
               {starter ? (
                 <>
                   <span className="text-dim">#{starter.jersey ?? "—"}</span> {starter.name}
-                  {backups > 0 && <span className="text-dim"> +{backups}</span>}
+                  {/* top 3 at each position */}
+                  {ids.slice(1, 3).map((bid) => {
+                    const b = byId.get(bid);
+                    return b ? (
+                      <span key={bid} className="block text-[9.5px] text-dim">
+                        #{b.jersey ?? "—"} {b.name}
+                      </span>
+                    ) : null;
+                  })}
+                  {backups > 2 && <span className="block text-[9px] text-dim/70">+{backups - 2} more</span>}
                 </>
               ) : (
                 <span className="text-dim/70 italic">open</span>
