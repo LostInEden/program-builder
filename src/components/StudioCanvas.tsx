@@ -561,8 +561,20 @@ export default function StudioCanvas({
             return (
               <g key={l.id}>
                 <path
-                  d={d} fill="none" stroke="transparent" strokeWidth="3"
+                  d={d} fill="none" stroke="transparent" strokeWidth={l.kind === "block" ? 4.5 : 3}
                   style={{ pointerEvents: "stroke", cursor: tool === "select" ? "pointer" : undefined }}
+                  onClick={(e) => {
+                    if (tool !== "select") return;
+                    e.stopPropagation();
+                    onSelect(selected ? null : { kind: "line", id: l.id });
+                    setExtendId(null);
+                  }}
+                />
+                {/* fat hit target over the endpoint / block bar — short lines are hard to hit */}
+                <circle
+                  cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={l.kind === "block" ? 3 : 2.2}
+                  fill="transparent"
+                  style={{ pointerEvents: "all", cursor: tool === "select" ? "pointer" : undefined }}
                   onClick={(e) => {
                     if (tool !== "select") return;
                     e.stopPropagation();
@@ -574,8 +586,9 @@ export default function StudioCanvas({
                   d={d} fill="none" stroke={c} strokeWidth={selected ? 0.6 : 0.48}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
                   markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
+                  style={{ pointerEvents: "none" }}
                 />
-                {bar && <line x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={c} strokeWidth={selected ? 0.7 : 0.55} strokeLinecap="round" />}
+                {bar && <line x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={c} strokeWidth={selected ? 0.7 : 0.55} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && (
                   <>
                     {/* waypoint handles (filled) */}
