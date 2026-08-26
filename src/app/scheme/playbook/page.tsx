@@ -3,14 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowLeft, Plus, Copy, Trash2, X, Maximize2 } from "lucide-react";
-import PlayEditor from "@/components/PlayEditor";
+import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
 import { useStore, useHydrated, slotLabelOf, type PlaybookSection } from "@/lib/store";
-import { getStructure, offensivePresets, LOS_Y } from "@/lib/football";
+import {
+  getStructure,
+  offensivePresets,
+  ROUTE_COLORS,
+  type LineKind,
+  type LineStyle,
+} from "@/lib/football";
 import { recognizeFormation, formationLabel } from "@/lib/recognize";
-import PlayCanvas from "@/components/PlayCanvas";
+import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
 const SECTIONS: PlaybookSection[] = ["Fronts", "Coverages", "Pressures", "Checks & Adjustments"];
+const PTYPES = ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tight End", "Offensive Line", "Other"];
 
 export default function PlaybookPage() {
   const hydrated = useHydrated();
@@ -20,9 +26,7 @@ export default function PlaybookPage() {
     formationTemplates, saveFormationTemplate,
   } = useStore();
   const [section, setSection] = useState<PlaybookSection>("Fronts");
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [selectedOff, setSelectedOff] = useState<string | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
+  const [selection, setSelection] = useState<Selection>(null);
 
   if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
 
@@ -33,15 +37,19 @@ export default function PlaybookPage() {
   const call = calls.find((c) => c.id === activeCallId && c.section === section) ?? sectionCalls[0] ?? null;
   const label = (i: number) => slotLabelOf(overrides, group.structureId, i);
   const rec = call ? recognizeFormation(call.offLook, strengthRule) : null;
-  const selOffMarker = call?.offLook.find((m) => m.id === selectedOff) ?? null;
+
+  const selOff = call && selection?.kind === "off" ? call.offLook.find((m) => m.id === selection.id) : null;
+  const selLine = call && selection?.kind === "line" ? call.lines.find((l) => l.id === selection.id) : null;
+  const selText = call && selection?.kind === "text" ? (call.texts ?? []).find((t) => t.id === selection.id) : null;
+  const selDef = selection?.kind === "def" ? selection.slot : null;
 
   return (
-    <div className="px-6 py-8 max-w-7xl mx-auto">
-      <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-4">
+    <div className="px-6 py-6 max-w-[1700px] mx-auto">
+      <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
         <ArrowLeft size={15} /> My Scheme
       </Link>
 
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="display text-4xl font-bold">Playbook</h1>
         <Link
           href="/scheme/playbook/print"
@@ -49,11 +57,12 @@ export default function PlaybookPage() {
         >
           Print / PDF
         </Link>
+        <span className="text-xs text-dim">{group.name} ({structure.name}) · saves automatically</span>
         <div className="ml-auto flex gap-1.5 rounded-full border border-line bg-card p-1">
           {SECTIONS.map((s) => (
             <button
               key={s}
-              onClick={() => { setSection(s); setSelectedSlot(null); setSelectedOff(null); }}
+              onClick={() => { setSection(s); setSelection(null); }}
               className={`display rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                 s === section ? "bg-sky text-pitch" : "text-dim hover:text-ink"
               }`}
@@ -64,13 +73,13 @@ export default function PlaybookPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[220px_1fr_280px] items-start">
+      <div className="grid gap-4 xl:grid-cols-[210px_minmax(0,1fr)_290px] items-start">
         {/* Call list */}
         <div className="rounded-xl border border-line bg-card/80 p-3 flex flex-col gap-1.5">
           {sectionCalls.map((c) => (
             <button
               key={c.id}
-              onClick={() => { setActiveCall(c.id); setSelectedSlot(null); setSelectedOff(null); }}
+              onClick={() => { setActiveCall(c.id); setSelection(null); }}
               className={`rounded-lg px-3 py-2.5 text-left text-sm transition ${
                 call?.id === c.id
                   ? "bg-sky/15 border border-sky/40 font-semibold"
@@ -91,22 +100,16 @@ export default function PlaybookPage() {
           </button>
         </div>
 
-        {/* Canvas */}
+        {/* Editor */}
         <div className="min-w-0">
           {call ? (
-            <motion.div key={call.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <div className="mb-3 flex flex-wrap items-center gap-2">
+            <motion.div key={call.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
                 <input
                   value={call.name}
                   onChange={(e) => updateCall(call.id, { name: e.target.value })}
                   className="display rounded-lg border border-line bg-black/25 px-3 py-1.5 text-2xl font-bold min-w-0 w-52"
                 />
-                <button
-                  onClick={() => setEditorOpen(true)}
-                  className="display inline-flex items-center gap-1.5 rounded-full bg-grass px-4 py-1.5 text-xs font-bold text-pitch transition hover:brightness-110"
-                >
-                  <Maximize2 size={13} /> Full Screen
-                </button>
                 <button
                   onClick={() => duplicateCall(call.id)}
                   className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-dim hover:text-ink"
@@ -119,76 +122,55 @@ export default function PlaybookPage() {
                 >
                   <Trash2 size={13} /> Delete
                 </button>
-                <span className="ml-auto text-xs text-dim">
-                  {group.name} ({structure.name}) · saves automatically
-                </span>
-              </div>
-
-              {/* Offensive look controls */}
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
-                <span className="text-dim">Offensive look:</span>
-                <select
-                  value=""
-                  onChange={(e) => {
-                    if (!e.target.value) return;
-                    const look = offensivePresets[e.target.value] ?? formationTemplates[e.target.value];
-                    if (look) updateCall(call.id, { offLook: look.map((m) => ({ ...m })) });
-                    setSelectedOff(null);
-                  }}
-                  className="rounded-lg border border-line bg-black/25 px-2.5 py-1.5"
-                >
-                  <option value="">Load formation…</option>
-                  {Object.keys(formationTemplates).length > 0 && (
-                    <optgroup label="Your formations">
-                      {Object.keys(formationTemplates).map((n) => (
+                <div className="ml-auto flex flex-wrap items-center gap-2 text-xs">
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (!e.target.value) return;
+                      const look = offensivePresets[e.target.value] ?? formationTemplates[e.target.value];
+                      if (look) updateCall(call.id, { offLook: look.map((m) => ({ ...m })), offForm: call.offForm || e.target.value });
+                      setSelection(null);
+                    }}
+                    className="rounded-lg border border-line bg-black/25 px-2.5 py-1.5"
+                  >
+                    <option value="">Load formation…</option>
+                    {Object.keys(formationTemplates).length > 0 && (
+                      <optgroup label="Your formations">
+                        {Object.keys(formationTemplates).map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    <optgroup label="Built-in">
+                      {Object.keys(offensivePresets).map((n) => (
                         <option key={n} value={n}>{n}</option>
                       ))}
                     </optgroup>
-                  )}
-                  <optgroup label="Built-in">
-                    {Object.keys(offensivePresets).map((n) => (
-                      <option key={n} value={n}>{n}</option>
-                    ))}
-                  </optgroup>
-                </select>
-                <button
-                  onClick={() => {
-                    const name = call.offForm.trim() || window.prompt("Formation name to save this look as:")?.trim();
-                    if (name) {
-                      saveFormationTemplate(name, call.offLook);
-                      if (!call.offForm.trim()) updateCall(call.id, { offForm: name });
-                    }
-                  }}
-                  title="Save this offensive look under the formation name — never draw it twice"
-                  className="rounded-lg border border-grass/40 px-2.5 py-1.5 text-grass hover:bg-grass/10"
-                >
-                  Save as formation
-                </button>
-                <button
-                  onClick={() =>
-                    updateCall(call.id, {
-                      offLook: [
-                        ...call.offLook,
-                        { id: Math.random().toString(36).slice(2, 8), label: "?", x: 50, y: LOS_Y + 14 },
-                      ],
-                    })
-                  }
-                  className="rounded-lg border border-line px-2.5 py-1.5 text-dim hover:text-ink"
-                >
-                  + Add player
-                </button>
+                  </select>
+                  <button
+                    onClick={() => {
+                      const name = call.offForm.trim() || window.prompt("Formation name to save this look as:")?.trim();
+                      if (name) {
+                        saveFormationTemplate(name, call.offLook);
+                        if (!call.offForm.trim()) updateCall(call.id, { offForm: name });
+                      }
+                    }}
+                    title="Save this offensive look under the formation name — never draw it twice"
+                    className="rounded-lg border border-grass/40 px-2.5 py-1.5 text-grass hover:bg-grass/10"
+                  >
+                    Save as formation
+                  </button>
+                </div>
               </div>
 
-              <PlayCanvas
+              <StudioCanvas
                 call={call}
                 structureId={group.structureId}
                 groupSlots={group.slots}
                 players={players}
                 labelFor={label}
-                selectedSlot={selectedSlot}
-                onSelectSlot={setSelectedSlot}
-                selectedOff={selectedOff}
-                onSelectOff={setSelectedOff}
+                selection={selection}
+                onSelect={setSelection}
               />
 
               {rec && (
@@ -238,89 +220,159 @@ export default function PlaybookPage() {
           )}
         </div>
 
-        {/* Assignment / selection panel */}
+        {/* Inspector */}
         <div className="rounded-xl border border-line bg-card/80 p-4">
-          {call && selOffMarker ? (
+          {call && selOff ? (
             <>
-              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">
-                Offensive player
+              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">Offensive player</div>
+              <div className="mb-3 flex items-center gap-2">
+                <span className="grid size-9 place-items-center rounded-full bg-ink text-xs font-bold text-pitch">{selOff.label}</span>
+                <div className="text-sm font-bold">{selOff.label} {selOff.ptype ? `(${selOff.ptype})` : ""}</div>
               </div>
-              <div className="flex items-center gap-2 mb-3">
-                <input
-                  value={selOffMarker.label}
-                  onChange={(e) =>
-                    updateCall(call.id, {
-                      offLook: call.offLook.map((m) =>
-                        m.id === selOffMarker.id ? { ...m, label: e.target.value.slice(0, 3) } : m,
-                      ),
-                    })
-                  }
-                  className="display w-20 rounded-lg border border-line bg-black/25 px-3 py-2 text-xl font-bold text-red-400"
-                />
-                <button
-                  onClick={() => {
-                    updateCall(call.id, {
-                      offLook: call.offLook.filter((m) => m.id !== selOffMarker.id),
-                      lines: call.lines.filter((l) => l.anchor !== `off:${selOffMarker.id}`),
-                    });
-                    setSelectedOff(null);
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10"
+              <Field label="Type">
+                <select
+                  value={selOff.ptype ?? ""}
+                  onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, ptype: e.target.value || undefined } : m)) })}
+                  className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
                 >
-                  <X size={13} /> Remove
-                </button>
+                  <option value="">—</option>
+                  {PTYPES.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </Field>
+              <div className="grid grid-cols-2 gap-2">
+                <Field label="Label">
+                  <input
+                    value={selOff.label}
+                    onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, label: e.target.value.slice(0, 3) } : m)) })}
+                    className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
+                  />
+                </Field>
+                <Field label="Jersey">
+                  <input
+                    value={selOff.jersey ?? ""}
+                    onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, jersey: e.target.value } : m)) })}
+                    placeholder="—"
+                    className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm"
+                  />
+                </Field>
               </div>
-              <p className="text-xs text-dim">
-                Drag to reposition (Select tool). Draw a route, block, or motion from this player with the tools
-                above the field.
-              </p>
+              <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
+                <input
+                  type="checkbox"
+                  checked={selOff.showLabel ?? true}
+                  onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, showLabel: e.target.checked } : m)) })}
+                />
+                Show Label
+              </label>
+              <button
+                onClick={() => {
+                  updateCall(call.id, {
+                    offLook: call.offLook.filter((m) => m.id !== selOff.id),
+                    lines: call.lines.filter((l) => l.anchor !== `off:${selOff.id}`),
+                  });
+                  setSelection(null);
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10"
+              >
+                <X size={13} /> Remove player
+              </button>
+            </>
+          ) : call && selLine ? (
+            <>
+              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">Line</div>
+              <Field label="Type">
+                <select
+                  value={selLine.kind}
+                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, kind: e.target.value as LineKind } : l)) })}
+                  className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm capitalize"
+                >
+                  {(["route", "block", "motion", "pitch"] as LineKind[]).map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </Field>
+              <Field label="Color">
+                <div className="flex gap-1.5">
+                  {ROUTE_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, color: c === ROUTE_COLORS[0] ? undefined : c } : l)) })}
+                      className={`size-6 rounded-full border border-line ${(selLine.color ?? ROUTE_COLORS[0]) === c ? "ring-2 ring-grass ring-offset-1 ring-offset-card" : ""}`}
+                      style={{ backgroundColor: c }}
+                      aria-label={c}
+                    />
+                  ))}
+                </div>
+              </Field>
+              <Field label="Style">
+                <select
+                  value={selLine.style ?? "solid"}
+                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, style: e.target.value as LineStyle } : l)) })}
+                  className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm capitalize"
+                >
+                  {["solid", "dashed", "dotted"].map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </Field>
+              <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
+                <input
+                  type="checkbox"
+                  checked={selLine.showArrow ?? selLine.kind !== "block"}
+                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, showArrow: e.target.checked } : l)) })}
+                />
+                Show Arrow
+              </label>
+              <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
+                <input
+                  type="checkbox"
+                  checked={selLine.smooth ?? false}
+                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, smooth: e.target.checked } : l)) })}
+                />
+                Curved
+              </label>
+            </>
+          ) : call && selDef !== null ? (
+            <>
+              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">Assignment</div>
+              <div className="mb-2 flex items-baseline gap-2">
+                <span className="display text-2xl font-bold text-ember">{label(selDef)}</span>
+                {(group.slots[selDef] ?? [])[0] && (
+                  <span className="text-sm text-dim">
+                    #{byId.get(group.slots[selDef][0])?.jersey} {byId.get(group.slots[selDef][0])?.name}
+                  </span>
+                )}
+              </div>
+              <textarea
+                rows={5}
+                value={call.assignments[selDef] ?? ""}
+                onChange={(e) => updateCall(call.id, { assignments: { ...call.assignments, [selDef]: e.target.value } })}
+                placeholder="Responsibility on this call — gap, leverage, drop, rules…"
+                className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm resize-y"
+              />
+            </>
+          ) : call && selText ? (
+            <>
+              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">Text</div>
+              <textarea
+                rows={3}
+                value={selText.text}
+                onChange={(e) => updateCall(call.id, { texts: (call.texts ?? []).map((t) => (t.id === selText.id ? { ...t, text: e.target.value } : t)) })}
+                className="w-full rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-sm resize-y"
+              />
             </>
           ) : (
-            <>
-              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">
-                Assignments
-              </div>
-              {call && selectedSlot !== null ? (
-                <>
-                  <div className="mb-2 flex items-baseline gap-2">
-                    <span className="display text-2xl font-bold text-ember">{label(selectedSlot)}</span>
-                    {(group.slots[selectedSlot] ?? [])[0] && (
-                      <span className="text-sm text-dim">
-                        #{byId.get(group.slots[selectedSlot][0])?.jersey}{" "}
-                        {byId.get(group.slots[selectedSlot][0])?.name}
-                      </span>
-                    )}
-                  </div>
-                  <textarea
-                    rows={5}
-                    value={call.assignments[selectedSlot] ?? ""}
-                    onChange={(e) =>
-                      updateCall(call.id, { assignments: { ...call.assignments, [selectedSlot]: e.target.value } })
-                    }
-                    placeholder="This position's responsibility on this call — gap, leverage, drop, rules…"
-                    className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm resize-y"
-                  />
-                </>
-              ) : (
-                <p className="text-sm text-dim mb-3">
-                  Select a defender for their responsibility, or use the drawing tools to put routes, blocks,
-                  motions, and zones on the field.
-                </p>
-              )}
-            </>
+            <p className="text-sm text-dim">
+              Select a player, line, zone, or text on the field to edit it — or select a defender to write their
+              assignment.
+            </p>
           )}
 
           {call && (
             <>
-              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mt-4 mb-2">
-                All assignments
-              </div>
-              <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto pr-1">
+              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mt-5 mb-2">All assignments</div>
+              <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
                 {structure.slots.map((slot, i) =>
                   call.assignments[i] ? (
                     <button
                       key={i}
-                      onClick={() => { setSelectedSlot(i); setSelectedOff(null); }}
+                      onClick={() => setSelection({ kind: "def", slot: i })}
                       className="rounded-lg border border-line bg-black/20 px-3 py-2 text-left text-xs hover:border-sky/40"
                     >
                       <span className="display font-bold text-sky mr-2">{label(i)}</span>
@@ -342,8 +394,15 @@ export default function PlaybookPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {editorOpen && call && <PlayEditor callId={call.id} onClose={() => setEditorOpen(false)} />}
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-3">
+      <label className="block text-[11px] font-semibold text-dim mb-1">{label}</label>
+      {children}
     </div>
   );
 }
