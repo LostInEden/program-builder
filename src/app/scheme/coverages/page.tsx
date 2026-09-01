@@ -22,7 +22,7 @@ function RoleCard({ role }: { role: CoverageRole }) {
   if (role.key) facts.push(["Key", role.key]);
   return (
     <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
-      <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-black/30 border-b border-line uppercase">
+      <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-slate-50 border-b border-line uppercase">
         {role.position}
       </div>
       <div className="px-5 py-3.5 flex flex-col gap-2.5 text-sm">
@@ -89,7 +89,7 @@ function MasterRulePanel() {
       </div>
 
       <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
-        <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-black/30 border-b border-line uppercase">
+        <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-slate-50 border-b border-line uppercase">
           Receiver numbering
         </div>
         <table className="w-full text-sm">
@@ -105,7 +105,7 @@ function MasterRulePanel() {
       </div>
 
       <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
-        <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-black/30 border-b border-line uppercase">
+        <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-slate-50 border-b border-line uppercase">
           The 13 questions
         </div>
         <table className="w-full text-sm">
@@ -121,7 +121,7 @@ function MasterRulePanel() {
       </div>
 
       <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
-        <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-black/30 border-b border-line uppercase">
+        <div className="display text-xs font-semibold tracking-[0.2em] text-grass px-5 py-3 bg-slate-50 border-b border-line uppercase">
           {MASTER_RULE_EXAMPLE.title}
         </div>
         <table className="w-full text-sm">
@@ -134,7 +134,7 @@ function MasterRulePanel() {
             ))}
           </tbody>
         </table>
-        <p className="px-5 py-3.5 text-sm border-t border-line bg-black/20">
+        <p className="px-5 py-3.5 text-sm border-t border-line bg-slate-50">
           <span className="display text-[11px] font-semibold tracking-widest text-dim uppercase mr-2">
             Core rule
           </span>
@@ -186,7 +186,7 @@ export default function CoveragesPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search coverages"
-              className="w-full rounded-lg border border-line bg-black/25 pl-9 pr-3 py-2 text-sm placeholder:text-dim/60"
+              className="w-full rounded-lg border border-line bg-slate-50 pl-9 pr-3 py-2 text-sm placeholder:text-dim/60"
             />
           </div>
 
@@ -196,7 +196,7 @@ export default function CoveragesPage() {
               if (items.length === 0) return null;
               return (
                 <div key={family}>
-                  <div className="display text-[10px] font-semibold tracking-[0.2em] text-dim px-4 py-2 bg-black/30 border-b border-line uppercase sticky top-0">
+                  <div className="display text-[10px] font-semibold tracking-[0.2em] text-dim px-4 py-2 bg-slate-50 border-b border-line uppercase sticky top-0">
                     {family}
                   </div>
                   {items.map((c) => (
@@ -206,7 +206,7 @@ export default function CoveragesPage() {
                       className={`block w-full text-left px-4 py-2 text-sm border-b border-line/40 last:border-b-line transition ${
                         selectedId === c.id
                           ? "bg-grass/10 text-grass font-semibold"
-                          : "text-ink hover:bg-white/5"
+                          : "text-ink hover:bg-slate-100"
                       }`}
                     >
                       {c.name}
@@ -218,7 +218,7 @@ export default function CoveragesPage() {
             <button
               onClick={() => setSelectedId(MASTER_ID)}
               className={`block w-full text-left px-4 py-2.5 text-sm transition display font-semibold ${
-                selectedId === MASTER_ID ? "bg-ember/10 text-ember" : "text-dim hover:bg-white/5 hover:text-ink"
+                selectedId === MASTER_ID ? "bg-ember/10 text-ember" : "text-dim hover:bg-slate-100 hover:text-ink"
               }`}
             >
               Master Software Rule

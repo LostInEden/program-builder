@@ -111,7 +111,7 @@ export default function RosterImport({ onClose }: { onClose: () => void }) {
             <p className="text-dim mb-6">players imported. Blanks were left blank — nothing is required.</p>
             <button
               onClick={onClose}
-              className="display rounded-full bg-grass px-6 py-2.5 text-sm font-bold text-pitch"
+              className="display rounded-full bg-grass px-6 py-2.5 text-sm font-bold text-white"
             >
               Done
             </button>
@@ -133,7 +133,7 @@ export default function RosterImport({ onClose }: { onClose: () => void }) {
             <div className="flex flex-col gap-2 mb-5">
               {headers.map((h, i) => (
                 <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
-                  <span className="truncate rounded-lg border border-line bg-black/25 px-3 py-2 font-mono text-xs">
+                  <span className="truncate rounded-lg border border-line bg-slate-50 px-3 py-2 font-mono text-xs">
                     {h}
                     <span className="ml-2 text-dim">{rows[0]?.[i] ? `e.g. ${rows[0][i]}` : ""}</span>
                   </span>
@@ -143,7 +143,7 @@ export default function RosterImport({ onClose }: { onClose: () => void }) {
                     onChange={(e) =>
                       setMapping((m) => m.map((f, j) => (j === i ? (e.target.value as Field) : f)))
                     }
-                    className="rounded-lg border border-line bg-black/25 px-3 py-2"
+                    className="rounded-lg border border-line bg-slate-50 px-3 py-2"
                   >
                     {FIELD_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
@@ -157,7 +157,7 @@ export default function RosterImport({ onClose }: { onClose: () => void }) {
             <button
               onClick={doImport}
               disabled={!mapping.includes("name")}
-              className="display w-full rounded-full bg-grass px-6 py-3 text-sm font-bold text-pitch disabled:opacity-40"
+              className="display w-full rounded-full bg-grass px-6 py-3 text-sm font-bold text-white disabled:opacity-40"
             >
               {mapping.includes("name") ? `Import ${rows.length} players` : "Map a Name column to continue"}
             </button>

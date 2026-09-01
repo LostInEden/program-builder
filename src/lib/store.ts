@@ -41,7 +41,39 @@ export type Player = {
   forty?: number | null;
   flying10?: number | null;
   shuttle?: number | null;
+  rating?: number | null; // coach's overall grade, 0–5 in half steps
   eval: Evaluation;
+};
+
+// Recent-updates feed shown in the top bar and My Team overview.
+export type ActivityItem = { id: string; text: string; sub?: string; ts: number };
+
+// "TE + 2 strong → we bump to Over" — the structured rule format the coach's
+// spec calls the Key V1 Requirement: don't just save the conversation.
+export type SchemeRule = { id: string; trigger: string; action: string; result: string };
+
+export type ScoutFormation = { id: string; name: string; snapsPct?: number | null; runPct?: number | null; notes?: string };
+export type ScoutConcept = { id: string; name: string; type: "Run" | "Pass"; freq?: number | null; notes?: string };
+export type ScoutKeyPlayer = { id: string; jersey?: string; name: string; pos?: string; notes?: string };
+export type Opponent = {
+  id: string;
+  name: string;
+  week?: number | null; // ties to seasonSchedule
+  personnel: string; // e.g. "Mostly 11 and 12 personnel"
+  formations: ScoutFormation[];
+  concepts: ScoutConcept[];
+  downDistance: string; // situational tendencies free text
+  redZone: string;
+  keyPlayers: ScoutKeyPlayer[];
+  notes: string;
+};
+
+export type PlanItem = { id: string; text: string };
+export type GamePlan = {
+  opponentId: string;
+  bestAnswers: PlanItem[];
+  adjustments: PlanItem[];
+  emphasis: PlanItem[];
 };
 
 // slots: structure slot index -> ordered player ids (index 0 = starter)
@@ -363,6 +395,21 @@ type Store = {
   activeCallId: string | null;
   opponent: { name: string; kickoff: string };
   seasonSchedule: ScheduleWeek[];
+  watchList: string[]; // player ids
+  activity: ActivityItem[];
+  schemeRules: SchemeRule[];
+  opponents: Opponent[];
+  gamePlans: GamePlan[];
+
+  toggleWatch: (playerId: string) => void;
+  logActivity: (text: string, sub?: string) => void;
+  addSchemeRule: () => void;
+  updateSchemeRule: (id: string, patch: Partial<SchemeRule>) => void;
+  removeSchemeRule: (id: string) => void;
+  addOpponent: (name?: string) => string;
+  updateOpponent: (id: string, patch: Partial<Opponent>) => void;
+  removeOpponent: (id: string) => void;
+  updateGamePlan: (opponentId: string, patch: Partial<GamePlan>) => void;
 
   addPlayer: (pl?: Partial<Player>) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -413,6 +460,78 @@ export const useStore = create<Store>()(
       activeCallId: seedCalls[0].id,
       opponent: { name: "Red Valley", kickoff: "Saturday, 7:00 PM" },
       seasonSchedule: seedSchedule,
+      watchList: [],
+      activity: [],
+      schemeRules: [
+        { id: "sr-seed", trigger: "TE + 2 strong", action: "Change front", result: "Over" },
+      ],
+      opponents: [],
+      gamePlans: [],
+
+      logActivity: (text, sub) =>
+        set((s) => ({
+          activity: [{ id: uid(), text, sub, ts: Date.now() }, ...s.activity].slice(0, 25),
+        })),
+      toggleWatch: (playerId) =>
+        set((s) => {
+          const on = s.watchList.includes(playerId);
+          const pl = s.players.find((p) => p.id === playerId);
+          return {
+            watchList: on ? s.watchList.filter((x) => x !== playerId) : [...s.watchList, playerId],
+            activity: pl
+              ? [
+                  { id: uid(), text: pl.name, sub: on ? "Removed from Watch List" : "Added to Watch List", ts: Date.now() },
+                  ...s.activity,
+                ].slice(0, 25)
+              : s.activity,
+          };
+        }),
+      addSchemeRule: () =>
+        set((s) => ({ schemeRules: [...s.schemeRules, { id: uid(), trigger: "", action: "", result: "" }] })),
+      updateSchemeRule: (id, patch) =>
+        set((s) => ({ schemeRules: s.schemeRules.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
+      removeSchemeRule: (id) =>
+        set((s) => ({ schemeRules: s.schemeRules.filter((r) => r.id !== id) })),
+      addOpponent: (name) => {
+        const id = uid();
+        set((s) => ({
+          opponents: [
+            ...s.opponents,
+            {
+              id,
+              name: name?.trim() || "New Opponent",
+              week: null,
+              personnel: "",
+              formations: [],
+              concepts: [],
+              downDistance: "",
+              redZone: "",
+              keyPlayers: [],
+              notes: "",
+            },
+          ],
+          activity: [{ id: uid(), text: name?.trim() || "New Opponent", sub: "Opponent added to Scout", ts: Date.now() }, ...s.activity].slice(0, 25),
+        }));
+        return id;
+      },
+      updateOpponent: (id, patch) =>
+        set((s) => ({ opponents: s.opponents.map((o) => (o.id === id ? { ...o, ...patch } : o)) })),
+      removeOpponent: (id) =>
+        set((s) => ({
+          opponents: s.opponents.filter((o) => o.id !== id),
+          gamePlans: s.gamePlans.filter((g) => g.opponentId !== id),
+        })),
+      updateGamePlan: (opponentId, patch) =>
+        set((s) => {
+          const existing = s.gamePlans.find((g) => g.opponentId === opponentId);
+          const base: GamePlan = existing ?? { opponentId, bestAnswers: [], adjustments: [], emphasis: [] };
+          const next = { ...base, ...patch };
+          return {
+            gamePlans: existing
+              ? s.gamePlans.map((g) => (g.opponentId === opponentId ? next : g))
+              : [...s.gamePlans, next],
+          };
+        }),
 
       addPlayer: (pl = {}) => {
         const id = uid();
@@ -421,6 +540,7 @@ export const useStore = create<Store>()(
             ...s.players,
             { id, jersey: null, name: "New Player", cls: "", positions: [], status: "Healthy", eval: {}, ...pl },
           ],
+          activity: [{ id: uid(), text: pl.name ?? "New Player", sub: "Added to roster", ts: Date.now() }, ...s.activity].slice(0, 25),
         }));
         return id;
       },
@@ -458,7 +578,13 @@ export const useStore = create<Store>()(
             flying10: r.flying10 ?? null,
             shuttle: r.shuttle ?? null,
           }));
-        set((s) => ({ players: [...s.players, ...players] }));
+        set((s) => ({
+          players: [...s.players, ...players],
+          activity: [
+            { id: uid(), text: `${players.length} players imported`, sub: "Roster import", ts: Date.now() },
+            ...s.activity,
+          ].slice(0, 25),
+        }));
         return players.length;
       },
 

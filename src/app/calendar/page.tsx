@@ -14,7 +14,7 @@ const kindStyle: Record<EventKind, string> = {
   practice: "border-grass/50 bg-grass/10 text-grass",
   film: "border-sky/50 bg-sky/10 text-sky",
   meeting: "border-mind/50 bg-mind/10 text-mind",
-  team: "border-line bg-white/5 text-dim",
+  team: "border-line bg-slate-100 text-dim",
   game: "border-ember/60 bg-ember/15 text-ember",
 };
 
@@ -156,7 +156,7 @@ export default function CalendarPage() {
               key={v}
               onClick={() => setView(v)}
               className={`display rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition ${
-                view === v ? "bg-grass text-pitch" : "text-dim hover:text-ink"
+                view === v ? "bg-grass text-white" : "text-dim hover:text-ink"
               }`}
             >
               {v}
@@ -172,9 +172,9 @@ export default function CalendarPage() {
           animate={{ opacity: 1 }}
           className="rounded-xl border border-line bg-card/60 overflow-hidden"
         >
-          <div className="grid grid-cols-7 border-b border-line bg-black/30">
+          <div className="grid grid-cols-7 border-b border-line bg-slate-50">
             {DOW.map((d) => (
-              <div key={d} className="display px-3 py-2 text-[11px] font-semibold tracking-widest text-dim">
+              <div key={d} className="display uppercase px-3 py-2 text-[11px] font-semibold tracking-widest text-dim">
                 {d}
               </div>
             ))}
@@ -193,7 +193,7 @@ export default function CalendarPage() {
                       setCursor(new Date(d));
                       setView("week");
                     }}
-                    className={`relative flex min-h-28 flex-col gap-1 border-r border-line/60 p-1.5 pb-6 text-left align-top transition last:border-r-0 hover:bg-white/4 ${
+                    className={`relative flex min-h-28 flex-col gap-1 border-r border-line/60 p-1.5 pb-6 text-left align-top transition last:border-r-0 hover:bg-slate-50 ${
                       isCurMonth ? "" : "opacity-40"
                     } ${isToday ? "bg-grass/5" : ""}`}
                   >
@@ -207,14 +207,14 @@ export default function CalendarPage() {
                       </span>
                     ))}
                     {events.length > 3 && (
-                      <span className="display px-1 text-[10px] font-semibold tracking-wider text-dim">
+                      <span className="display uppercase px-1 text-[10px] font-semibold tracking-wider text-dim">
                         + {events.length - 3} more
                       </span>
                     )}
                     <span
                       className={`absolute bottom-1.5 right-2 text-xs tabular-nums ${
                         isToday
-                          ? "grid size-5 place-items-center rounded-full bg-grass font-bold text-pitch"
+                          ? "grid size-5 place-items-center rounded-full bg-grass font-bold text-white"
                           : "text-dim"
                       }`}
                     >

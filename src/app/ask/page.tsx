@@ -110,7 +110,7 @@ export default function AskPage() {
           />
           <button
             type="submit"
-            className="grid size-9 place-items-center rounded-full bg-mind text-pitch transition hover:brightness-110"
+            className="grid size-9 place-items-center rounded-full bg-mind text-white transition hover:brightness-110"
             aria-label="Send"
           >
             <Send size={16} />

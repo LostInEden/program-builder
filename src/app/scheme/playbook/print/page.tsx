@@ -35,7 +35,7 @@ export default function PlaybookPrintPage() {
         <span className="text-sm text-dim">8 cards per page · use your browser&apos;s &ldquo;Save as PDF&rdquo;</span>
         <button
           onClick={() => window.print()}
-          className="ml-auto display inline-flex items-center gap-2 rounded-full bg-grass px-6 py-2.5 text-sm font-bold text-pitch transition hover:brightness-110"
+          className="ml-auto display inline-flex items-center gap-2 rounded-full bg-grass px-6 py-2.5 text-sm font-bold text-white transition hover:brightness-110"
         >
           <Printer size={16} /> Print / PDF
         </button>

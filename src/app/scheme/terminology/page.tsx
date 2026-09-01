@@ -45,7 +45,7 @@ export default function TerminologyPage() {
               key={t}
               onClick={() => setTab(t)}
               className={`display rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                tab === t ? "bg-grass text-pitch" : "text-dim hover:text-ink"
+                tab === t ? "bg-grass text-white" : "text-dim hover:text-ink"
               }`}
             >
               {t}
@@ -63,7 +63,7 @@ export default function TerminologyPage() {
           <select
             value={structureId}
             onChange={(e) => setStructureId(e.target.value)}
-            className="mb-3 rounded-lg border border-line bg-black/25 px-3 py-2 display font-bold"
+            className="mb-3 rounded-lg border border-line bg-slate-50 px-3 py-2 display font-bold"
           >
             {structures.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
@@ -72,7 +72,7 @@ export default function TerminologyPage() {
           <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="display text-xs tracking-widest text-dim border-b border-line bg-black/30">
+                <tr className="display uppercase text-xs tracking-widest text-dim border-b border-line bg-slate-50">
                   <th className="text-left px-5 py-3">Your term</th>
                   <th className="text-left px-5 py-3">Default</th>
                   <th className="text-left px-5 py-3">Level</th>
@@ -88,7 +88,7 @@ export default function TerminologyPage() {
                         <input
                           value={slotLabelOf(overrides, structureId, i)}
                           onChange={(e) => setSlotOverride(structureId, i, { label: e.target.value })}
-                          className="display w-24 rounded-lg border border-line bg-black/25 px-3 py-1.5 font-bold text-grass"
+                          className="display w-24 rounded-lg border border-line bg-slate-50 px-3 py-1.5 font-bold text-grass"
                         />
                       </td>
                       <td className="px-5 py-2.5 text-dim">{slot.pos}</td>
@@ -97,7 +97,7 @@ export default function TerminologyPage() {
                         <select
                           value={ov?.concept ?? slot.concept}
                           onChange={(e) => setSlotOverride(structureId, i, { concept: e.target.value as Concept })}
-                          className="rounded-lg border border-line bg-black/25 px-3 py-1.5 text-dim"
+                          className="rounded-lg border border-line bg-slate-50 px-3 py-1.5 text-dim"
                         >
                           {CONCEPTS.map((c) => (
                             <option key={c} value={c}>{c}</option>
@@ -122,7 +122,7 @@ export default function TerminologyPage() {
           <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="display text-xs tracking-widest text-dim border-b border-line bg-black/30">
+                <tr className="display uppercase text-xs tracking-widest text-dim border-b border-line bg-slate-50">
                   <th className="text-left px-5 py-3">Recognized structure</th>
                   <th className="text-left px-5 py-3">Your term</th>
                 </tr>
@@ -136,7 +136,7 @@ export default function TerminologyPage() {
                         value={formationTerms[name] ?? ""}
                         placeholder={name}
                         onChange={(e) => setFormationTerm(name, e.target.value)}
-                        className="display w-40 rounded-lg border border-line bg-black/25 px-3 py-1.5 font-bold text-grass placeholder:text-dim/50 placeholder:font-normal"
+                        className="display w-40 rounded-lg border border-line bg-slate-50 px-3 py-1.5 font-bold text-grass placeholder:text-dim/50 placeholder:font-normal"
                       />
                     </td>
                   </tr>
@@ -181,7 +181,7 @@ export default function TerminologyPage() {
       {tab === "Reference" && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid gap-5 sm:grid-cols-2">
           <div className="rounded-xl border border-line bg-card/80 overflow-hidden">
-            <div className="display text-xs font-semibold tracking-[0.2em] text-dim px-5 py-3 bg-black/30 border-b border-line">
+            <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim px-5 py-3 bg-slate-50 border-b border-line">
               D-Line Techniques
             </div>
             <table className="w-full text-sm">
@@ -196,7 +196,7 @@ export default function TerminologyPage() {
             </table>
           </div>
           <div className="rounded-xl border border-line bg-card/80 overflow-hidden self-start">
-            <div className="display text-xs font-semibold tracking-[0.2em] text-dim px-5 py-3 bg-black/30 border-b border-line">
+            <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim px-5 py-3 bg-slate-50 border-b border-line">
               Gaps
             </div>
             <table className="w-full text-sm">

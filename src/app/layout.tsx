@@ -1,22 +1,17 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Source_Sans_3 } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import TopNav from "@/components/TopNav";
+import SideNav from "@/components/SideNav";
 
-const barlow = Barlow_Condensed({
-  variable: "--font-barlow",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-});
-
-const sourceSans = Source_Sans_3({
-  variable: "--font-source",
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "Program Builder AI",
+  title: "CounterScheme",
   description: "Your team. Your scheme. Smarter game plans.",
 };
 
@@ -25,9 +20,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${barlow.variable} ${sourceSans.variable} antialiased stadium-bg min-h-screen`}>
-        <div className="flex min-h-screen">
-          <Sidebar />
+      <body className={`${inter.variable} antialiased stadium-bg min-h-screen`}>
+        <TopNav />
+        <div className="flex min-h-[calc(100vh-61px)]">
+          <SideNav />
           <main className="flex-1 min-w-0 overflow-x-hidden">{children}</main>
         </div>
       </body>

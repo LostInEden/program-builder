@@ -300,7 +300,8 @@ export type TextNote = { id: string; x: number; y: number; text: string };
 
 // First entry is the default "ink" color — light on the dark field; the print
 // renderer maps it back to dark for paper.
-export const ROUTE_COLORS = ["#e9efe9", "#eab308", "#ef4444", "#38bdf8", "#22c55e"];
+// Index 0 is the default ink; stored lines with color undefined render in it.
+export const ROUTE_COLORS = ["#1e2a3a", "#ca8a04", "#ef4444", "#0284c7", "#16a34a"];
 
 export function lineDash(l: { kind: LineKind; style?: LineStyle }): string | undefined {
   const style = l.style ?? (l.kind === "motion" ? "dashed" : l.kind === "pitch" ? "dotted" : "solid");

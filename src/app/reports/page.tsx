@@ -32,7 +32,7 @@ export default function ReportsPage() {
               transition={{ delay: i * 0.07 }}
               className={`group rounded-2xl border bg-card/80 p-6 text-left transition-all hover:-translate-y-0.5 ${a.border}`}
             >
-              <div className={`mb-4 inline-flex rounded-lg border border-line bg-black/25 p-2.5 ${a.text}`}>
+              <div className={`mb-4 inline-flex rounded-lg border border-line bg-slate-50 p-2.5 ${a.text}`}>
                 <FileText size={20} />
               </div>
               <h2 className="display text-xl font-bold">{r.title}</h2>

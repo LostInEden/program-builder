@@ -21,7 +21,7 @@ export default function WeekPage() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-xl border border-line bg-card/80 p-6"
         >
-          <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-5 flex items-center gap-2">
+          <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-5 flex items-center gap-2">
             <Target size={14} className="text-ember" /> Offensive Tendencies
             <span className="ml-auto normal-case tracking-normal font-normal">n = 184 plays</span>
           </div>
@@ -62,12 +62,12 @@ export default function WeekPage() {
           transition={{ delay: 0.08 }}
           className="rounded-xl border border-line bg-card/80 p-6"
         >
-          <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-5 flex items-center gap-2">
+          <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-5 flex items-center gap-2">
             <AlertTriangle size={14} className="text-grass" /> Exploitable Weaknesses
           </div>
           <div className="flex flex-col gap-3">
             {opponent.weaknesses.map((w, i) => (
-              <div key={i} className="flex gap-3 rounded-lg border border-line bg-black/25 px-4 py-3.5 text-sm">
+              <div key={i} className="flex gap-3 rounded-lg border border-line bg-slate-50 px-4 py-3.5 text-sm">
                 <span className="display font-bold text-grass">{String(i + 1).padStart(2, "0")}</span>
                 <span>{w}</span>
               </div>
@@ -86,13 +86,13 @@ export default function WeekPage() {
         transition={{ delay: 0.16 }}
         className="mt-6 rounded-xl border border-line bg-card/80 p-6"
       >
-        <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-5">
+        <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-5">
           Recommended Game Plan — by situation
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm min-w-150">
             <thead>
-              <tr className="display text-xs tracking-widest text-dim border-b border-line">
+              <tr className="display uppercase text-xs tracking-widest text-dim border-b border-line">
                 <th className="text-left py-2 pr-6">Situation</th>
                 <th className="text-left py-2 pr-6">Call</th>
                 <th className="text-left py-2">Why</th>
@@ -110,7 +110,7 @@ export default function WeekPage() {
           </table>
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
-          <button className="display rounded-full bg-grass px-5 py-2.5 text-sm font-bold text-pitch transition hover:brightness-110">
+          <button className="display rounded-full bg-grass px-5 py-2.5 text-sm font-bold text-white transition hover:brightness-110">
             Export Call Sheet (PDF)
           </button>
           <button className="display rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-dim transition hover:text-ink hover:border-dim">

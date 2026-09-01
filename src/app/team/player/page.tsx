@@ -76,7 +76,7 @@ function PlayerProfile() {
                 type="number"
                 value={player.jersey ?? ""}
                 onChange={(e) => setNum("jersey", e.target.value)}
-                className="w-20 rounded-lg border border-line bg-black/25 px-3 py-2 display text-2xl font-bold text-grass"
+                className="w-20 rounded-lg border border-line bg-slate-50 px-3 py-2 display text-2xl font-bold text-grass"
               />
             </div>
             <div className="flex-1 min-w-48">
@@ -84,7 +84,7 @@ function PlayerProfile() {
               <input
                 value={player.name}
                 onChange={(e) => updatePlayer(id, { name: e.target.value })}
-                className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 display text-2xl font-bold"
+                className="w-full rounded-lg border border-line bg-slate-50 px-3 py-2 display text-2xl font-bold"
               />
             </div>
             <div>
@@ -93,7 +93,7 @@ function PlayerProfile() {
                 value={player.cls}
                 onChange={(e) => updatePlayer(id, { cls: e.target.value })}
                 placeholder="JR"
-                className="w-20 rounded-lg border border-line bg-black/25 px-3 py-2"
+                className="w-20 rounded-lg border border-line bg-slate-50 px-3 py-2"
               />
             </div>
             <div>
@@ -105,7 +105,7 @@ function PlayerProfile() {
                     positions: e.target.value.split(/[\/,;]/).map((x) => x.trim().toUpperCase()).filter(Boolean),
                   })
                 }
-                className="w-32 rounded-lg border border-line bg-black/25 px-3 py-2"
+                className="w-32 rounded-lg border border-line bg-slate-50 px-3 py-2"
               />
             </div>
             <div>
@@ -113,7 +113,7 @@ function PlayerProfile() {
               <select
                 value={player.status}
                 onChange={(e) => updatePlayer(id, { status: e.target.value as Player["status"] })}
-                className="rounded-lg border border-line bg-black/25 px-3 py-2"
+                className="rounded-lg border border-line bg-slate-50 px-3 py-2"
               >
                 <option>Healthy</option>
                 <option>Limited</option>
@@ -127,7 +127,7 @@ function PlayerProfile() {
         <div className="grid gap-5 sm:grid-cols-2 mb-5">
           {groups.map((g) => (
             <div key={g} className="rounded-xl border border-line bg-card/80 p-5">
-              <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">{g}</div>
+              <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">{g}</div>
               <div className="flex flex-col gap-3">
                 {numFields
                   .filter((f) => f.group === g)
@@ -141,7 +141,7 @@ function PlayerProfile() {
                           value={(player[f.key] as number | null) ?? ""}
                           onChange={(e) => setNum(f.key, e.target.value)}
                           placeholder="—"
-                          className="w-24 rounded-lg border border-line bg-black/25 px-2.5 py-1.5 text-right tabular-nums"
+                          className="w-24 rounded-lg border border-line bg-slate-50 px-2.5 py-1.5 text-right tabular-nums"
                         />
                         <span className="w-6 text-xs text-dim">{f.unit}</span>
                       </span>
@@ -154,7 +154,7 @@ function PlayerProfile() {
 
         {/* Football evaluation */}
         <div className="rounded-xl border border-line bg-card/80 p-5 mb-6">
-          <div className="display text-xs font-semibold tracking-[0.2em] text-dim mb-3">
+          <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">
             Football Evaluation
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -165,7 +165,7 @@ function PlayerProfile() {
                   rows={f.rows ?? 2}
                   value={player.eval[f.key] ?? ""}
                   onChange={(e) => updatePlayer(id, { eval: { ...player.eval, [f.key]: e.target.value } })}
-                  className="w-full rounded-lg border border-line bg-black/25 px-3 py-2 text-sm resize-y"
+                  className="w-full rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm resize-y"
                 />
               </div>
             ))}
@@ -182,7 +182,7 @@ function PlayerProfile() {
               router.push("/team");
             }
           }}
-          className="inline-flex items-center gap-2 rounded-full border border-red-500/40 px-4 py-2 text-sm text-red-400 transition hover:bg-red-500/10"
+          className="inline-flex items-center gap-2 rounded-full border border-red-500/40 px-4 py-2 text-sm text-red-500 transition hover:bg-red-500/10"
         >
           <Trash2 size={15} /> Remove player
         </button>

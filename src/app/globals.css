@@ -1,23 +1,27 @@
 @import "tailwindcss";
 
+/* CounterScheme light theme (coach's V1 look, Aug 2026).
+   Token NAMES are historical (grass = primary accent, pitch = page bg) —
+   values are the light palette. */
 @theme {
-  --color-pitch: #0a0e0b;
-  --color-panel: #11161230;
-  --color-card: #131a15;
-  --color-line: #232d26;
-  --color-ink: #e9efe9;
-  --color-dim: #8fa094;
-  --color-grass: #4ade80;
-  --color-grass-deep: #16a34a;
-  --color-sky: #38bdf8;
-  --color-ember: #f59e0b;
-  --color-mind: #a78bfa;
-  --font-display: var(--font-barlow), "Arial Narrow", sans-serif;
-  --font-body: var(--font-source), "Segoe UI", sans-serif;
+  --color-pitch: #f4f6fa;        /* page background */
+  --color-panel: #ffffff;
+  --color-card: #ffffff;         /* surfaces */
+  --color-line: #e3e8f0;         /* hairline borders */
+  --color-ink: #0f1c2e;          /* primary text (navy) */
+  --color-dim: #64748b;          /* secondary text */
+  --color-grass: #1d63ed;        /* primary accent — CounterScheme blue */
+  --color-grass-deep: #1450c4;
+  --color-navy: #0b1526;         /* dark chips (position boxes, logo bar) */
+  --color-sky: #0284c7;
+  --color-ember: #d97706;
+  --color-mind: #7c3aed;
+  --font-display: var(--font-inter), "Segoe UI", sans-serif;
+  --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -26,19 +30,18 @@ body {
   font-family: var(--font-body);
 }
 
-/* Stadium atmosphere behind everything */
+/* Soft app background */
 .stadium-bg {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(74, 222, 128, 0.10), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 15% 110%, rgba(56, 189, 248, 0.05), transparent 60%),
-    radial-gradient(ellipse 60% 40% at 85% 110%, rgba(167, 139, 250, 0.05), transparent 60%),
-    linear-gradient(180deg, #0d120e 0%, #0a0e0b 45%, #080b09 100%);
+    radial-gradient(ellipse 70% 40% at 50% -10%, rgba(29, 99, 237, 0.05), transparent 60%),
+    linear-gradient(180deg, #f6f8fc 0%, #f4f6fa 100%);
 }
 
+/* Historically the condensed-uppercase heading face; now just the UI face.
+   Uppercase is applied per-element where labels need it. */
 .display {
   font-family: var(--font-display);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: -0.01em;
 }
 
 .field-lines {
@@ -46,13 +49,13 @@ body {
     180deg,
     transparent 0px,
     transparent 39px,
-    rgba(233, 239, 233, 0.05) 39px,
-    rgba(233, 239, 233, 0.05) 40px
+    rgba(15, 28, 46, 0.06) 39px,
+    rgba(15, 28, 46, 0.06) 40px
   );
 }
 
 ::selection {
-  background: rgba(74, 222, 128, 0.3);
+  background: rgba(29, 99, 237, 0.2);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -66,12 +69,12 @@ input[type="number"] {
   appearance: textfield;
 }
 
-/* Selects: custom chevron with breathing room, dark popup list */
+/* Selects: custom chevron with breathing room */
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: dark;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238fa094' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  color-scheme: light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 14px;
@@ -79,16 +82,16 @@ select {
   cursor: pointer;
 }
 select option {
-  background-color: #131a15;
-  color: #e9efe9;
+  background-color: #ffffff;
+  color: #0f1c2e;
 }
 select optgroup {
-  background-color: #131a15;
-  color: #9aa59b;
+  background-color: #ffffff;
+  color: #64748b;
   font-style: normal;
   font-weight: 600;
 }
 
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #232d26; border-radius: 8px; }
+*::-webkit-scrollbar-thumb { background: #d3dae5; border-radius: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }

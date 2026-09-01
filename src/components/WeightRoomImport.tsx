@@ -97,7 +97,7 @@ export default function WeightRoomImport({ onClose }: { onClose: () => void }) {
               players matched and updated. Numbers sync straight to each player&apos;s profile.
               {done < rows.length && ` ${rows.length - done} rows didn't match a rostered player (check jersey/name).`}
             </p>
-            <button onClick={onClose} className="display rounded-full bg-grass px-6 py-2.5 text-sm font-bold text-pitch">
+            <button onClick={onClose} className="display rounded-full bg-grass px-6 py-2.5 text-sm font-bold text-white">
               Done
             </button>
           </div>
@@ -118,7 +118,7 @@ export default function WeightRoomImport({ onClose }: { onClose: () => void }) {
             <div className="flex flex-col gap-2 mb-5">
               {headers.map((h, i) => (
                 <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm">
-                  <span className="truncate rounded-lg border border-line bg-black/25 px-3 py-2 font-mono text-xs">
+                  <span className="truncate rounded-lg border border-line bg-slate-50 px-3 py-2 font-mono text-xs">
                     {h}
                     <span className="ml-2 text-dim">{rows[0]?.[i] ? `e.g. ${rows[0][i]}` : ""}</span>
                   </span>
@@ -126,7 +126,7 @@ export default function WeightRoomImport({ onClose }: { onClose: () => void }) {
                   <select
                     value={mapping[i]}
                     onChange={(e) => setMapping((m) => m.map((f, j) => (j === i ? (e.target.value as Field) : f)))}
-                    className="rounded-lg border border-line bg-black/25 px-3 py-2"
+                    className="rounded-lg border border-line bg-slate-50 px-3 py-2"
                   >
                     {FIELD_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -138,7 +138,7 @@ export default function WeightRoomImport({ onClose }: { onClose: () => void }) {
             <button
               onClick={doImport}
               disabled={!mapping.includes("jersey") && !mapping.includes("name")}
-              className="display w-full rounded-full bg-grass px-6 py-3 text-sm font-bold text-pitch disabled:opacity-40"
+              className="display w-full rounded-full bg-grass px-6 py-3 text-sm font-bold text-white disabled:opacity-40"
             >
               {mapping.includes("jersey") || mapping.includes("name")
                 ? `Sync ${rows.length} rows to player profiles`

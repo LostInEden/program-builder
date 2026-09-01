@@ -26,61 +26,64 @@ export default function DepthChartCanvas({
 
   return (
     <div
-      className={`relative field-lines rounded-xl border border-line bg-[#0d130f] aspect-16/9 min-h-72 overflow-hidden ${className}`}
+      className={`relative field-lines rounded-xl border border-line bg-[#f8fafd] aspect-16/9 min-h-80 overflow-hidden ${className}`}
     >
-      {/* line of scrimmage */}
-      <div className="absolute inset-x-0 top-[8%] h-px bg-grass/50" />
-      <span className="absolute left-2 top-[8%] -translate-y-1/2 text-[10px] text-grass/60 display tracking-widest">
+      {/* faint yard numbers */}
+      {[10, 30, 50, 70, 90].map((x, i) => (
+        <span
+          key={x}
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 text-4xl font-extrabold text-ink/5 select-none"
+          style={{ left: `${x}%` }}
+        >
+          {[10, 30, 50, 30, 10][i]}
+        </span>
+      ))}
+      {/* line of scrimmage — the offense is below, so the front lines up at the bottom */}
+      <div className="absolute inset-x-0 bottom-[4%] h-px bg-grass/40" />
+      <span className="absolute left-2 bottom-[4%] translate-y-1/2 text-[10px] text-grass/70 display uppercase tracking-widest font-bold">
         LOS
       </span>
 
       {structure.slots.map((slot, i) => {
         const ids = slots[i] ?? [];
-        const starter = ids[0] ? byId.get(ids[0]) : undefined;
-        const backups = ids.length - 1;
         const selected = selectedSlot === i;
         const label = slotLabelOf(overrides, structureId, i);
         return (
           <motion.button
             key={i}
             type="button"
-            initial={{ opacity: 0, scale: 0.85 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.03 }}
             onClick={onSlotClick ? () => onSlotClick(i) : undefined}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 text-center ${
+            className={`absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center ${
               onSlotClick ? "cursor-pointer" : "cursor-default"
             }`}
-            style={{ left: `${slot.x}%`, top: `${8 + slot.y * 0.88}%` }}
+            style={{ left: `${slot.x}%`, top: `${86 - slot.y * 0.74}%` }}
           >
             <span
-              className={`grid size-10 place-items-center rounded-full border-2 display text-sm font-bold transition-colors ${
-                selected
-                  ? "border-ember bg-ember/20 text-ember"
-                  : starter
-                    ? "border-grass bg-pitch text-grass"
-                    : "border-dashed border-dim/60 bg-pitch/60 text-dim"
-              } ${onSlotClick ? "hover:border-ember hover:text-ember" : ""}`}
+              className={`display rounded-md px-2.5 py-0.5 text-[11px] font-bold tracking-wide text-white transition-colors ${
+                selected ? "bg-ember" : ids.length > 0 ? "bg-navy" : "bg-dim/70"
+              } ${onSlotClick ? "hover:bg-ember" : ""}`}
             >
               {label}
             </span>
-            <span className="mt-1 block max-w-24 text-[11px] leading-tight text-ink/90">
-              {starter ? (
-                <>
-                  <span className="text-dim">#{starter.jersey ?? "—"}</span> {starter.name}
-                  {/* top 3 at each position */}
-                  {ids.slice(1, 3).map((bid) => {
-                    const b = byId.get(bid);
-                    return b ? (
-                      <span key={bid} className="block text-[9.5px] text-dim">
-                        #{b.jersey ?? "—"} {b.name}
-                      </span>
-                    ) : null;
-                  })}
-                  {backups > 2 && <span className="block text-[9px] text-dim/70">+{backups - 2} more</span>}
-                </>
-              ) : (
-                <span className="text-dim/70 italic">open</span>
+            <span className="mt-0.5 min-w-24 max-w-32 rounded-lg border border-line bg-white shadow-sm px-2 py-1 text-left">
+              {ids.length === 0 && <span className="block text-[10px] text-dim/70 italic px-0.5">open</span>}
+              {ids.slice(0, 2).map((pid, depth) => {
+                const p = byId.get(pid);
+                return p ? (
+                  <span
+                    key={pid}
+                    className={`block truncate text-[11px] leading-4.5 ${depth === 0 ? "font-semibold text-ink" : "text-dim"}`}
+                  >
+                    <span className="tabular-nums text-dim mr-1">{p.jersey ?? "—"}</span>
+                    {p.name}
+                  </span>
+                ) : null;
+              })}
+              {ids.length > 2 && (
+                <span className="block text-[9.5px] text-dim/70 px-0.5">+{ids.length - 2} more</span>
               )}
             </span>
           </motion.button>

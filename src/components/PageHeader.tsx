@@ -18,7 +18,7 @@ export default function PageHeader({
       transition={{ duration: 0.35 }}
       className="mb-8"
     >
-      <div className="display text-xs font-semibold tracking-[0.2em] text-grass mb-1">
+      <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-grass mb-1">
         {eyebrow}
       </div>
       <h1 className="display text-4xl md:text-5xl font-bold text-ink">{title}</h1>

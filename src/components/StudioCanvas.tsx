@@ -50,9 +50,18 @@ type Drag =
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const INK = ROUTE_COLORS[0];
-const DEF_INK = "#9aa59b";
+const DEF_INK = "#5b6b7c";
 // legacy stored colors from the light-theme build
-const legacy = (c?: string) => (c === "#111827" ? undefined : c === "#3b82f6" ? "#38bdf8" : c === "#6b7280" ? undefined : c);
+const legacy = (c?: string) =>
+  c === "#111827" || c === "#6b7280" || c === "#e9efe9" || c === "#9aa59b"
+    ? undefined
+    : c === "#3b82f6" || c === "#38bdf8"
+      ? "#0284c7"
+      : c === "#eab308"
+        ? "#ca8a04"
+        : c === "#22c55e"
+          ? "#16a34a"
+          : c;
 
 // Number keys per the coach's request, plus mnemonic letter aliases
 // (the convention in Excalidraw/tldraw: letters primary, digits secondary).
@@ -462,7 +471,7 @@ export default function StudioCanvas({
       : null;
 
   const markerBase =
-    "grid size-9 place-items-center rounded-full display text-[13px] font-bold text-pitch select-none transition bg-ink";
+    "grid size-9 place-items-center rounded-full display text-[13px] font-bold text-white select-none transition bg-ink";
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -480,7 +489,7 @@ export default function StudioCanvas({
           setZoneStart(null);
         }}
         onClick={onFieldClick}
-        className={`relative mx-auto aspect-4/3 max-h-full w-full max-w-full overflow-hidden rounded-xl border border-line bg-[#0d130f] touch-none select-none ${
+        className={`relative mx-auto aspect-4/3 max-h-full w-full max-w-full overflow-hidden rounded-xl border border-line bg-[#f8fafd] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
@@ -495,21 +504,21 @@ export default function StudioCanvas({
 
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "rgba(233,239,233,0.35)" : "rgba(233,239,233,0.08)"} strokeWidth={yl.goal ? 0.5 : 0.24} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "rgba(15,28,46,0.4)" : "rgba(15,28,46,0.08)"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
-                  <text x="5.5" y={yl.y} fontSize="4.6" fill="rgba(233,239,233,0.14)" fontFamily="var(--font-barlow)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 5.5 ${yl.y})`}>{yl.label}</text>
-                  <text x="94.5" y={yl.y} fontSize="4.6" fill="rgba(233,239,233,0.14)" fontFamily="var(--font-barlow)" fontWeight="700" textAnchor="middle" transform={`rotate(90 94.5 ${yl.y})`}>{yl.label}</text>
+                  <text x="5.5" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 5.5 ${yl.y})`}>{yl.label}</text>
+                  <text x="94.5" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 94.5 ${yl.y})`}>{yl.label}</text>
                 </>
               )}
             </g>
           ))}
           {[40, 60].map((x) =>
             Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => (
-              <polygon key={`${x}-${y}`} points={`${x - 0.5},${y + 0.35} ${x + 0.5},${y + 0.35} ${x},${y - 0.45}`} fill="rgba(233,239,233,0.08)" />
+              <polygon key={`${x}-${y}`} points={`${x - 0.5},${y + 0.35} ${x + 0.5},${y + 0.35} ${x},${y - 0.45}`} fill="rgba(15,28,46,0.08)" />
             )),
           )}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#4ade80" strokeWidth="0.4" strokeOpacity="0.7" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#1d63ed" strokeWidth="0.4" strokeOpacity="0.7" />
 
           {call.zones.map((z) => (
             <g key={z.id}>
@@ -530,7 +539,7 @@ export default function StudioCanvas({
               />
               {z.id === selZoneId && (
                 <rect
-                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#e9efe9" stroke="#f59e0b" strokeWidth="0.25"
+                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#ffffff" stroke="#d97706" strokeWidth="0.25"
                   style={{ pointerEvents: "all", cursor: "nwse-resize" }}
                   onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "zone-resize", id: z.id, moved: false }; }}
                 />
@@ -607,7 +616,7 @@ export default function StudioCanvas({
                     {pts.slice(1).map(([x, y], i) =>
                       i === l.points.length - 1 && !extendId ? null : ( // tip is the + button
                       <circle
-                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#0d130f" stroke="#f59e0b" strokeWidth="0.3"
+                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
                         onDoubleClick={(e) => {
@@ -626,7 +635,7 @@ export default function StudioCanvas({
                     {/* midpoint bend handles (hollow) — drag to bend like Excalidraw */}
                     {midpoints.map((m, i) => (
                       <circle
-                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(13,19,15,0.6)" stroke="#f59e0b" strokeWidth="0.22" strokeDasharray="0.5 0.4"
+                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(255,255,255,0.85)" stroke="#f59e0b" strokeWidth="0.22" strokeDasharray="0.5 0.4"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
@@ -654,7 +663,7 @@ export default function StudioCanvas({
             <ellipse
               cx={(zoneStart[0] + hover[0]) / 2} cy={(zoneStart[1] + hover[1]) / 2}
               rx={Math.abs(hover[0] - zoneStart[0]) / 2} ry={Math.abs(hover[1] - zoneStart[1]) / 2}
-              fill="rgba(74,222,128,0.06)" stroke="rgba(74,222,128,0.5)" strokeWidth="0.3" strokeDasharray="1.4 1"
+              fill="rgba(29,99,237,0.06)" stroke="rgba(29,99,237,0.5)" strokeWidth="0.3" strokeDasharray="1.4 1"
             />
           )}
         </svg>
@@ -690,7 +699,7 @@ export default function StudioCanvas({
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-pitch" : ""}`}>
+              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-white" : ""}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -709,7 +718,7 @@ export default function StudioCanvas({
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-pitch" : ""}`}>
+              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-white" : ""}`}>
                 {(o.showLabel ?? true) ? o.label : ""}
               </span>
             </span>
@@ -731,7 +740,7 @@ export default function StudioCanvas({
             }}
             onClick={(e) => e.stopPropagation()}
             title="Drag to move the endpoint · click + to extend the line"
-            className="absolute z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-ember bg-pitch text-ember shadow-lg transition hover:bg-ember hover:text-pitch"
+            className="absolute z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-ember bg-pitch text-ember shadow-lg transition hover:bg-ember hover:text-white"
             style={{ left: `${extendBtnPos[0]}%`, top: `${(extendBtnPos[1] / FIELD_H) * 100}%` }}
           >
             <Plus size={13} />
@@ -747,7 +756,7 @@ export default function StudioCanvas({
             onClick={() => { setPending(null); setExtendId(null); setTool(t.id); }}
             title={`${t.label} (${t.key})`}
             className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-semibold transition ${
-              tool === t.id ? "bg-grass/15 text-grass ring-1 ring-grass/40" : "text-dim hover:bg-white/5 hover:text-ink"
+              tool === t.id ? "bg-grass/15 text-grass ring-1 ring-grass/40" : "text-dim hover:bg-slate-100 hover:text-ink"
             }`}
           >
             <t.icon size={17} />
@@ -783,21 +792,21 @@ export default function StudioCanvas({
               }
             }}
             title={s.label}
-            className={`rounded-lg px-2.5 py-2 transition ${style === s.id && !selLineId ? "bg-grass/15 ring-1 ring-grass/40" : "hover:bg-white/5"}`}
+            className={`rounded-lg px-2.5 py-2 transition ${style === s.id && !selLineId ? "bg-grass/15 ring-1 ring-grass/40" : "hover:bg-slate-100"}`}
           >
             <svg width="26" height="4" viewBox="0 0 26 4">
-              <line x1="1" y1="2" x2="25" y2="2" stroke="#9aa59b" strokeWidth={s.id === "solid" ? 2.4 : 2} strokeDasharray={s.id === "dashed" ? "5 3" : s.id === "dotted" ? "1.6 2.6" : undefined} strokeLinecap="round" />
+              <line x1="1" y1="2" x2="25" y2="2" stroke="#5b6b7c" strokeWidth={s.id === "solid" ? 2.4 : 2} strokeDasharray={s.id === "dashed" ? "5 3" : s.id === "dotted" ? "1.6 2.6" : undefined} strokeLinecap="round" />
             </svg>
           </button>
         ))}
         <span className="mx-1 h-8 w-px bg-line" />
-        <button onClick={undo} title="Undo (Ctrl+Z)" className="rounded-lg p-2 text-dim hover:bg-white/5 hover:text-ink"><Undo2 size={16} /></button>
-        <button onClick={redo} title="Redo (Ctrl+Shift+Z)" className="rounded-lg p-2 text-dim hover:bg-white/5 hover:text-ink"><Redo2 size={16} /></button>
+        <button onClick={undo} title="Undo (Ctrl+Z)" className="rounded-lg p-2 text-dim hover:bg-slate-100 hover:text-ink"><Undo2 size={16} /></button>
+        <button onClick={redo} title="Redo (Ctrl+Shift+Z)" className="rounded-lg p-2 text-dim hover:bg-slate-100 hover:text-ink"><Redo2 size={16} /></button>
         <button
           onClick={deleteSelection}
           disabled={!selection || selection.kind === "def"}
           title="Delete selection"
-          className="rounded-lg p-2 text-red-400 hover:bg-red-500/10 disabled:opacity-30"
+          className="rounded-lg p-2 text-red-500 hover:bg-red-500/10 disabled:opacity-30"
         >
           <Trash2 size={16} />
         </button>
