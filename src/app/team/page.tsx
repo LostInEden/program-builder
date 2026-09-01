@@ -8,7 +8,7 @@ import {
   Search, Upload, Plus, Pencil, X, ChevronRight, ArrowUp, ArrowDown, Check,
   Star, Users, ClipboardCheck, Ambulance, UserPlus, LayoutGrid,
 } from "lucide-react";
-import { useStore, useHydrated, slotLabelOf, fmtHeight, type Player } from "@/lib/store";
+import { useStore, useHydrated, slotLabelOf, fmtHeight, overallRating, type Player } from "@/lib/store";
 import { getStructure, structures, type Concept } from "@/lib/football";
 import DepthChartCanvas from "@/components/DepthChartCanvas";
 import RosterImport from "@/components/RosterImport";
@@ -101,7 +101,7 @@ function RosterRows({
             <td className="px-4 py-2.5 text-right tabular-nums">{p.squat ?? "—"}</td>
             <td className="px-4 py-2.5 text-right tabular-nums">{p.vertical ? `${p.vertical}"` : "—"}</td>
             <td className="px-4 py-2.5">
-              <Stars value={p.rating} onChange={(v) => onRate(p.id, v)} />
+              <Stars value={overallRating(p)} onChange={(v) => onRate(p.id, v)} />
             </td>
           </tr>
         ))}
@@ -514,7 +514,7 @@ function TeamPageInner() {
                 <div className="text-xs text-dim">
                   {p.positions.join("/") || "No position"} · {p.cls || "—"} · {p.status}
                 </div>
-                <Stars value={p.rating} />
+                <Stars value={overallRating(p)} />
               </div>
               <ChevronRight size={15} className="ml-auto text-dim" />
             </Link>

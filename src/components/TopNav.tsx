@@ -9,7 +9,7 @@ import { useStore, useHydrated } from "@/lib/store";
 const NAV = [
   { href: "/team", label: "My Team", icon: Users },
   { href: "/scheme", label: "My Scheme", icon: Shield },
-  { href: "/scout", label: "Opponent Scout", icon: Binoculars },
+  { href: "/matchup", label: "Opponent Matchup", icon: Binoculars },
   { href: "/gameplan", label: "Game Plans", icon: ClipboardList },
   { href: "/reports", label: "Reports", icon: BarChart3 },
 ];

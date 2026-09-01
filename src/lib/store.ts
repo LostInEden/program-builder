@@ -9,7 +9,7 @@ import {
   defaultPresetName,
   defenseCanvasY,
   type OffMarker,
-  type Concept,
+  type Concept as SlotConcept,
   type DrawLine,
   type Zone,
   type Structure,
@@ -41,39 +41,124 @@ export type Player = {
   forty?: number | null;
   flying10?: number | null;
   shuttle?: number | null;
-  rating?: number | null; // coach's overall grade, 0–5 in half steps
+  rating?: number | null; // coach's overall grade, 1–5
+  skills?: Partial<Record<SkillKey, number | null>>; // football skill ratings, 1–5
   eval: Evaluation;
 };
+
+export const SKILLS: { key: SkillKey; label: string }[] = [
+  { key: "tackle", label: "Tackling" },
+  { key: "coverage", label: "Coverage" },
+  { key: "blockShed", label: "Block Shedding" },
+  { key: "pursuit", label: "Pursuit / Effort" },
+  { key: "iq", label: "Football IQ" },
+];
+export type SkillKey = "tackle" | "coverage" | "blockShed" | "pursuit" | "iq";
+
+// Overall grade: explicit rating wins, otherwise the mean of entered skills.
+export function overallRating(p: Player): number | null {
+  if (p.rating != null) return p.rating;
+  const vals = Object.values(p.skills ?? {}).filter((v): v is number => typeof v === "number");
+  return vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 2) / 2 : null;
+}
+
+// ---- Scheme model -----------------------------------------------------------
+// The saved defensive model the coach's spec calls for. Every entry is a named,
+// structured concept the engine can read; adjustments are Trigger → Action → Result.
+export type ConceptKind = "front" | "coverage" | "pressure" | "adjustment";
+export const ADJUSTMENT_CATEGORIES = [
+  "vs Formations",
+  "vs Motions",
+  "vs Personnel",
+  "Situational Rules",
+  "Special Situations",
+] as const;
+export type AdjustmentCategory = (typeof ADJUSTMENT_CATEGORIES)[number];
+export const PRESSURE_GROUPS = ["Zone Blitzes", "Man Blitzes", "Edge Blitzes", "Pressure Packages", "3rd Down Calls"] as const;
+export type PressureGroup = (typeof PRESSURE_GROUPS)[number];
+
+export type Responsibility = { id: string; role: string; job: string };
+
+export type Concept = {
+  id: string;
+  kind: ConceptKind;
+  name: string;
+  isBase?: boolean; // the base front / base coverage
+  summary: string;
+  group?: PressureGroup; // pressures
+  category?: AdjustmentCategory; // adjustments
+  trigger?: string; // adjustments
+  action?: string;
+  result?: string;
+  libraryId?: string; // coverage → Coverage Library entry
+  responsibilities: Responsibility[];
+  notes: string;
+  source: "coach" | "teach";
+  confirmed: boolean; // Teach results wait for a one-click confirm
+  createdAt: number;
+};
+
+export type TeachEntry = { id: string; input: string; conceptIds: string[]; question?: string; ts: number };
 
 // Recent-updates feed shown in the top bar and My Team overview.
 export type ActivityItem = { id: string; text: string; sub?: string; ts: number };
 
-// "TE + 2 strong → we bump to Over" — the structured rule format the coach's
-// spec calls the Key V1 Requirement: don't just save the conversation.
-export type SchemeRule = { id: string; trigger: string; action: string; result: string };
+// Pre-v5 rule shape, kept only so the migration can type it.
+type LegacySchemeRule = { id: string; trigger: string; action: string; result: string };
 
+// ---- Opponent model ---------------------------------------------------------
 export type ScoutFormation = { id: string; name: string; snapsPct?: number | null; runPct?: number | null; notes?: string };
 export type ScoutConcept = { id: string; name: string; type: "Run" | "Pass"; freq?: number | null; notes?: string };
-export type ScoutKeyPlayer = { id: string; jersey?: string; name: string; pos?: string; notes?: string };
+export type ScoutKeyPlayer = {
+  id: string; jersey?: string; name: string; pos?: string; height?: string; weight?: string; cls?: string; notes?: string;
+};
+export const DOWNS = ["1st", "2nd", "3rd", "4th"] as const;
+export const DISTANCES = ["Short (1-3)", "Med (4-6)", "Long (7+)"] as const;
+// Run % per down × distance cell; null = no data.
+export type DownDistanceGrid = Record<(typeof DOWNS)[number], Record<(typeof DISTANCES)[number], number | null>>;
+export const emptyGrid = (): DownDistanceGrid =>
+  Object.fromEntries(DOWNS.map((d) => [d, Object.fromEntries(DISTANCES.map((x) => [x, null]))])) as DownDistanceGrid;
+
 export type Opponent = {
   id: string;
   name: string;
   week?: number | null; // ties to seasonSchedule
-  personnel: string; // e.g. "Mostly 11 and 12 personnel"
+  record: string; // "6-2 Overall · 3-1 District"
+  headCoach: string;
+  offensiveCoordinator: string;
+  offensiveStyle: string;
+  tempo: string;
+  lastGame: string;
+  // headline tendencies (percent, null = unknown)
+  runRate: number | null;
+  firstDownRun: number | null;
+  rpoRate: number | null;
+  signatureConcept: string; // e.g. "Wide Zone"
+  signatureRate: number | null;
+  personnelUsage: { id: string; group: string; pct: number | null }[]; // "11 Personnel (1 RB, 1 TE, 3 WR)"
+  downDistance: DownDistanceGrid;
   formations: ScoutFormation[];
   concepts: ScoutConcept[];
-  downDistance: string; // situational tendencies free text
-  redZone: string;
   keyPlayers: ScoutKeyPlayer[];
+  matchupNotes: { id: string; label: string; value: string }[]; // Favorite Concept, Pass Game, Red Zone, 2-Point…
+  redZone: string;
   notes: string;
+  playsImported: number; // rows from the last tendency-report upload
+  questions: { id: string; q: string; a: string; ts: number }[]; // Ask CounterScheme history
+  planStatus: { walkthrough: boolean; practicePlan: boolean };
+  isDemo?: boolean;
 };
 
-export type PlanItem = { id: string; text: string };
+export type PlanItem = { id: string; text: string; sub?: string };
 export type GamePlan = {
   opponentId: string;
+  priorities: PlanItem[]; // top 3
+  threats: PlanItem[];
   bestAnswers: PlanItem[];
+  concerns: PlanItem[];
   adjustments: PlanItem[];
   emphasis: PlanItem[];
+  generatedAt?: number;
 };
 
 // slots: structure slot index -> ordered player ids (index 0 = starter)
@@ -86,7 +171,7 @@ export type PersonnelGroup = {
 
 // Coach terminology overrides per structure slot: what the coach calls the
 // position, and (optionally) which standardized concept it maps to internally.
-export type SlotOverride = { label?: string; concept?: Concept };
+export type SlotOverride = { label?: string; concept?: SlotConcept };
 export type Overrides = Record<string, Record<number, SlotOverride>>;
 
 export type PlaybookSection = "Fronts" | "Coverages" | "Pressures" | "Checks & Adjustments";
@@ -381,11 +466,149 @@ export const PRESET_PLAYS: {
   },
 ];
 
+export const emptyOpponent = (id: string, name: string): Opponent => ({
+  id,
+  name,
+  week: null,
+  record: "",
+  headCoach: "",
+  offensiveCoordinator: "",
+  offensiveStyle: "",
+  tempo: "",
+  lastGame: "",
+  runRate: null,
+  firstDownRun: null,
+  rpoRate: null,
+  signatureConcept: "",
+  signatureRate: null,
+  personnelUsage: [],
+  downDistance: emptyGrid(),
+  formations: [],
+  concepts: [],
+  keyPlayers: [],
+  matchupNotes: [],
+  redZone: "",
+  notes: "",
+  playsImported: 0,
+  questions: [],
+  planStatus: { walkthrough: false, practicePlan: false },
+});
+
+const concept = (
+  kind: ConceptKind,
+  name: string,
+  summary: string,
+  extra: Partial<Concept> = {},
+): Concept => ({
+  id: `c-${kind}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+  kind,
+  name,
+  summary,
+  responsibilities: [],
+  notes: "",
+  source: "coach",
+  confirmed: true,
+  createdAt: 0,
+  ...extra,
+});
+
+// Demo scheme so the dashboard shows the idea on first load. The coach
+// replaces these with his own through Teach / Manage.
+const seedConcepts: Concept[] = [
+  concept("front", "Okie", "3-down base: two 4i ends and a 0-tech nose with J and R on the edges.", { isBase: true }),
+  concept("front", "Over", "Shift the 3-tech to the TE side; nose shades away.", {}),
+  concept("front", "Under", "3-tech away from the TE, Sam walks up to the strong edge.", {}),
+  concept("front", "Tite", "4i–0–4i with both edges outside; closes the B gaps vs zone.", {}),
+  concept("front", "Bear", "Cover both guards and the center — five across vs heavy sets.", {}),
+  concept("coverage", "Cover 3 Match", "One-high match: corners funnel #1 to the post, overhangs match #2.", { isBase: true, libraryId: "cover-3-match" }),
+  concept("coverage", "Quarters Match", "Two-high pattern match — safeties match #2 vertical, corners MOD on #1.", { libraryId: "quarters-match" }),
+  concept("coverage", "Cover 1 Robber", "Man free with a low-hole robber cutting crossers.", { libraryId: "cover-1-robber" }),
+  concept("coverage", "Tampa 2 Match", "Two-high with the Mike carrying #3 vertical.", { libraryId: "tampa-2-match" }),
+  concept("coverage", "Cloud Match", "Cover 3 with the field corner playing the flat while the safety rotates over.", { libraryId: "cover-3-cloud" }),
+  concept("pressure", "Smoke W", "Will off the weak edge, drop the end opposite — Cover 3 behind.", { group: "Edge Blitzes" }),
+  concept("pressure", "Double A Gap", "Both inside backers show A gaps; one goes, one drops.", { group: "Man Blitzes" }),
+  concept("pressure", "Field Fire Zone", "Nickel and Sam off the field; three-under, three-deep behind.", { group: "Zone Blitzes" }),
+  concept("pressure", "Robber Pressure", "Five-man pressure with Cover 1 Robber behind on 3rd & long.", { group: "3rd Down Calls" }),
+  // createdAt 1–5 keeps these on top of "Recently Added" (still reads as starter scheme)
+  concept("adjustment", "TE + 2 = Over front", "", {
+    category: "vs Personnel", trigger: "TE + 2 strong (12 personnel)", action: "Change front", result: "Over", createdAt: 5,
+  }),
+  concept("adjustment", "3rd & Long = Cover 1 Robber", "", {
+    category: "Situational Rules", trigger: "3rd & 7+", action: "Check coverage", result: "Cover 1 Robber", createdAt: 4,
+  }),
+  concept("adjustment", "Red Zone = 5-man front", "", {
+    category: "Special Situations", trigger: "Ball inside the 20", action: "Change front", result: "Bear", createdAt: 3,
+  }),
+  concept("adjustment", "Motion Bump", "", {
+    category: "vs Motions", trigger: "Across-the-formation motion", action: "Bump the second level; corners stay", result: "No rotation", createdAt: 2,
+  }),
+  concept("adjustment", "Check to Bear vs Heavy", "", {
+    category: "vs Formations", trigger: "Heavy / unbalanced set", action: "Check front", result: "Bear", createdAt: 1,
+  }),
+];
+
+// Demo opponent (from the coach's mock) so Opponent Matchup shows the idea.
+const seedOpponent: Opponent = {
+  ...emptyOpponent("opp-demo", "Westview High School"),
+  isDemo: true,
+  week: 4,
+  record: "6-2 Overall · 3-1 District",
+  headCoach: "B. Thompson",
+  offensiveCoordinator: "M. Reynolds",
+  offensiveStyle: "Multiple Spread",
+  tempo: "Fast",
+  lastGame: "vs. Ridgewood (W 42-14)",
+  runRate: 62,
+  firstDownRun: 71,
+  rpoRate: 54,
+  signatureConcept: "Wide Zone",
+  signatureRate: 67,
+  personnelUsage: [
+    { id: "pu-11", group: "11 Personnel (1 RB, 1 TE, 3 WR)", pct: 42 },
+    { id: "pu-12", group: "12 Personnel (1 RB, 2 TE, 2 WR)", pct: 28 },
+    { id: "pu-10", group: "10 Personnel (1 RB, 0 TE, 4 WR)", pct: 20 },
+    { id: "pu-13", group: "13 Personnel (1 RB, 3 TE, 1 WR)", pct: 7 },
+    { id: "pu-other", group: "Other", pct: 3 },
+  ],
+  downDistance: {
+    "1st": { "Short (1-3)": 64, "Med (4-6)": 61, "Long (7+)": 38 },
+    "2nd": { "Short (1-3)": 58, "Med (4-6)": 45, "Long (7+)": 40 },
+    "3rd": { "Short (1-3)": 22, "Med (4-6)": 34, "Long (7+)": 24 },
+    "4th": { "Short (1-3)": 75, "Med (4-6)": 50, "Long (7+)": 33 },
+  },
+  formations: [
+    { id: "f-trips", name: "Trips Right", snapsPct: 31, runPct: 40, notes: "Bunch look on the field side" },
+    { id: "f-doubles", name: "Doubles (2x2)", snapsPct: 27, runPct: 66 },
+    { id: "f-empty", name: "Empty", snapsPct: 12, runPct: 8, notes: "3rd & long" },
+  ],
+  concepts: [
+    { id: "k-wz", name: "Wide Zone", type: "Run", freq: 48, notes: "Off both tackles, RPO glance attached" },
+    { id: "k-iz", name: "Inside Zone / RPO", type: "Run", freq: 31 },
+    { id: "k-cross", name: "Deep Cross", type: "Pass", freq: 14, notes: "Play-action off wide zone" },
+    { id: "k-wheel", name: "Post-Wheel", type: "Pass", freq: 9 },
+    { id: "k-screen", name: "Bubble / Tunnel Screen", type: "Pass", freq: 17 },
+  ],
+  keyPlayers: [
+    { id: "kp-4", jersey: "4", name: "J. Carter", pos: "QB", height: "6'2\"", weight: "190", cls: "Jr", notes: "Runs the RPO game; keeps on the read" },
+    { id: "kp-22", jersey: "22", name: "M. Johnson", pos: "RB", height: "5'11\"", weight: "205", cls: "Sr", notes: "Wide zone back — one cut and go" },
+    { id: "kp-11", jersey: "11", name: "D. Williams", pos: "WR", height: "6'1\"", weight: "180", cls: "Jr", notes: "Deep cross / fade target" },
+    { id: "kp-72", jersey: "72", name: "T. Anderson", pos: "OT", height: "6'4\"", weight: "285", cls: "Sr", notes: "Best lineman — they run behind him" },
+  ],
+  matchupNotes: [
+    { id: "mn-1", label: "Favorite Concept", value: "Inside Zone / RPO Alert" },
+    { id: "mn-2", label: "Pass Game", value: "Deep Cross / Post-Wheel" },
+    { id: "mn-3", label: "Red Zone", value: "78% Run Rate inside the 20" },
+    { id: "mn-4", label: "2-Point Attempts", value: "3 for 4 on the season" },
+  ],
+  redZone: "78% run inside the 20 — QB power and wide zone; fade to #11 on 3rd down.",
+  notes: "Demo opponent from the design mock. Replace with a real scouting report.",
+};
+
 type Store = {
   players: Player[];
   groups: PersonnelGroup[];
   activeGroupId: string;
-  scheme: { structureName: string; philosophy: string };
+  scheme: { structureName: string; philosophyTitle: string; philosophy: string };
   overrides: Overrides;
   strengthRule: StrengthRule;
   formationTerms: Record<string, string>; // internal name -> coach's label
@@ -397,16 +620,19 @@ type Store = {
   seasonSchedule: ScheduleWeek[];
   watchList: string[]; // player ids
   activity: ActivityItem[];
-  schemeRules: SchemeRule[];
+  concepts: Concept[];
+  teachLog: TeachEntry[];
   opponents: Opponent[];
   gamePlans: GamePlan[];
 
   toggleWatch: (playerId: string) => void;
   logActivity: (text: string, sub?: string) => void;
-  addSchemeRule: () => void;
-  updateSchemeRule: (id: string, patch: Partial<SchemeRule>) => void;
-  removeSchemeRule: (id: string) => void;
-  addOpponent: (name?: string) => string;
+  addConcept: (c: Partial<Concept> & { kind: ConceptKind; name: string }) => string;
+  updateConcept: (id: string, patch: Partial<Concept>) => void;
+  removeConcept: (id: string) => void;
+  confirmConcept: (id: string) => void;
+  addTeachEntry: (e: Omit<TeachEntry, "id" | "ts">) => void;
+  addOpponent: (name?: string, seed?: Partial<Opponent>) => string;
   updateOpponent: (id: string, patch: Partial<Opponent>) => void;
   removeOpponent: (id: string) => void;
   updateGamePlan: (opponentId: string, patch: Partial<GamePlan>) => void;
@@ -422,7 +648,7 @@ type Store = {
   setSlotPlayers: (groupId: string, slotIndex: number, playerIds: string[]) => void;
   addGroup: (name: string) => void;
 
-  setScheme: (patch: Partial<{ structureName: string; philosophy: string }>) => void;
+  setScheme: (patch: Partial<{ structureName: string; philosophyTitle: string; philosophy: string }>) => void;
   setSlotOverride: (structureId: string, slotIndex: number, patch: SlotOverride) => void;
   setStrengthRule: (rule: StrengthRule) => void;
   setFormationTerm: (internal: string, label: string) => void;
@@ -448,6 +674,7 @@ export const useStore = create<Store>()(
       activeGroupId: "base",
       scheme: {
         structureName: "3-4",
+        philosophyTitle: "Stop the run. Take away the big play.",
         philosophy:
           "Stop the run first. Eliminate explosive plays, create negative plays, disguise intentions, and force the offense to execute long drives without help.",
       },
@@ -462,16 +689,41 @@ export const useStore = create<Store>()(
       seasonSchedule: seedSchedule,
       watchList: [],
       activity: [],
-      schemeRules: [
-        { id: "sr-seed", trigger: "TE + 2 strong", action: "Change front", result: "Over" },
-      ],
-      opponents: [],
+      concepts: seedConcepts,
+      teachLog: [],
+      opponents: [seedOpponent],
       gamePlans: [],
 
       logActivity: (text, sub) =>
         set((s) => ({
           activity: [{ id: uid(), text, sub, ts: Date.now() }, ...s.activity].slice(0, 25),
         })),
+      addConcept: (c) => {
+        const id = uid();
+        set((s) => ({
+          concepts: [
+            ...s.concepts,
+            {
+              id,
+              summary: "",
+              responsibilities: [],
+              notes: "",
+              source: "coach",
+              confirmed: true,
+              createdAt: Date.now(),
+              ...c,
+            },
+          ],
+        }));
+        return id;
+      },
+      updateConcept: (id, patch) =>
+        set((s) => ({ concepts: s.concepts.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+      removeConcept: (id) => set((s) => ({ concepts: s.concepts.filter((c) => c.id !== id) })),
+      confirmConcept: (id) =>
+        set((s) => ({ concepts: s.concepts.map((c) => (c.id === id ? { ...c, confirmed: true } : c)) })),
+      addTeachEntry: (e) =>
+        set((s) => ({ teachLog: [{ id: uid(), ts: Date.now(), ...e }, ...s.teachLog].slice(0, 50) })),
       toggleWatch: (playerId) =>
         set((s) => {
           const on = s.watchList.includes(playerId);
@@ -486,31 +738,11 @@ export const useStore = create<Store>()(
               : s.activity,
           };
         }),
-      addSchemeRule: () =>
-        set((s) => ({ schemeRules: [...s.schemeRules, { id: uid(), trigger: "", action: "", result: "" }] })),
-      updateSchemeRule: (id, patch) =>
-        set((s) => ({ schemeRules: s.schemeRules.map((r) => (r.id === id ? { ...r, ...patch } : r)) })),
-      removeSchemeRule: (id) =>
-        set((s) => ({ schemeRules: s.schemeRules.filter((r) => r.id !== id) })),
-      addOpponent: (name) => {
+      addOpponent: (name, seed = {}) => {
         const id = uid();
         set((s) => ({
-          opponents: [
-            ...s.opponents,
-            {
-              id,
-              name: name?.trim() || "New Opponent",
-              week: null,
-              personnel: "",
-              formations: [],
-              concepts: [],
-              downDistance: "",
-              redZone: "",
-              keyPlayers: [],
-              notes: "",
-            },
-          ],
-          activity: [{ id: uid(), text: name?.trim() || "New Opponent", sub: "Opponent added to Scout", ts: Date.now() }, ...s.activity].slice(0, 25),
+          opponents: [...s.opponents, { ...emptyOpponent(id, name?.trim() || "New Opponent"), ...seed }],
+          activity: [{ id: uid(), text: name?.trim() || "New Opponent", sub: "Opponent added", ts: Date.now() }, ...s.activity].slice(0, 25),
         }));
         return id;
       },
@@ -524,7 +756,9 @@ export const useStore = create<Store>()(
       updateGamePlan: (opponentId, patch) =>
         set((s) => {
           const existing = s.gamePlans.find((g) => g.opponentId === opponentId);
-          const base: GamePlan = existing ?? { opponentId, bestAnswers: [], adjustments: [], emphasis: [] };
+          const base: GamePlan = existing ?? {
+            opponentId, priorities: [], threats: [], bestAnswers: [], concerns: [], adjustments: [], emphasis: [],
+          };
           const next = { ...base, ...patch };
           return {
             gamePlans: existing
@@ -745,9 +979,17 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 4,
+      version: 5,
       migrate: (persisted, version) => {
-        const state = persisted as { calls?: Call[]; formationTemplates?: Record<string, OffMarker[]> };
+        const state = persisted as {
+          calls?: Call[];
+          formationTemplates?: Record<string, OffMarker[]>;
+          schemeRules?: LegacySchemeRule[];
+          concepts?: Concept[];
+          opponents?: Partial<Opponent>[];
+          gamePlans?: Partial<GamePlan>[];
+          scheme?: { structureName: string; philosophyTitle?: string; philosophy: string };
+        };
         if (version < 2 && state?.calls) {
           // v1 offensive looks lived at y 58–86 (OL at 82): remap into the
           // offense-at-bottom space and add the drawing fields.
@@ -796,6 +1038,41 @@ export const useStore = create<Store>()(
               Object.entries(state.formationTemplates).map(([name, look]) => [name, look.map(relabel)]),
             );
           }
+        }
+        if (version < 5) {
+          // v5: the scheme model. Old Trigger/Action/Result rules become
+          // adjustment concepts on top of the seeded demo scheme; old scout
+          // opponents and plans get the new fields.
+          const rules = (state.schemeRules ?? []).filter((r) => r.trigger || r.result);
+          state.concepts = [
+            ...seedConcepts,
+            ...rules
+              .filter((r) => r.id !== "sr-seed")
+              .map((r) => concept("adjustment", `${r.trigger} = ${r.result}`, "", {
+                id: `c-adj-${r.id}`, category: "vs Formations", trigger: r.trigger, action: r.action, result: r.result,
+              })),
+          ];
+          delete state.schemeRules;
+          if (state.scheme && !state.scheme.philosophyTitle) {
+            state.scheme.philosophyTitle = "Stop the run. Take away the big play.";
+          }
+          state.opponents = [
+            seedOpponent,
+            ...(state.opponents ?? []).map((o) => ({
+              ...emptyOpponent(o.id ?? uid(), o.name ?? "Opponent"),
+              ...o,
+              downDistance: o.downDistance && typeof o.downDistance === "object" ? o.downDistance : emptyGrid(),
+            })),
+          ];
+          state.gamePlans = (state.gamePlans ?? []).map((g) => ({
+            opponentId: g.opponentId ?? "",
+            priorities: g.priorities ?? [],
+            threats: g.threats ?? [],
+            bestAnswers: g.bestAnswers ?? [],
+            concerns: g.concerns ?? [],
+            adjustments: g.adjustments ?? [],
+            emphasis: g.emphasis ?? [],
+          }));
         }
         return state;
       },

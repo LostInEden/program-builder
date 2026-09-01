@@ -4,8 +4,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { ArrowLeft, Trash2 } from "lucide-react";
-import { useStore, useHydrated, type Player, type Evaluation } from "@/lib/store";
+import { ArrowLeft, Trash2, Star } from "lucide-react";
+import { useStore, useHydrated, SKILLS, overallRating, type Player, type Evaluation } from "@/lib/store";
 
 const numFields: { key: keyof Player; label: string; group: string; unit?: string }[] = [
   { key: "heightIn", label: "Height", group: "Body", unit: "in" },
@@ -45,6 +45,8 @@ function PlayerProfile() {
   const player = useStore((s) => s.players.find((p) => p.id === id));
   const updatePlayer = useStore((s) => s.updatePlayer);
   const removePlayer = useStore((s) => s.removePlayer);
+  const watchList = useStore((s) => s.watchList);
+  const toggleWatch = useStore((s) => s.toggleWatch);
 
   if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
   if (!player)
@@ -120,7 +122,53 @@ function PlayerProfile() {
                 <option>Out</option>
               </select>
             </div>
+            <button
+              onClick={() => toggleWatch(id)}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold ${
+                watchList.includes(id) ? "border-amber-300 bg-amber-50 text-amber-700" : "border-line text-dim hover:text-ink"
+              }`}
+            >
+              <Star size={15} className={watchList.includes(id) ? "fill-amber-400 text-amber-400" : ""} />
+              {watchList.includes(id) ? "On Watch List" : "Watch"}
+            </button>
           </div>
+        </div>
+
+        {/* Football skill ratings — what the analysis engine reasons with */}
+        <div className="rounded-xl border border-line bg-card/80 p-5 mb-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim">Football Skills</div>
+            <span className="ml-auto text-sm text-dim">
+              Overall{" "}
+              <span className="font-extrabold text-ink tabular-nums">{overallRating(player) ?? "—"}</span>
+              <span className="text-xs">/5</span>
+            </span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {SKILLS.map((s) => {
+              const v = player.skills?.[s.key] ?? null;
+              return (
+                <div key={s.key} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm">
+                  <span className="font-semibold">{s.label}</span>
+                  <span className="inline-flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => updatePlayer(id, { skills: { ...player.skills, [s.key]: v === i ? null : i } })}
+                        aria-label={`${s.label} ${i}`}
+                      >
+                        <Star size={16} className={v != null && i <= v ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-amber-300"} />
+                      </button>
+                    ))}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-xs text-dim">
+            1 = liability, 3 = solid starter, 5 = best on the field. These drive the personnel checks in Defensive Analysis and the matchups in Game Plans.
+          </p>
         </div>
 
         {/* Measurables */}
