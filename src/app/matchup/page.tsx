@@ -151,8 +151,8 @@ function MatchupInner() {
           )}
 
           {/* Row 1: overview · tendencies · key players */}
-          <div className="grid gap-4 lg:grid-cols-[1fr_1.3fr_1.1fr] items-start">
-            <div className={card}>
+          <div className="grid gap-4 lg:grid-cols-[1fr_1.3fr_1.1fr] lg:grid-rows-[auto_1fr] items-stretch">
+            <div className={`${card} lg:col-start-1 lg:row-span-2 flex flex-col`}>
               <div className={cardHead}>
                 Opponent Overview
                 <button onClick={() => setEditing((e) => !e)} className={`ml-auto normal-case tracking-normal inline-flex items-center gap-1 text-xs font-semibold ${editing ? "text-grass" : "text-dim hover:text-ink"}`}>
@@ -175,12 +175,12 @@ function MatchupInner() {
                     ["Tempo", "tempo"],
                     ["Last Game", "lastGame"],
                   ] as [string, keyof Opponent][]).map(([label, key]) => (
-                    <div key={key} className="grid grid-cols-[150px_1fr] items-center gap-2">
+                    <div key={key} className="grid grid-cols-[128px_1fr] items-center gap-2">
                       <span className="font-semibold text-ink/80">{label}</span>
                       <Editable value={(o[key] as string) ?? ""} onChange={(v) => set({ [key]: v } as Partial<Opponent>)} placeholder="—" className="text-grass font-semibold w-full" />
                     </div>
                   ))}
-                  <div className="grid grid-cols-[150px_1fr] items-center gap-2">
+                  <div className="grid grid-cols-[128px_1fr] items-center gap-2">
                     <span className="font-semibold text-ink/80">Week</span>
                     <select value={o.week ?? ""} onChange={(e) => set({ week: e.target.value === "" ? null : Number(e.target.value) })} className={`${input} py-0.5`}>
                       <option value="">—</option>
@@ -191,8 +191,8 @@ function MatchupInner() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div className={card}>
+            <div className="contents">
+              <div className={`${card} lg:col-start-2 lg:row-start-1 flex flex-col`}>
                 <div className={cardHead}>Offensive Tendencies (Season) {o.playsImported > 0 && <span className="ml-auto normal-case tracking-normal text-xs font-normal text-dim">{o.playsImported} plays imported</span>}</div>
                 <div className="grid grid-cols-4">
                   <Stat value={o.runRate} label="Run Rate" sub={o.runRate != null ? `(${100 - o.runRate}% Pass)` : undefined} />
@@ -213,14 +213,14 @@ function MatchupInner() {
                 </div>
               </div>
 
-              <div className={card}>
+              <div className={`${card} lg:col-start-2 lg:row-start-2 flex flex-col`}>
                 <div className={cardHead}>
                   Formation Usage (Season)
                   <button onClick={() => set({ personnelUsage: [...o.personnelUsage, { id: uid(), group: "", pct: null }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
                 </div>
-                <div className="p-4 flex flex-col gap-2">
+                <div className="p-4 flex flex-col gap-2 flex-1 justify-center">
                   {o.personnelUsage.map((p) => (
-                    <div key={p.id} className="grid grid-cols-[1fr_120px_44px_20px] items-center gap-2 text-sm">
+                    <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_96px_40px_16px] items-center gap-2 text-sm">
                       <Editable value={p.group} onChange={(v) => set({ personnelUsage: o.personnelUsage.map((x) => (x.id === p.id ? { ...x, group: v } : x)) })} placeholder="11 Personnel (1 RB, 1 TE, 3 WR)" className="font-semibold w-full" />
                       <div className="h-2 rounded-full bg-slate-100 overflow-hidden"><div className="h-full rounded-full bg-grass" style={{ width: `${p.pct ?? 0}%` }} /></div>
                       <input type="number" value={p.pct ?? ""} onChange={(e) => set({ personnelUsage: o.personnelUsage.map((x) => (x.id === p.id ? { ...x, pct: e.target.value === "" ? null : Number(e.target.value) } : x)) })} className="w-11 rounded border border-transparent bg-transparent text-right text-sm font-bold tabular-nums hover:border-line focus:border-grass focus:outline-none" />
@@ -232,8 +232,8 @@ function MatchupInner() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <div className={card}>
+            <div className="contents">
+              <div className={`${card} lg:col-start-3 lg:row-start-1 flex flex-col`}>
                 <div className={cardHead}>
                   Key Players
                   <button onClick={() => set({ keyPlayers: [...o.keyPlayers, { id: uid(), name: "" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
@@ -259,12 +259,12 @@ function MatchupInner() {
                 </table>
               </div>
 
-              <div className={card}>
+              <div className={`${card} lg:col-start-3 lg:row-start-2 flex flex-col`}>
                 <div className={cardHead}>Down &amp; Distance Profile</div>
-                <div className="p-3">
+                <div className="p-3 flex-1 flex flex-col justify-center">
                   <div className="grid grid-cols-[76px_repeat(4,1fr)] gap-1.5 text-center">
                     <div />
-                    {DOWNS.map((d) => <div key={d} className={`${th} py-1`}>{d} Down</div>)}
+                    {DOWNS.map((d) => <div key={d} className={`${th} py-1 whitespace-nowrap`}>{d} Down</div>)}
                     {DISTANCES.map((dist) => (
                       <div key={dist} className="contents">
                         <div className="text-[11px] font-bold text-ink/80 self-center text-left pl-1">{dist}</div>
@@ -281,8 +281,8 @@ function MatchupInner() {
           </div>
 
           {/* Row 2: game plan summary · matchup notes · up next */}
-          <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_0.9fr] items-start">
-            <div className={card}>
+          <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_0.9fr] items-stretch">
+            <div className={`${card} flex flex-col`}>
               <div className={cardHead}><Target size={14} className="text-grass" /> Game Plan Summary</div>
               <div className="p-5">
                 <div className={`${th} mb-3`}>Top 3 Priorities</div>
@@ -305,7 +305,7 @@ function MatchupInner() {
               </div>
             </div>
 
-            <div className={card}>
+            <div className={`${card} flex flex-col`}>
               <div className={cardHead}>
                 Matchup Notes
                 <button onClick={() => set({ matchupNotes: [...o.matchupNotes, { id: uid(), label: "", value: "" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
@@ -328,7 +328,7 @@ function MatchupInner() {
               </div>
             </div>
 
-            <div className={card}>
+            <div className={`${card} flex flex-col`}>
               <div className={cardHead}><CalendarDays size={14} className="text-dim" /> Up Next</div>
               <div className="p-5 text-center">
                 <div className="flex items-center justify-center gap-3 mb-2">
@@ -363,8 +363,8 @@ function MatchupInner() {
           </div>
 
           {/* Row 3: full tendencies (formations + concepts) */}
-          <div id="full-tendencies" className="grid gap-4 lg:grid-cols-2 items-start">
-            <div className={card}>
+          <div id="full-tendencies" className="grid gap-4 lg:grid-cols-2 items-stretch">
+            <div className={`${card} flex flex-col`}>
               <div className={cardHead}>
                 Formations / Sets
                 <button onClick={() => set({ formations: [...o.formations, { id: uid(), name: "" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
@@ -388,7 +388,7 @@ function MatchupInner() {
                 </tbody>
               </table>
             </div>
-            <div className={card}>
+            <div className={`${card} flex flex-col`}>
               <div className={cardHead}>
                 Run / Pass Concepts
                 <button onClick={() => set({ concepts: [...o.concepts, { id: uid(), name: "", type: "Run" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
