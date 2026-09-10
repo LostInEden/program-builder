@@ -11,6 +11,7 @@
 //  - key players from the tagged ball carrier / target (Q38)
 
 import { DOWNS, DISTANCES, emptyGrid, type DownDistanceGrid, type Opponent, type Play } from "@/lib/store";
+import { resolveTag, shortMeaning, type ResolvedTerm, type TermKind, type TermMapping } from "@/lib/knowledge";
 
 // ---- column mapping (shared by the importer and the verification script) ----
 
@@ -515,12 +516,90 @@ export function computeTells(plays: Play[], opts: TellOptions = {}) {
   };
 }
 
-export function tellSentence(t: Tell): string {
+export function tellSentence(t: Tell, resolve?: TagResolver): string {
   const pct = Math.round(t.rate * 100);
   const base = Math.round(t.baseline * 100);
-  if (t.outcomeKind === "runpass") return `${t.condition} → ${t.outcome} ${pct}% (they ${t.outcome === "Run" ? "run" : "throw"} ${base}% overall)`;
-  if (t.outcomeKind === "direction") return `${t.condition} → ball goes ${t.outcome} ${pct}% (${base}% overall)`;
-  return `${t.condition} → ${t.outcome} ${pct}% of the time (${base}% overall)`;
+  const condition = resolve
+    ? t.tags.map((tag) => decorate(tag.label, resolve(tag.value, kindOfField(tag.field)))).join(" + ")
+    : t.condition;
+  const outcome = resolve && t.outcomeKind === "play" ? decorate(t.outcome, resolve(t.outcome, "concept")) : t.outcome;
+  if (t.outcomeKind === "runpass") return `${condition} → ${t.outcome} ${pct}% (they ${t.outcome === "Run" ? "run" : "throw"} ${base}% overall)`;
+  if (t.outcomeKind === "direction") return `${condition} → ball goes ${t.outcome} ${pct}% (${base}% overall)`;
+  return `${condition} → ${outcome} ${pct}% of the time (${base}% overall)`;
+}
+
+// ---- terminology (Q27) ------------------------------------------------------
+
+/** Look up one raw opponent tag. Coach's dictionary first, then football. */
+export type TagResolver = (value: string, kind?: TermKind) => ResolvedTerm | null;
+
+const FIELD_KIND: Partial<Record<TellField, TermKind>> = {
+  formation: "formation",
+  backfield: "backfield",
+  motion: "concept",
+};
+const kindOfField = (f: TellField): TermKind | undefined => FIELD_KIND[f];
+
+/** "UTAH (Trips, TE attached)" — raw tag stays primary, meaning rides along. */
+export function decorate(raw: string, r: ResolvedTerm | null): string {
+  const m = r && r.source !== "unknown" ? shortMeaning(r, 48) : null;
+  return m ? `${raw} (${m})` : raw;
+}
+
+export function makeResolver(termMap: TermMapping[]): TagResolver {
+  const cache = new Map<string, ResolvedTerm | null>();
+  return (value, kind) => {
+    const key = `${kind ?? ""}|${tag(value)}`;
+    if (!cache.has(key)) {
+      const r = resolveTag(value, termMap, kind);
+      cache.set(key, r.source === "unknown" ? null : r);
+    }
+    return cache.get(key) ?? null;
+  };
+}
+
+/** One word CounterScheme can't account for, and where it showed up. */
+export type UnknownTerm = {
+  term: string; // the word (or the whole tag, when none of it read)
+  kind: TermKind;
+  count: number; // snaps affected
+  tags: string[]; // the raw tags it appeared in
+  field: "formation" | "play" | "backfield" | "motion";
+};
+
+const UNKNOWN_FIELDS: { field: UnknownTerm["field"]; kind: TermKind; of: (p: Play) => string }[] = [
+  { field: "formation", kind: "formation", of: (p) => p.formation },
+  { field: "play", kind: "concept", of: (p) => p.play },
+  { field: "backfield", kind: "backfield", of: (p) => p.backfield },
+  { field: "motion", kind: "concept", of: (p) => p.motion },
+];
+
+/**
+ * The words we'd have to ask about. Only what's actually on this opponent's
+ * film, ranked by how often it shows up — the coach answers one at a time and
+ * only when it matters (Q27).
+ */
+export function unknownTerms(plays: Play[], termMap: TermMapping[] = []): UnknownTerm[] {
+  const out = new Map<string, UnknownTerm>();
+  for (const f of UNKNOWN_FIELDS) {
+    const counts = new Map<string, number>();
+    for (const p of plays) {
+      const raw = tag(f.of(p));
+      if (!raw) continue;
+      counts.set(raw, (counts.get(raw) ?? 0) + 1);
+    }
+    for (const [raw, n] of counts) {
+      const r = resolveTag(raw, termMap, f.kind);
+      for (const word of r.unknownWords) {
+        const key = `${f.field}|${word}`;
+        const e = out.get(key) ?? { term: word, kind: f.kind, count: 0, tags: [], field: f.field };
+        e.count += n;
+        if (!e.tags.includes(raw)) e.tags.push(raw);
+        out.set(key, e);
+      }
+    }
+  }
+  return [...out.values()].sort((a, b) => b.count - a.count || a.term.localeCompare(b.term));
 }
 
 // ---- key players (Q38) ------------------------------------------------------

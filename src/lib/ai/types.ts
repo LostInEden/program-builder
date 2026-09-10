@@ -4,6 +4,7 @@
 // route once the coach's API key is configured. Pages never know which.
 
 import type { Concept, Opponent, Player, PersonnelGroup, Overrides, GamePlan } from "@/lib/store";
+import type { TermKind, TermMapping } from "@/lib/knowledge";
 import type { Finding } from "@/lib/analyze";
 
 export type TeachResult = {
@@ -21,9 +22,29 @@ export type SchemeContext = {
   groups: PersonnelGroup[];
   activeGroupId: string;
   overrides: Overrides;
+  /** This staff's terminology, when the caller has it (Q27). */
+  termMap?: TermMapping[];
 };
 
-export type MatchupAnswer = { answer: string; grounded: boolean };
+// One of THIS team's words, understood (Q27). `meaning` is always the coach's
+// own sentence — the knowledge base only tells us how to file it.
+export type TermResolution = {
+  term: string;
+  meaning: string;
+  kind: TermKind;
+  knowledgeId?: string;
+  /** What CounterScheme recognized in the answer, if anything. */
+  matched: { label: string; meaning: string } | null;
+  /** One line back to the coach. */
+  reply: string;
+};
+
+export type MatchupAnswer = {
+  answer: string;
+  grounded: boolean;
+  /** Set when the question was really the coach teaching us a word ("Dallas is Snag"). */
+  termMapping?: TermResolution;
+};
 
 export interface AiProvider {
   readonly name: string;
@@ -31,4 +52,6 @@ export interface AiProvider {
   analyze(ctx: SchemeContext): Promise<Finding[]>;
   gamePlan(opponent: Opponent, ctx: SchemeContext, findings: Finding[]): Promise<Omit<GamePlan, "opponentId">>;
   ask(question: string, opponent: Opponent, ctx: SchemeContext): Promise<MatchupAnswer>;
+  /** "What does Utah mean?" → "Utah is Trips with the TE on." */
+  resolveTerm(term: string, answer: string, kind?: TermKind): Promise<TermResolution>;
 }

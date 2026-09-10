@@ -33,7 +33,7 @@ function relTime(ts: number) {
 export default function SchemePage() {
   const hydrated = useHydrated();
   const {
-    scheme, setScheme, concepts, addConcept, confirmConcept, removeConcept, addTeachEntry, teachLog, groups, activeGroupId,
+    scheme, setScheme, concepts, addConcept, confirmConcept, removeConcept, addTeachEntry, teachLog, groups, activeGroupId, termMap,
   } = useStore();
   const [editing, setEditing] = useState(false);
   const [fullPhil, setFullPhil] = useState(false);
@@ -67,7 +67,7 @@ export default function SchemePage() {
     if (!input || busy) return;
     setBusy(true);
     try {
-      const res = await ai.teach(input, { scheme, concepts, players: [], groups, activeGroupId, overrides: {} });
+      const res = await ai.teach(input, { scheme, concepts, players: [], groups, activeGroupId, overrides: {}, termMap });
       const ids = res.concepts.map((c) =>
         addConcept({ ...c, source: "teach", confirmed: false, createdAt: Date.now() }),
       );

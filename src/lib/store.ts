@@ -15,6 +15,9 @@ import {
   type Structure,
 } from "@/lib/football";
 import type { StrengthRule } from "@/lib/recognize";
+import { normalizeTerm, type TermKind, type TermMapping } from "@/lib/knowledge";
+
+export type { TermKind, TermMapping };
 
 export type Evaluation = {
   skill?: string;
@@ -651,6 +654,13 @@ type Store = {
   teachLog: TeachEntry[];
   opponents: Opponent[];
   gamePlans: GamePlan[];
+  // What this staff's words mean (Q27). Learned one term at a time, never as a
+  // setup task. Always beats the standard knowledge base.
+  termMap: TermMapping[];
+
+  addTermMapping: (m: { term: string; meaning: string; kind: TermKind; knowledgeId?: string }) => string;
+  updateTermMapping: (id: string, patch: Partial<Omit<TermMapping, "id">>) => void;
+  removeTermMapping: (id: string) => void;
 
   toggleWatch: (playerId: string) => void;
   logActivity: (text: string, sub?: string) => void;
@@ -720,6 +730,24 @@ export const useStore = create<Store>()(
       teachLog: [],
       opponents: [seedOpponent],
       gamePlans: [],
+      termMap: [],
+
+      addTermMapping: ({ term, meaning, kind, knowledgeId }) => {
+        const key = normalizeTerm(term);
+        const existing = get().termMap.find((m) => normalizeTerm(m.term) === key);
+        const id = existing?.id ?? uid();
+        const entry: TermMapping = { id, term: key, meaning: meaning.trim(), kind, knowledgeId, createdAt: existing?.createdAt ?? Date.now() };
+        set((s) => ({
+          termMap: existing ? s.termMap.map((m) => (m.id === id ? entry : m)) : [...s.termMap, entry],
+          activity: [{ id: uid(), text: key, sub: `Terminology: ${entry.meaning}`, ts: Date.now() }, ...s.activity].slice(0, 25),
+        }));
+        return id;
+      },
+      updateTermMapping: (id, patch) =>
+        set((s) => ({
+          termMap: s.termMap.map((m) => (m.id === id ? { ...m, ...patch, term: patch.term ? normalizeTerm(patch.term) : m.term } : m)),
+        })),
+      removeTermMapping: (id) => set((s) => ({ termMap: s.termMap.filter((m) => m.id !== id) })),
 
       logActivity: (text, sub) =>
         set((s) => ({
@@ -1006,9 +1034,10 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 6,
+      version: 7,
       migrate: (persisted, version) => {
         const state = persisted as {
+          termMap?: TermMapping[];
           calls?: Call[];
           formationTemplates?: Record<string, OffMarker[]>;
           schemeRules?: LegacySchemeRule[];
@@ -1110,6 +1139,12 @@ export const useStore = create<Store>()(
             plays: Array.isArray(o.plays) ? o.plays : [],
             playsImported: Array.isArray(o.plays) ? o.plays.length : (o.playsImported ?? 0),
           }));
+        }
+        if (version < 7) {
+          // v7: terminology mapping. Starts empty on purpose — CounterScheme
+          // reads standard football on its own and only asks about the words
+          // that are this staff's own.
+          state.termMap = Array.isArray(state.termMap) ? state.termMap : [];
         }
         return state;
       },

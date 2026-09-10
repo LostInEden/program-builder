@@ -50,7 +50,7 @@ function GamePlanInner() {
     if (!opponent || busy) return;
     setBusy(true);
     try {
-      const ctx = { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides };
+      const ctx = { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides, termMap: store.termMap };
       const gp = await ai.gamePlan(opponent, ctx, computeFindings(ctx).findings);
       updateGamePlan(opponent.id, gp);
     } finally {

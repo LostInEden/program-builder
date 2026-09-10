@@ -5,7 +5,8 @@
 import { COVERAGES } from "@/lib/coverages";
 import { computeFindings, SITUATIONS, type Finding } from "@/lib/analyze";
 import { DOWNS, DISTANCES, type Concept, type Opponent, type GamePlan, type PlanItem } from "@/lib/store";
-import type { AiProvider, SchemeContext, TeachResult, MatchupAnswer } from "./types";
+import { matchTerm, parseTermAnswer, resolveTag, normalizeTerm, type TermKind } from "@/lib/knowledge";
+import type { AiProvider, SchemeContext, TeachResult, MatchupAnswer, TermResolution } from "./types";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const item = (text: string, sub?: string): PlanItem => ({ id: uid(), text, sub });
@@ -51,8 +52,23 @@ const TRIGGERS: { category: Concept["category"]; words: string[] }[] = [
   { category: "vs Personnel", words: ["personnel", "12", "13", "21", "22", "11 ", "10 ", "te +", "te+", "two te", "2 te", "tight end", "heavy", "jumbo", "big"] },
   { category: "vs Formations", words: ["trips", "3x1", "2x2", "empty", "bunch", "stack", "twins", "wing", "unbalanced", "pro", "i-form", "spread", "doubles", "quads", "nasty", "flex"] },
 ];
-const classify = (trigger: string): Concept["category"] =>
-  TRIGGERS.find((t) => t.words.some((w) => lc(trigger).includes(w)))?.category ?? "vs Formations";
+const classify = (trigger: string): Concept["category"] => {
+  const hit = TRIGGERS.find((t) => t.words.some((w) => lc(trigger).includes(w)));
+  if (hit) return hit.category;
+  // The trigger is usually an OPPONENT word ("vs Trey", "against Deuce Stack").
+  // The knowledge base knows most of them, so file the rule properly (Q27).
+  const m = matchTerm(trigger.replace(/^(?:against|vs\.?|versus|when|on|in)\s+/i, ""));
+  if (m?.kind === "formation") return "vs Formations";
+  if (m?.kind === "backfield") return "vs Formations";
+  if (m?.entries.some((e) => /jet|orbit|motion/i.test(e.label))) return "vs Motions";
+  return "vs Formations";
+};
+
+/** What the knowledge base knows about an opponent word in a Teach trigger. */
+const triggerNote = (trigger: string): string => {
+  const m = matchTerm(trigger.replace(/^(?:against|vs\.?|versus|when|on|in)\s+/i, ""));
+  return m && m.exact ? `${m.label}: ${m.meaning}.` : "";
+};
 
 const VERB = "(?:we|our defense|the defense|i|defense)?\\s*(?:will|always|usually|like to|want to|gonna|going to)?\\s*(check|play|go|bump|roll|run|call|switch|get into|line up in|kick|slide|rotate|bring|blitz|drop|lock|base|stay in|shift)\\s*(?:to|into|in|up|over|the|our|a)?\\s*";
 const COND = /^(?:against|vs\.?|versus|when|whenever|if|on|in|anytime|any time)\s+(.+)$/i;
@@ -99,7 +115,7 @@ function parseSentence(raw: string, existing: Concept[]): Parsed {
           trigger: cap(trigger),
           action,
           result: r.name,
-          summary: "",
+          summary: triggerNote(trigger),
         });
         if (r.kind) ensure(r.kind, r.name, r.libraryId ? { libraryId: r.libraryId } : {});
         return out;
@@ -118,7 +134,7 @@ function parseSentence(raw: string, existing: Concept[]): Parsed {
       trigger: cap(trigger),
       action: r.kind === "front" ? "Change front" : r.kind === "coverage" ? "Check coverage" : r.kind === "pressure" ? "Bring pressure" : cap(inv[1]),
       result: r.name,
-      summary: "",
+      summary: triggerNote(trigger),
     });
     if (r.kind) ensure(r.kind, r.name, r.libraryId ? { libraryId: r.libraryId } : {});
     return out;
@@ -297,9 +313,79 @@ async function gamePlan(o: Opponent, ctx: SchemeContext, findings: Finding[]): P
   };
 }
 
+// ---- terminology (Q27) -----------------------------------------------------
+
+/**
+ * The coach tells us what one of their words means. We match the football in
+ * his answer against the knowledge base so the term is filed correctly, but the
+ * meaning we keep is always his own sentence.
+ */
+async function resolveTerm(term: string, answer: string, kind?: TermKind): Promise<TermResolution> {
+  const parsed = parseTermAnswer(term, answer, kind);
+  const matched = parsed.match ? { label: parsed.match.label, meaning: parsed.match.meaning } : null;
+  const reply = matched
+    ? `Got it — ${parsed.term} is ${matched.label} (${matched.meaning}). I'll read it that way on every ${parsed.term} snap.`
+    : `Got it — ${parsed.term}: ${parsed.meaning}. I don't have that in standard football language, so I'll use your words for it.`;
+  return {
+    term: parsed.term,
+    meaning: parsed.meaning,
+    kind: (kind ?? parsed.kind) as TermKind,
+    knowledgeId: parsed.knowledgeId,
+    matched,
+    reply,
+  };
+}
+
+// "Dallas is Snag", "Utah means trips with the TE on", "Deuce = 2x2 with a TE"
+const TEACH_TERM = /^\s*["“]?([A-Za-z][\w'-]*(?:\s+[A-Za-z][\w'-]*)?)["”]?\s*(?:is|means|=|stands for)\s+(.{2,140}?)\s*[.!]?\s*$/i;
+// Words that make "X is Y" a normal sentence, not a definition.
+const NOT_A_TERM = /^(?:the|their|they|he|she|it|we|our|this|that|there|what|who|when|where|why|how|my|his|her|a|an)\b/i;
+// "What does Utah mean?" / "what is deuce stack" — at most two words, and it
+// has to read like a definition question so real football questions fall through.
+const ASK_TERM = /^\s*what(?:'s| is| does|'re| are)?\s+(?:the\s+)?(?:term\s+)?["“]?([A-Za-z][\w'-]*(?:\s+[A-Za-z][\w'-]*)?)["”]?\s+(?:mean|means|stands? for)\s*\??\s*$/i;
+
 // ---- Ask CounterScheme -----------------------------------------------------
 async function ask(question: string, o: Opponent, ctx: SchemeContext): Promise<MatchupAnswer> {
   const q = lc(question);
+  const termMap = ctx.termMap ?? [];
+
+  // "What does Utah mean?" — answer from the coach's dictionary, then football.
+  const asked = question.match(ASK_TERM);
+  if (asked && !NOT_A_TERM.test(asked[1])) {
+    const raw = asked[1];
+    const seen = o.plays.filter((p) => [p.formation, p.play, p.backfield, p.motion].some((v) => normalizeTerm(v).split(" ").includes(normalizeTerm(raw)) || normalizeTerm(v) === normalizeTerm(raw))).length;
+    const r = resolveTag(raw, termMap);
+    const where = seen ? ` It's on ${seen} of their snaps.` : "";
+    if (r.source !== "unknown") {
+      return { answer: `${r.term} — ${r.meaning}${r.source === "coach" ? " (your words)" : ""}.${where}`, grounded: true };
+    }
+    return {
+      answer: `I don't know what ${normalizeTerm(raw)} means yet.${where} Tell me in one line — “${normalizeTerm(raw)} is Trips with the TE on” — and I'll remember it for this team.`,
+      grounded: false,
+    };
+  }
+
+  // "Dallas is Snag" — the coach teaching us a word, not asking a question.
+  const teaching = question.match(TEACH_TERM);
+  if (teaching && !/\?/.test(question) && !NOT_A_TERM.test(teaching[1])) {
+    const term = normalizeTerm(teaching[1]);
+    const has = (pick: (p: (typeof o.plays)[number]) => string) =>
+      o.plays.some((p) => normalizeTerm(pick(p)).split(" ").includes(term));
+    const onFilm = has((p) => p.formation) || has((p) => p.play) || has((p) => p.backfield) || has((p) => p.motion);
+    // Only treat it as a definition when it's a word off their film or the
+    // answer is real football — otherwise it's just a sentence, answer normally.
+    if (onFilm || matchTerm(teaching[2])) {
+      const kindHint: TermKind | undefined = has((p) => p.formation)
+        ? "formation"
+        : has((p) => p.backfield)
+          ? "backfield"
+          : onFilm
+            ? "concept"
+            : undefined;
+      const res = await resolveTerm(term, teaching[2], kindHint);
+      return { answer: res.reply, grounded: true, termMapping: res };
+    }
+  }
   const none = (where: string): MatchupAnswer => ({
     answer: `I don't have that in the scouting data for ${o.name} yet. Add it under ${where} and ask again.`,
     grounded: false,
@@ -368,4 +454,4 @@ async function ask(question: string, o: Opponent, ctx: SchemeContext): Promise<M
   };
 }
 
-export const localProvider: AiProvider = { name: "Local engine", teach, analyze, gamePlan, ask };
+export const localProvider: AiProvider = { name: "Local engine", teach, analyze, gamePlan, ask, resolveTerm };

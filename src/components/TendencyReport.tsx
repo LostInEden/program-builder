@@ -6,14 +6,26 @@
 
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Search, Users2, Layers, ListOrdered, Flame } from "lucide-react";
-import type { Play } from "@/lib/store";
-import { tendencyReport, tellSentence, sideOf, type Tell } from "@/lib/tendencies";
+import { useStore, type Play } from "@/lib/store";
+import { tendencyReport, tellSentence, sideOf, makeResolver, type Tell, type TagResolver } from "@/lib/tendencies";
+import { shortMeaning, type TermKind } from "@/lib/knowledge";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink px-5 py-3.5 border-b border-line flex items-center gap-3";
 const th = "display uppercase text-[11px] tracking-widest text-dim font-semibold";
 
 const pc = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)}%`);
+
+/** Raw tag stays primary; what it means rides alongside it (Q27). */
+function Term({ raw, kind, resolve }: { raw: string; kind?: TermKind; resolve: TagResolver }) {
+  const meaning = shortMeaning(resolve(raw, kind), 44);
+  return (
+    <>
+      {raw}
+      {meaning && <span className="ml-1 font-normal text-dim" title={meaning}>({meaning})</span>}
+    </>
+  );
+}
 const one = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
 
 function PlayTable({ plays }: { plays: Play[] }) {
@@ -48,7 +60,7 @@ function PlayTable({ plays }: { plays: Play[] }) {
   );
 }
 
-function TellCard({ tell, byId, rank }: { tell: Tell; byId: Map<string, Play>; rank: number }) {
+function TellCard({ tell, byId, rank, resolve }: { tell: Tell; byId: Map<string, Play>; rank: number; resolve: TagResolver }) {
   const [open, setOpen] = useState(false);
   const evidence = tell.playIds.map((id) => byId.get(id)).filter((p): p is Play => !!p);
   const missed = tell.matchIds.length - tell.playIds.length;
@@ -57,7 +69,7 @@ function TellCard({ tell, byId, rank }: { tell: Tell; byId: Map<string, Play>; r
       <div className="flex items-start gap-3 px-5 py-3">
         <span className={`grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-extrabold ${tell.actionable ? "bg-navy text-white" : "border border-line text-dim"}`}>{rank}</span>
         <div className="min-w-0 flex-1">
-          <div className="font-bold leading-snug">{tellSentence(tell)}</div>
+          <div className="font-bold leading-snug">{tellSentence(tell, resolve)}</div>
           <div className="mt-0.5 text-xs text-dim">
             {tell.hits} of {tell.n} snaps · {Math.round(tell.lift * 100)} points above their normal
             {tell.actionable ? " · worth an answer" : " · keep an eye on it"}
@@ -84,6 +96,8 @@ function TellCard({ tell, byId, rank }: { tell: Tell; byId: Map<string, Play>; r
 
 export default function TendencyReport({ plays }: { plays: Play[] }) {
   const r = useMemo(() => tendencyReport(plays), [plays]);
+  const termMap = useStore((s) => s.termMap);
+  const resolve = useMemo(() => makeResolver(termMap), [termMap]);
   const byId = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
   const [showMore, setShowMore] = useState(false);
   const [personnelOpen, setPersonnelOpen] = useState<string | null>(r.personnel[0]?.personnel ?? null);
@@ -106,7 +120,7 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
             ? <>Where we make our money: {r.actionable.length} tendenc{r.actionable.length === 1 ? "y is" : "ies are"} strong enough to build an answer for. Everything below is counted off their own film — nothing is claimed on fewer than 5 snaps.</>
             : <>Nothing here clears the bar for a call-it-before-the-snap tell yet. The strongest leans are listed anyway — treat them as leans, not rules.</>}
         </div>
-        {fallback.map((t, i) => <TellCard key={t.id} tell={t} byId={byId} rank={i + 1} />)}
+        {fallback.map((t, i) => <TellCard key={t.id} tell={t} byId={byId} rank={i + 1} resolve={resolve} />)}
         {r.tells.length > fallback.length && (
           <div className="border-t border-line px-5 py-2.5 text-center">
             <button onClick={() => setShowMore((v) => !v)} className="text-sm font-bold text-grass hover:underline">
@@ -137,7 +151,7 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
                     <td className="px-2 py-1.5 text-right tabular-nums">{s.n}</td>
                     <td className="px-2 py-1.5 text-right tabular-nums font-bold">{s.runRate == null ? "—" : `${Math.round(s.runRate * 100)}% run`}</td>
                     <td className="px-2 py-1.5 text-right tabular-nums">{one(s.avgGain)}</td>
-                    <td className="px-3 py-1.5 text-dim truncate">{s.topFormation ? `${s.topFormation.name} (${s.topFormation.n})` : "—"}</td>
+                    <td className="px-3 py-1.5 text-dim truncate">{s.topFormation ? <><Term raw={s.topFormation.name} kind="formation" resolve={resolve} /> <span className="tabular-nums">×{s.topFormation.n}</span></> : "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -171,10 +185,10 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
                       <tbody>
                         {g.formations.map((f) => (
                           <tr key={f.name} className="border-b border-line/60 last:border-0">
-                            <td className="px-4 py-1 font-semibold whitespace-nowrap">{f.name}</td>
+                            <td className="px-4 py-1 font-semibold">{<Term raw={f.name} kind="formation" resolve={resolve} />}</td>
                             <td className="px-2 py-1 text-right tabular-nums">{f.n}</td>
                             <td className="px-2 py-1 text-right tabular-nums">{pc(f.runRate)}</td>
-                            <td className="px-3 py-1 text-dim truncate">{f.topPlay ? `${f.topPlay.name} (${f.topPlay.n})` : "—"}</td>
+                            <td className="px-3 py-1 text-dim truncate">{f.topPlay ? <><Term raw={f.topPlay.name} kind="concept" resolve={resolve} /> <span className="tabular-nums">×{f.topPlay.n}</span></> : "—"}</td>
                           </tr>
                         ))}
                         {!g.formations.length && <tr><td colSpan={4} className="px-4 py-3 text-center text-xs text-dim">No formations tagged on these snaps.</td></tr>}
@@ -201,7 +215,7 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
               <div className={`${th} mb-2`}>Most called</div>
               {r.best.byFrequency.slice(0, 8).map((p) => (
                 <div key={p.name} className="flex items-baseline gap-2 border-b border-line/60 py-1.5 last:border-0 text-sm">
-                  <span className="font-semibold truncate">{p.name}</span>
+                  <span className="font-semibold truncate"><Term raw={p.name} kind="concept" resolve={resolve} /></span>
                   <span className="ml-auto shrink-0 tabular-nums text-dim">{p.n}× · {one(p.avgGain)} yds</span>
                 </div>
               ))}
@@ -211,7 +225,7 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
               <div className={`${th} mb-2`}>Most dangerous (3+ snaps)</div>
               {r.best.bySuccess.slice(0, 8).map((p) => (
                 <div key={p.name} className="flex items-baseline gap-2 border-b border-line/60 py-1.5 last:border-0 text-sm">
-                  <span className="font-semibold truncate">{p.name}</span>
+                  <span className="font-semibold truncate"><Term raw={p.name} kind="concept" resolve={resolve} /></span>
                   <span className="ml-auto shrink-0 tabular-nums text-dim">{one(p.avgGain)} yds · {p.explosive} exp</span>
                 </div>
               ))}
@@ -257,7 +271,7 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
               <div className={`${th} mb-2`}>Formation + backfield + situation</div>
               {r.combos.slice(0, 5).map((c) => (
                 <div key={`${c.formation}|${c.backfield}|${c.situation}`} className="flex items-baseline gap-2 border-b border-line/60 py-1 last:border-0 text-xs">
-                  <span className="truncate"><span className="font-semibold">{c.formation}</span>{c.backfield !== "—" ? ` · ${c.backfield}` : ""} · {c.situation}</span>
+                  <span className="truncate"><span className="font-semibold"><Term raw={c.formation} kind="formation" resolve={resolve} /></span>{c.backfield !== "—" ? <> · <Term raw={c.backfield} kind="backfield" resolve={resolve} /></> : ""} · {c.situation}</span>
                   <span className="ml-auto shrink-0 tabular-nums text-dim">{c.n}× · {pc(c.runRate)} run</span>
                 </div>
               ))}

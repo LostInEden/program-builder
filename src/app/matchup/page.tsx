@@ -14,6 +14,7 @@ import { ai, AI_LABEL } from "@/lib/ai";
 import { computeFindings } from "@/lib/analyze";
 import TendencyImport from "@/components/TendencyImport";
 import TendencyReport from "@/components/TendencyReport";
+import UnknownTerms from "@/components/UnknownTerms";
 import { headlineFromPlays } from "@/lib/tendencies";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
@@ -65,7 +66,7 @@ function MatchupInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const store = useStore();
-  const { opponents, addOpponent, updateOpponent, removeOpponent, seasonSchedule, gamePlans, updateGamePlan } = store;
+  const { opponents, addOpponent, updateOpponent, removeOpponent, seasonSchedule, gamePlans, updateGamePlan, termMap, addTermMapping } = store;
   const [importOpen, setImportOpen] = useState(false);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -97,7 +98,12 @@ function MatchupInner() {
     if (!o || !q.trim() || busy) return;
     setBusy(true);
     try {
-      const res = await ai.ask(q.trim(), o, { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides });
+      const res = await ai.ask(q.trim(), o, { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides, termMap });
+      // "Dallas is Snag" in the Ask box teaches us a word instead of asking one.
+      if (res.termMapping) {
+        const t = res.termMapping;
+        addTermMapping({ term: t.term, meaning: t.meaning, kind: t.kind, knowledgeId: t.knowledgeId });
+      }
       set({ questions: [{ id: uid(), q: q.trim(), a: res.answer, ts: Date.now() }, ...o.questions].slice(0, 20) });
       setQ("");
     } finally {
@@ -107,7 +113,7 @@ function MatchupInner() {
 
   const createPlan = async () => {
     if (!o) return;
-    const ctx = { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides };
+    const ctx = { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides, termMap };
     const findings = computeFindings(ctx).findings;
     const gp = await ai.gamePlan(o, ctx, findings);
     updateGamePlan(o.id, gp);
@@ -378,7 +384,10 @@ function MatchupInner() {
 
           {/* Row 3: the Tendency Report — only real once snaps are on file */}
           {plays.length > 0 ? (
-            <TendencyReport plays={plays} />
+            <>
+              <UnknownTerms plays={plays} />
+              <TendencyReport plays={plays} />
+            </>
           ) : (
             <div className={`${card} px-5 py-6 text-center`}>
               <div className="font-bold mb-1">No Tendency Report yet</div>
@@ -456,7 +465,7 @@ function MatchupInner() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && askIt()}
-                  placeholder="Example: What are their weaknesses on 3rd down?"
+                  placeholder="Example: What are their weaknesses on 3rd down? — or teach me a word: “Utah is Trips with the TE on”"
                   className="flex-1 bg-transparent px-2 text-sm focus:outline-none"
                 />
                 <Mic size={16} className="text-dim" />
