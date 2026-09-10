@@ -12,8 +12,13 @@ import {
 import {
   answerFor, callName, genItem, makeKit, readConcept, tellEvidence, type PlanAnswer, type PlanKit, type PlanSections,
 } from "@/lib/plan";
-import { buildPracticePool, type PracticePool } from "@/lib/practice";
-import type { AiProvider, SchemeContext, TeachResult, MatchupAnswer, TermResolution } from "./types";
+import {
+  buildPracticePool, buildScript, emptySelection, poolSummary, pruneSelection, selectedReps,
+  type PracticePool, type PracticeRep,
+} from "@/lib/practice";
+import type {
+  AiProvider, SchemeContext, TeachResult, MatchupAnswer, TermResolution, ChatContext, ChatReply,
+} from "./types";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 // Generated items keep a stable id across regenerates so the merge rule can
@@ -707,4 +712,267 @@ async function practicePool(o: Opponent, ctx: SchemeContext, plan?: GamePlan): P
   return buildPracticePool({ opponent: o, concepts: ctx.concepts, termMap: ctx.termMap ?? [], plan });
 }
 
-export const localProvider: AiProvider = { name: "Local engine", teach, analyze, gamePlan, ask, resolveTerm, practicePool };
+// ---- one CounterScheme conversation (Q26, Q29, Q2, Q31) ---------------------
+//
+// Every box in the app — Teach on My Scheme, Ask on Opponent Matchup, the phone
+// — sends its sentence here. This router decides what the coach actually did:
+// taught us a rule, taught us a word, asked about the opponent, asked why a
+// plan item is the answer, or asked what we're repping. The reply is direct,
+// says the reasoning, and only asks a question when the answer depends on it.
+
+type Action = NonNullable<ChatReply["reply"]["actions"]>[number];
+
+const planLink = (ctx: ChatContext): Action | null =>
+  ctx.opponent ? { label: "Open Game Plan", href: `/gameplan?id=${ctx.opponent.id}` } : null;
+const matchupLink = (ctx: ChatContext): Action | null =>
+  ctx.opponent ? { label: `Open ${ctx.opponent.name}`, href: `/matchup?id=${ctx.opponent.id}` } : null;
+const acts = (...list: (Action | null | undefined)[]) => {
+  const out = list.filter(Boolean) as Action[];
+  return out.length ? out : undefined;
+};
+
+const reply = (
+  text: string,
+  ctx: ChatContext,
+  extra: { actions?: Action[]; conceptIds?: string[]; playIds?: string[] } = {},
+): ChatReply["reply"] => ({
+  role: "counterscheme",
+  text,
+  actions: extra.actions,
+  context: {
+    page: ctx.page,
+    opponentId: ctx.opponent?.id,
+    conceptIds: extra.conceptIds?.length ? extra.conceptIds : undefined,
+    playIds: extra.playIds?.length ? extra.playIds.slice(0, 40) : undefined,
+  },
+});
+
+const GREETING = /^(?:hey|hi|hello|yo|sup|what's up|whats up|good morning|good evening|morning|thanks|thank you|thx|ok|okay|got it)\b[\s.!,]*$/i;
+const QUESTION_START = /^(?:what|who|when|where|why|which|how|do|does|did|is|are|can|could|should|would|will|tell me|show me|give me|any|got)\b/i;
+const WHY = /\b(?:why|evidence|how do (?:you|we) know|what'?s the proof|prove it|says who|back that up|sample size)\b/i;
+const PRACTICE_Q = /\b(?:rep|reps|repping|practice|script|scout (?:card|team|period)|walk ?through|monday|tuesday|wednesday|thursday)\b/i;
+const TEACH_ME = /^(?:teach|add|save|file|remember)\b.*\b(?:rule|front|coverage|pressure|blitz|check|adjustment)\b/i;
+// An idea he wants evaluated, not a fact he wants looked up (Q28).
+const ADVICE = /\b(?:should we|should i|what should|how should|how do we|what do we do|would you|do you think|is it worth|any reason)\b/i;
+
+/** The words in a plan item that make it that item, for "why is that?" matching. */
+const CHAT_NOISE = new Set([
+  "the", "a", "an", "and", "or", "to", "of", "on", "in", "for", "is", "are", "we", "our", "us", "it", "that", "this",
+  "why", "what", "how", "do", "does", "with", "from", "at", "be", "vs", "against", "you", "your", "them", "their",
+  "answer", "else", "could", "inside", "defense", "and", "not",
+]);
+const keyWords = (s: string) =>
+  normalizeTerm(s).split(" ").filter((w) => w.length > 2 && !CHAT_NOISE.has(w));
+
+const allPlanItems = (plan?: GamePlan): { section: string; item: PlanItem }[] =>
+  plan
+    ? ([
+        ["Top priority", plan.priorities], ["Their best players", plan.bestPlayers], ["Tendency", plan.threats],
+        ["Concern", plan.concerns], ["Adjustment", plan.adjustments], ["Practice emphasis", plan.emphasis],
+      ] as const).flatMap(([section, rows]) => (rows ?? []).map((item) => ({ section, item })))
+    : [];
+
+/** The plan line the coach is asking about, if he named one. */
+function findPlanItem(input: string, plan?: GamePlan) {
+  const asked = keyWords(input);
+  if (!asked.length) return null;
+  let best: { section: string; item: PlanItem; score: number } | null = null;
+  for (const { section, item } of allPlanItems(plan)) {
+    const words = new Set(keyWords(`${item.text} ${item.sub ?? ""}`));
+    if (!words.size) continue;
+    const hits = asked.filter((w) => words.has(w)).length;
+    const score = hits / Math.max(3, keyWords(item.text).length);
+    if (hits >= 2 && (!best || score > best.score)) best = { section, item, score };
+  }
+  return best;
+}
+
+/** Answer first, then the numbers underneath it (Q29). */
+function explainItem(found: { section: string; item: PlanItem }, ctx: ChatContext): ChatReply {
+  const { item, section } = found;
+  const e = item.evidence;
+  const named = (item.conceptIds ?? [])
+    .map((id) => ctx.concepts.find((c) => c.id === id))
+    .filter(Boolean)
+    .map((c) => callName(c as Concept));
+  const bits = [`${section}: ${item.text}.`];
+  if (item.sub) bits.push(item.sub);
+  if (e) {
+    const base = e.baseline != null ? ` Their baseline is ${pctOf(e.baseline)}, so that's ${Math.round((e.rate - e.baseline) * 100)} points above how they play the rest of the game.` : "";
+    bits.push(`The evidence: ${e.summary} — ${e.n} snap${e.n === 1 ? "" : "s"} on film at ${pctOf(e.rate)}.${base}${e.n < 5 ? " That's a small sample, so treat it as a lead, not a rule." : ""}`);
+  } else {
+    bits.push("There's no counted evidence behind this one — it came off your notes and your saved defense, not the snap data.");
+  }
+  if (named.length) bits.push(`It calls for ${named.join(" and ")} — already in your system, so nothing new to install.`);
+  else bits.push("Nothing in your saved calls is filed against it yet. Tell me the call you want and I'll write the rule.");
+  return {
+    reply: reply(bits.join(" "), ctx, {
+      conceptIds: item.conceptIds,
+      playIds: e?.playIds,
+      actions: acts(planLink(ctx), e ? { label: "See evidence", href: ctx.opponent ? `/gameplan?id=${ctx.opponent.id}` : "/gameplan" } : null),
+    }),
+    sideEffects: {},
+  };
+}
+
+/** What we're actually repping this week — the same arithmetic the page uses. */
+function practiceAnswer(ctx: ChatContext): ChatReply {
+  const o = ctx.opponent;
+  if (!o || (o.plays?.length ?? 0) < 5) {
+    return {
+      reply: reply(
+        `I can't build a rep list yet — ${o ? `${o.name} has ${o?.plays?.length ?? 0} tagged snaps on file` : "there's no opponent on file"}. Upload the Hudl breakdown and the candidate pool builds itself.`,
+        ctx,
+        { actions: acts(matchupLink(ctx)) },
+      ),
+      sideEffects: {},
+    };
+  }
+  const pool = buildPracticePool({ opponent: o, concepts: ctx.concepts, termMap: ctx.termMap ?? [], plan: ctx.plan });
+  const sel = pruneSelection(ctx.practiceSelection ?? emptySelection(), pool);
+  const chosen = selectedReps(pool, sel);
+  const sum = poolSummary(pool, sel);
+  const script = buildScript(pool, sel);
+  const byId = new Map(pool.reps.map((r) => [r.id, r]));
+  const line = (r: PracticeRep) => `${[r.personnel, r.formation, r.play].filter(Boolean).join(" ")}${r.situation ? ` (${r.situation})` : ""}`;
+  const mon = (script.find((d) => d.day === "Mon")?.repIds ?? []).map((id) => byId.get(id)).filter(Boolean) as PracticeRep[];
+  const gaps = chosen.filter((r) => !r.hasAnswer);
+  const bits = [
+    `${sum.chosen} rep${sum.chosen === 1 ? "" : "s"} in the script out of ${sum.total} candidates off ${pool.snaps} tagged snaps.`,
+    mon.length ? `Monday teaches ${mon.slice(0, 3).map(line).join("; ")}${mon.length > 3 ? `, plus ${mon.length - 3} more` : ""}.` : "",
+    gaps.length
+      ? `${gaps.length} of them have no stored answer — ${gaps.slice(0, 2).map(line).join("; ")}. Decide those calls Monday so Wednesday can be game-like.`
+      : "Every rep in there has a call on file behind it.",
+    sum.overCap ? `That's over ${pool.cap.high} — cut it down or the players get volume instead of mastery.` : "",
+  ].filter(Boolean);
+  return {
+    reply: reply(bits.join(" "), ctx, {
+      actions: acts({ label: "Open practice script", href: "/practice" }, planLink(ctx)),
+    }),
+    sideEffects: {},
+  };
+}
+
+/** Greetings, "teach a rule", and anything we genuinely can't place (Q31). */
+function capabilities(ctx: ChatContext, lead: string): ChatReply {
+  const o = ctx.opponent;
+  const where = o ? `${o.name}${(o.plays?.length ?? 0) ? ` (${o.plays.length} tagged snaps)` : ""}` : "no opponent on file yet";
+  return {
+    reply: reply(
+      `${lead} I've got your ${ctx.scheme.structureName} and ${ctx.concepts.filter((c) => c.confirmed).length} saved calls, and this week is ${where}. Four things I'm good for: teach me a rule ("Against 12 personnel we check to Over"), ask about the opponent ("What do they run on 3rd down?"), ask why a plan item is the answer, or ask what we're repping this week.`,
+      ctx,
+      { actions: acts(matchupLink(ctx), planLink(ctx)) },
+    ),
+    sideEffects: {},
+  };
+}
+
+async function chat(input: string, ctx: ChatContext): Promise<ChatReply> {
+  const text = input.trim();
+  if (!text) return capabilities(ctx, "Say the word.");
+  const isQuestion = /\?/.test(text) || QUESTION_START.test(text);
+
+  // 1. Hello / thanks — short, then say what I'm for.
+  if (GREETING.test(text)) return capabilities(ctx, "Ready.");
+  if (TEACH_ME.test(text) && text.split(/\s+/).length <= 5) {
+    return {
+      reply: reply(
+        `Say it the way you'd say it to a player: “when ___, we ___.” Example: “Against Trips we check to Solo.” I'll file the trigger, the action and the result, and any front or coverage in it that you don't already carry.`,
+        ctx,
+        { actions: acts({ label: "Open My Scheme", href: "/scheme" }) },
+      ),
+      sideEffects: {},
+    };
+  }
+
+  // 2. "What does Utah mean?" and "Dallas is Snag" — the terminology routes
+  // already live in Ask, and they work with or without an opponent on file.
+  const asked = text.match(ASK_TERM);
+  const teaching = text.match(TEACH_TERM);
+  if ((asked && !NOT_A_TERM.test(asked[1])) || (teaching && !isQuestion && !NOT_A_TERM.test(teaching[1]))) {
+    if (ctx.opponent) {
+      const a = await ask(text, ctx.opponent, ctx);
+      if (a.termMapping || asked) {
+        return {
+          reply: reply(a.answer, ctx, { actions: acts({ label: "Open Terminology", href: "/scheme/terminology" }) }),
+          sideEffects: a.termMapping ? { termMapping: a.termMapping } : {},
+        };
+      }
+    } else if (teaching) {
+      const res = await resolveTerm(normalizeTerm(teaching[1]), teaching[2]);
+      return {
+        reply: reply(res.reply, ctx, { actions: acts({ label: "Open Terminology", href: "/scheme/terminology" }) }),
+        sideEffects: { termMapping: res },
+      };
+    }
+  }
+
+  // 3. "Why is that the answer?" about something in the plan (Q29).
+  if (WHY.test(text)) {
+    const found = findPlanItem(text, ctx.plan);
+    if (found) return explainItem(found, ctx);
+  }
+
+  // 4. "What are we repping this week?"
+  if (PRACTICE_Q.test(text) && isQuestion) return practiceAnswer(ctx);
+
+  // 5. "Should we …?" — an idea he wants evaluated (Q28: collaborative). If the
+  // plan already says something about it, say that; otherwise give him the
+  // three things the plan says matter and let him push back.
+  if (ADVICE.test(text) && ctx.plan) {
+    const found = findPlanItem(text, ctx.plan);
+    if (found) return explainItem(found, ctx);
+    const top = (ctx.plan.priorities ?? []).slice(0, 3);
+    if (top.length) {
+      return {
+        reply: reply(
+          `Nothing in the plan speaks to that directly, so here's what it does say matters this week: ${top.map((p) => p.text).join("; ")}. If your idea serves one of those, it's worth a rep — tell me the call and I'll file the rule; if it doesn't, it costs practice time you don't have.`,
+          ctx,
+          { actions: acts(planLink(ctx)) },
+        ),
+        sideEffects: {},
+      };
+    }
+  }
+
+  // 6. A scheme sentence — the Teach parser owns it. Questions never come here.
+  if (!isQuestion) {
+    const res = await teach(text, ctx);
+    if (res.concepts.length) {
+      const named = res.concepts.map((c) => (c.kind === "adjustment" && c.trigger ? `${c.trigger} → ${c.result}` : c.name));
+      return {
+        reply: reply(
+          `${res.summary.replace(" Confirm them in Recently Added.", "")} ${named.join("; ")}. It's sitting unconfirmed until you say it's right, and once you confirm it I'll use it in the game plan.`,
+          ctx,
+          { actions: acts({ label: "Confirm in Recently Added", href: "/scheme" }) },
+        ),
+        sideEffects: { concepts: res.concepts },
+      };
+    }
+    // Nothing filed. If there's an opponent, it may still have been about them.
+    if (!ctx.opponent) return capabilities(ctx, res.question ?? "I couldn't file that as a rule.");
+  }
+
+  // 7. Opponent questions.
+  if (ctx.opponent) {
+    const a = await ask(text, ctx.opponent, ctx);
+    if (a.grounded || !ctx.plan) {
+      return {
+        reply: reply(a.answer, ctx, { actions: acts(matchupLink(ctx), planLink(ctx)) }),
+        sideEffects: a.termMapping
+          ? { termMapping: a.termMapping }
+          : a.grounded
+            ? { question: { q: text, a: a.answer, opponentId: ctx.opponent.id } }
+            : {},
+      };
+    }
+    // Not in the scouting data — try the plan before giving up.
+    const found = findPlanItem(text, ctx.plan);
+    if (found) return explainItem(found, ctx);
+    return { reply: reply(a.answer, ctx, { actions: acts(matchupLink(ctx), planLink(ctx)) }), sideEffects: {} };
+  }
+
+  return capabilities(ctx, "I don't have an opponent on file to answer that against.");
+}
+
+export const localProvider: AiProvider = { name: "Local engine", teach, analyze, gamePlan, ask, resolveTerm, practicePool, chat };

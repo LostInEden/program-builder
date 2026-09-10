@@ -5,7 +5,7 @@
 // matter with an answer inside our defense, where they stress us, the small
 // stuff, and what we have to rep.
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
@@ -111,11 +111,16 @@ function GamePlanInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const { opponents, gamePlans, updateGamePlan } = useStore();
+  const setLastOpponent = useStore((s) => s.setLastOpponent);
   useTick();
 
   const opponent = opponents.find((o) => o.id === sp.get("id")) ?? opponents.find((o) => !o.isDemo) ?? opponents[0] ?? null;
   const { plan, regenerate, busy, stale } = useGamePlan(opponent);
   const storedPlan: GamePlan | undefined = opponent ? gamePlans.find((g) => g.opponentId === opponent.id) : undefined;
+  // The chat talks about whoever he looked at last (Q2).
+  useEffect(() => {
+    if (opponent) setLastOpponent(opponent.id);
+  }, [opponent, setLastOpponent]);
 
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
 
@@ -132,7 +137,7 @@ function GamePlanInner() {
   ];
 
   return (
-    <div className="px-6 py-8 max-w-6xl mx-auto">
+    <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-6xl mx-auto">
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Game Plans</h1>

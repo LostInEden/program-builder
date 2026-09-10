@@ -129,6 +129,23 @@ export type TeachEntry = { id: string; input: string; conceptIds: string[]; ques
 // Recent-updates feed shown in the top bar and My Team overview.
 export type ActivityItem = { id: string; text: string; sub?: string; ts: number };
 
+// ---- One CounterScheme conversation (Q26, Q29, Q2) --------------------------
+// Teach on My Scheme, Ask on Opponent Matchup and the phone all write into the
+// SAME thread, so the coach never has to re-explain the situation. A link the
+// reply can offer — "Open Game Plan", "Confirm in Recently Added".
+export type ChatAction = { label: string; href: string };
+export type ChatMessage = {
+  id: string;
+  role: "coach" | "counterscheme";
+  text: string;
+  ts: number;
+  /** Where it was said and what it was about — the thread stays grounded. */
+  context?: { page?: string; opponentId?: string; conceptIds?: string[]; playIds?: string[] };
+  actions?: ChatAction[];
+};
+/** The thread is a running week, not an archive. */
+export const CHAT_CAP = 300;
+
 // Pre-v5 rule shape, kept only so the migration can type it.
 type LegacySchemeRule = { id: string; trigger: string; action: string; result: string };
 // Pre-v8 plan shapes (no `source`, and a separate "Best Answers" list).
@@ -769,6 +786,10 @@ type Store = {
   gamePlans: GamePlan[];
   /** The week's rep choices, per opponent (Q5). Keyed by opponent id. */
   practice: Record<string, PracticeSelection>;
+  /** The one CounterScheme conversation (Q26). Every box on every page feeds it. */
+  chat: ChatMessage[];
+  /** The opponent the coach looked at last — the chat talks about him by default. */
+  lastOpponentId: string | null;
   // What this staff's words mean (Q27). Learned one term at a time, never as a
   // setup task. Always beats the standard knowledge base.
   termMap: TermMapping[];
@@ -790,6 +811,9 @@ type Store = {
   updateGamePlan: (opponentId: string, patch: Partial<GamePlan>) => void;
   updatePractice: (opponentId: string, patch: Partial<PracticeSelection>) => void;
   resetPractice: (opponentId: string) => void;
+  appendChat: (m: Omit<ChatMessage, "id" | "ts"> & { id?: string; ts?: number }) => string;
+  clearChat: () => void;
+  setLastOpponent: (id: string | null) => void;
 
   addPlayer: (pl?: Partial<Player>) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -862,7 +886,17 @@ export const useStore = create<Store>()(
       opponents: [seedOpponent],
       gamePlans: [],
       practice: {},
+      chat: [],
+      lastOpponentId: null,
       termMap: [],
+
+      appendChat: (m) => {
+        const id = m.id ?? uid();
+        set((s) => ({ chat: [...s.chat, { ...m, id, ts: m.ts ?? Date.now() }].slice(-CHAT_CAP) }));
+        return id;
+      },
+      clearChat: () => set({ chat: [] }),
+      setLastOpponent: (id) => set((s) => (s.lastOpponentId === id ? s : { lastOpponentId: id })),
 
       addTermMapping: ({ term, meaning, kind, knowledgeId }) => {
         const key = normalizeTerm(term);
@@ -1268,7 +1302,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 10,
+      version: 11,
       migrate: (persisted, version) => {
         const state = persisted as {
           program?: Program;
@@ -1284,6 +1318,8 @@ export const useStore = create<Store>()(
           opponents?: Partial<Opponent>[];
           gamePlans?: LegacyGamePlan[];
           practice?: Record<string, PracticeSelection>;
+          chat?: ChatMessage[];
+          lastOpponentId?: string | null;
           scheme?: { structureName: string; philosophyTitle?: string; philosophy: string };
         };
         if (version < 2 && state?.calls) {
@@ -1499,6 +1535,14 @@ export const useStore = create<Store>()(
           // rep pool is always rebuilt from the snaps, and this only stores
           // which reps the coach kept, threw out and reordered.
           state.practice = state.practice && typeof state.practice === "object" ? state.practice : {};
+        }
+        if (version < 11) {
+          // v11: one CounterScheme conversation (Q26). The thread starts empty —
+          // the per-page Teach and Ask boxes write into it from here on, and the
+          // opponent the coach was last looking at is remembered so the chat
+          // already knows who we're talking about.
+          state.chat = Array.isArray(state.chat) ? state.chat.slice(-CHAT_CAP) : [];
+          state.lastOpponentId = typeof state.lastOpponentId === "string" ? state.lastOpponentId : null;
         }
         return state;
       },

@@ -6,7 +6,9 @@
 import { localProvider } from "./local";
 import type { AiProvider } from "./types";
 
-export type { AiProvider, TeachResult, SchemeContext, MatchupAnswer } from "./types";
+export type {
+  AiProvider, TeachResult, SchemeContext, MatchupAnswer, ChatContext, ChatReply, ChatSideEffects,
+} from "./types";
 
 const providers: Record<string, AiProvider> = {
   local: localProvider,

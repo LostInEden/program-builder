@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { useStore, useHydrated, ADJUSTMENT_CATEGORIES, PRESSURE_GROUPS, type Concept, type ConceptKind } from "@/lib/store";
 import { getStructure, structures } from "@/lib/football";
-import { ai, AI_LABEL } from "@/lib/ai";
+import { AI_LABEL } from "@/lib/ai";
+import { useChat } from "@/lib/useChat";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink px-5 py-3.5 border-b border-line flex items-center gap-3";
@@ -33,13 +34,17 @@ function relTime(ts: number) {
 export default function SchemePage() {
   const hydrated = useHydrated();
   const {
-    scheme, setScheme, concepts, addConcept, confirmConcept, removeConcept, addTeachEntry, teachLog, groups, activeGroupId, termMap,
+    scheme, setScheme, concepts, confirmConcept, removeConcept, teachLog, groups, activeGroupId,
   } = useStore();
+  // Teach posts into the ONE conversation (Q26) — same thread as the drawer,
+  // the phone and the Ask box on Opponent Matchup. The card below just shows
+  // the reply where he typed it.
+  const chat = useChat("/scheme");
   const [editing, setEditing] = useState(false);
   const [fullPhil, setFullPhil] = useState(false);
   const [teach, setTeach] = useState("");
   const [busy, setBusy] = useState(false);
-  const [reply, setReply] = useState<{ summary: string; question?: string } | null>(null);
+  const [reply, setReply] = useState<{ summary: string; actions?: { label: string; href: string }[] } | null>(null);
   const [listening, setListening] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -67,12 +72,8 @@ export default function SchemePage() {
     if (!input || busy) return;
     setBusy(true);
     try {
-      const res = await ai.teach(input, { scheme, concepts, players: [], groups, activeGroupId, overrides: {}, termMap });
-      const ids = res.concepts.map((c) =>
-        addConcept({ ...c, source: "teach", confirmed: false, createdAt: Date.now() }),
-      );
-      addTeachEntry({ input, conceptIds: ids, question: res.question });
-      setReply({ summary: res.summary, question: res.question });
+      const msg = await chat.send(input, "/scheme");
+      if (msg) setReply({ summary: msg.text, actions: msg.actions });
       setTeach("");
     } finally {
       setBusy(false);
@@ -316,12 +317,22 @@ export default function SchemePage() {
           </div>
           {reply && (
             <div className="mt-3 rounded-lg border border-grass/30 bg-grass/5 px-4 py-3 text-sm">
-              <div className="font-semibold">{reply.summary}</div>
-              {reply.question && <div className="mt-1 text-dim">{reply.question}</div>}
+              <div className="leading-relaxed">{reply.summary}</div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {(reply.actions ?? []).map((a) => (
+                  <Link key={a.href + a.label} href={a.href} className="rounded-lg border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-grass hover:border-grass">
+                    {a.label}
+                  </Link>
+                ))}
+                <Link href="/chat" className="rounded-lg border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-dim hover:border-grass hover:text-grass">
+                  Open the conversation
+                </Link>
+              </div>
             </div>
           )}
           <p className="mt-3 text-[11px] text-dim">
-            Engine: {AI_LABEL}. Nothing is saved until you confirm it on the right. Ctrl+Enter to send.
+            Engine: {AI_LABEL}. This goes into the same CounterScheme conversation as the chat. Nothing is saved until you
+            confirm it on the right. Ctrl+Enter to send.
           </p>
         </div>
 

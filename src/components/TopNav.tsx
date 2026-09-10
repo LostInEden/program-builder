@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Users, Shield, Binoculars, ClipboardList, BarChart3, Search, Bell, ChevronDown } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
+import ChatDrawer from "@/components/ChatDrawer";
 
 const NAV = [
   { href: "/team", label: "My Team", icon: Users },
@@ -64,6 +65,7 @@ export default function TopNav() {
         </nav>
 
         <div className="ml-auto flex items-center gap-3">
+          <ChatDrawer />
           <div className="relative hidden lg:block">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim" />
             <input

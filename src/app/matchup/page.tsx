@@ -10,13 +10,14 @@ import {
 import {
   useStore, useHydrated, initialsOf, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
 } from "@/lib/store";
-import { ai, AI_LABEL } from "@/lib/ai";
+import { AI_LABEL } from "@/lib/ai";
 import TendencyImport from "@/components/TendencyImport";
 import TendencyReport from "@/components/TendencyReport";
 import UnknownTerms from "@/components/UnknownTerms";
 import PlanStatus from "@/components/PlanStatus";
 import { headlineFromPlays } from "@/lib/tendencies";
 import { useGamePlan } from "@/lib/useGamePlan";
+import { useChat, startDictation } from "@/lib/useChat";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink px-5 py-3.5 border-b border-line flex items-center gap-3";
@@ -67,11 +68,17 @@ function MatchupInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const store = useStore();
-  const { opponents, addOpponent, updateOpponent, removeOpponent, seasonSchedule, termMap, addTermMapping } = store;
+  const { opponents, addOpponent, updateOpponent, removeOpponent, seasonSchedule } = store;
+  const setLastOpponent = useStore((s) => s.setLastOpponent);
   const [importOpen, setImportOpen] = useState(false);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [lastReply, setLastReply] = useState<{ q: string; a: string; actions?: { label: string; href: string }[] } | null>(null);
+  const [listening, setListening] = useState(false);
+  // The Ask box keeps its place on the page but posts into the ONE
+  // CounterScheme conversation (Q26) — same thread as the drawer and /chat.
+  const chat = useChat("/matchup");
 
   const o = opponents.find((x) => x.id === sp.get("id")) ?? opponents.find((x) => !x.isDemo) ?? opponents[0] ?? null;
   const { plan, regenerate } = useGamePlan(o);
@@ -79,6 +86,10 @@ function MatchupInner() {
   // "Ask about this" on a game plan item lands here with the question ready to
   // send — answer first, evidence second, conversation whenever he wants it (Q29).
   const askParam = sp.get("ask");
+  // The chat talks about whoever he looked at last.
+  useEffect(() => {
+    if (o) setLastOpponent(o.id);
+  }, [o, setLastOpponent]);
   const filled = useRef<string | null>(null);
   useEffect(() => {
     if (askParam && filled.current !== askParam) {
@@ -106,20 +117,22 @@ function MatchupInner() {
   const nextWeek = seasonSchedule.find((w) => w.opponent && !w.result);
 
   const askIt = async () => {
-    if (!o || !q.trim() || busy) return;
+    const text = q.trim();
+    if (!o || !text || busy) return;
     setBusy(true);
     try {
-      const res = await ai.ask(q.trim(), o, { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides, termMap });
-      // "Dallas is Snag" in the Ask box teaches us a word instead of asking one.
-      if (res.termMapping) {
-        const t = res.termMapping;
-        addTermMapping({ term: t.term, meaning: t.meaning, kind: t.kind, knowledgeId: t.knowledgeId });
-      }
-      set({ questions: [{ id: uid(), q: q.trim(), a: res.answer, ts: Date.now() }, ...o.questions].slice(0, 20) });
+      const msg = await chat.send(text, "/matchup");
+      if (msg) setLastReply({ q: text, a: msg.text, actions: msg.actions });
       setQ("");
     } finally {
       setBusy(false);
     }
+  };
+
+  const dictate = () => {
+    if (listening) return;
+    const h = startDictation((t) => setQ((prev) => (prev ? `${prev} ${t}` : t)), () => setListening(false));
+    if (h) setListening(true);
   };
 
   const createPlan = async () => {
@@ -134,7 +147,7 @@ function MatchupInner() {
   };
 
   return (
-    <div className="px-6 py-8 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto">
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Opponent Matchup</h1>
@@ -221,7 +234,7 @@ function MatchupInner() {
             <div className="contents">
               <div className={`${card} lg:col-start-2 lg:row-start-1 flex flex-col`}>
                 <div className={cardHead}>Offensive Tendencies (Season) {o.playsImported > 0 && <span className="ml-auto normal-case tracking-normal text-xs font-normal text-dim">{o.playsImported} plays imported</span>}</div>
-                <div className="grid grid-cols-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4">
                   <Stat value={view?.runRate ?? null} label="Run Rate" sub={view?.runRate != null ? `(${100 - view.runRate}% Pass)` : undefined} />
                   <Stat value={view?.firstDownRun ?? null} label="1st Down Run" />
                   <Stat value={view?.rpoRate ?? null} label="RPO Rate" />
@@ -266,7 +279,8 @@ function MatchupInner() {
                   Key Players
                   <button onClick={() => set({ keyPlayers: [...o.keyPlayers, { id: uid(), name: "" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
                 </div>
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[420px]">
                   <tbody>
                     {o.keyPlayers.map((k) => {
                       const up = (patch: Partial<ScoutKeyPlayer>) => set({ keyPlayers: o.keyPlayers.map((x) => (x.id === k.id ? { ...x, ...patch } : x)) });
@@ -285,6 +299,7 @@ function MatchupInner() {
                     {o.keyPlayers.length === 0 && <tr><td className="px-4 py-4 text-center text-xs text-dim">Who wins games for them?</td></tr>}
                   </tbody>
                 </table>
+                </div>
               </div>
 
               <div className={`${card} lg:col-start-3 lg:row-start-2 flex flex-col`}>
@@ -402,7 +417,8 @@ function MatchupInner() {
                 Formations / Sets
                 <button onClick={() => set({ formations: [...o.formations, { id: uid(), name: "" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
               </div>
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[520px]">
                 <thead><tr className="border-b border-line bg-slate-50"><th className={`${th} text-left px-4 py-2`}>Formation</th><th className={`${th} text-right px-2 py-2 w-20`}>Snaps</th><th className={`${th} text-right px-2 py-2 w-16`}>Run</th><th className={`${th} text-left px-3 py-2`}>Notes</th><th className="w-8" /></tr></thead>
                 <tbody>
                   {o.formations.map((f) => {
@@ -420,13 +436,15 @@ function MatchupInner() {
                   {o.formations.length === 0 && <tr><td colSpan={5} className="px-4 py-4 text-center text-xs text-dim">What do they line up in most?</td></tr>}
                 </tbody>
               </table>
+              </div>
             </div>
             <div className={`${card} flex flex-col`}>
               <div className={cardHead}>
                 Run / Pass Concepts
                 <button onClick={() => set({ concepts: [...o.concepts, { id: uid(), name: "", type: "Run" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
               </div>
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[520px]">
                 <thead><tr className="border-b border-line bg-slate-50"><th className={`${th} text-left px-4 py-2`}>Concept</th><th className={`${th} text-left px-2 py-2 w-20`}>Type</th><th className={`${th} text-right px-2 py-2 w-16`}>Seen</th><th className={`${th} text-left px-3 py-2`}>Notes</th><th className="w-8" /></tr></thead>
                 <tbody>
                   {o.concepts.map((c) => {
@@ -444,6 +462,7 @@ function MatchupInner() {
                   {o.concepts.length === 0 && <tr><td colSpan={5} className="px-4 py-4 text-center text-xs text-dim">Their bread-and-butter plays.</td></tr>}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
 
@@ -465,16 +484,22 @@ function MatchupInner() {
                   placeholder="Example: What are their weaknesses on 3rd down? — or teach me a word: “Utah is Trips with the TE on”"
                   className="flex-1 bg-transparent px-2 text-sm focus:outline-none"
                 />
-                <Mic size={16} className="text-dim" />
+                <button onClick={dictate} aria-label="Dictate" className={`grid size-8 place-items-center rounded-lg ${listening ? "text-red-500" : "text-dim hover:text-ink"}`}><Mic size={16} /></button>
                 <button onClick={askIt} disabled={!q.trim() || busy} className="inline-flex items-center gap-1.5 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep disabled:opacity-50"><Send size={14} /> Ask</button>
               </div>
-              {o.questions[0] && (
+              {(lastReply ?? (o.questions[0] ? { q: o.questions[0].q, a: o.questions[0].a, actions: undefined } : null)) && (
                 <div className="mt-3 rounded-lg border border-line bg-slate-50 px-4 py-3 text-sm">
-                  <div className="text-xs font-semibold text-dim mb-1">Q: {o.questions[0].q}</div>
-                  <div className="leading-relaxed">{o.questions[0].a}</div>
+                  <div className="text-xs font-semibold text-dim mb-1">Q: {(lastReply ?? o.questions[0]).q}</div>
+                  <div className="leading-relaxed">{(lastReply ?? o.questions[0]).a}</div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {(lastReply?.actions ?? []).map((a) => (
+                      <Link key={a.label + a.href} href={a.href} className="rounded-lg border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-grass hover:border-grass">{a.label}</Link>
+                    ))}
+                    <Link href="/chat" className="rounded-lg border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-dim hover:border-grass hover:text-grass">Open the conversation</Link>
+                  </div>
                 </div>
               )}
-              <p className="mt-2 text-[11px] text-dim">Answers come from the scouting data on this page. Engine: {AI_LABEL}.</p>
+              <p className="mt-2 text-[11px] text-dim">This is the same CounterScheme conversation as the chat — answers come from the scouting data on this page. Engine: {AI_LABEL}.</p>
             </div>
             <div className="p-5">
               <div className={`${th} mb-2 flex items-center gap-1.5`}><HelpCircle size={12} /> Recent Questions</div>
