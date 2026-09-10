@@ -7,33 +7,33 @@ import { Upload, Users, Shield, Bell, SlidersHorizontal } from "lucide-react";
 import { useStore, useHydrated, TEAM_LEVELS } from "@/lib/store";
 import SkillCategoriesPanel from "@/components/SkillCategoriesPanel";
 
+// Honest placeholders — these arrive with accounts (Q3). Nothing here is live.
 const sections = [
   {
     icon: Users,
     title: "Staff access",
     rows: [
-      { label: "Coach Carver", value: "Owner" },
-      { label: "T. Reyes (DC)", value: "Assistant" },
-      { label: "M. Osei (OC)", value: "Assistant" },
+      { label: "Head Coach / Admin", value: "Everything, plus staff and billing" },
+      { label: "Coordinator", value: "His side of the ball and its game plan" },
+      { label: "Assistant Coach", value: "His position group, chat, and what he's allowed to edit" },
     ],
+    note: "Roles are decided; sign-in and multi-coach access come with the accounts build. Today this browser is the only user.",
   },
   {
     icon: Upload,
     title: "Data & imports",
     rows: [
-      { label: "Hudl breakdown", value: "Last import Sep 13" },
-      { label: "Roster (MaxPreps)", value: "Synced" },
-      { label: "Testing sheet", value: "Upload CSV" },
+      { label: "Hudl play-by-play", value: "Opponent Matchup → Upload Report" },
+      { label: "Roster", value: "My Team → Import Roster (CSV or PDF)" },
+      { label: "Weight room / testing", value: "My Team → Weight Room → Upload" },
     ],
+    note: "Everything is saved in this browser. Cross-device sync comes with accounts.",
   },
   {
     icon: Bell,
     title: "Notifications",
-    rows: [
-      { label: "Scout report ready", value: "On" },
-      { label: "Practice reminders", value: "On" },
-      { label: "Weekly grade summary", value: "Off" },
-    ],
+    rows: [],
+    note: "Not built yet — nothing here sends anything.",
   },
 ];
 
@@ -152,12 +152,13 @@ export default function SettingsPage() {
             </div>
             <div className="flex flex-col divide-y divide-line/60">
               {s.rows.map((r) => (
-                <div key={r.label} className="flex items-center justify-between py-2.5 text-sm">
-                  <span className="text-dim">{r.label}</span>
-                  <span className="font-semibold">{r.value}</span>
+                <div key={r.label} className="flex items-start justify-between gap-3 py-2.5 text-sm">
+                  <span className="text-dim shrink-0">{r.label}</span>
+                  <span className="font-semibold text-right">{r.value}</span>
                 </div>
               ))}
             </div>
+            {s.note && <p className="mt-3 text-xs text-dim">{s.note}</p>}
           </motion.div>
         ))}
       </div>

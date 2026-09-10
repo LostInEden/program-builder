@@ -17,6 +17,17 @@ Rebuilt to the coach's "Version 1 – Essential Systems" spec + his My Scheme / 
 - **AI layer `src/lib/ai/`:** `types.ts` = provider contract (teach / analyze / gamePlan / ask), `local.ts` = in-house engine (heuristic Teach parser → Trigger/Action/Result + auto-creates named fronts/coverages; template game plan grounded in scout numbers + saved rules; keyword Q&A over scout data; asks a question when it can't file a sentence), `index.ts` selects by `NEXT_PUBLIC_AI_PROVIDER` (default `local`). **Next step when the coach's OpenAI key arrives:** add a Vercel route handler (`/api/ai`) that implements the same contract with structured outputs, a `remote.ts` provider that POSTs to it, drop `output: export` for the Vercel build (gh-pages mirror becomes static/no-AI or is retired). Rule: the model reasons over JSON, code does all math.
 - Voice input = browser Web Speech API (no key). "Upload Note" accepts .txt/.md; photos need the model.
 
+## 1b. Coach-answer build (2026-09-10) — six phases, all on the local engine
+
+Built from the coach's answers (`docs/coach-answers/`, spec in `docs/build-brief-2026-09-10.md`). Persist is now **version 11**. Real Hudl export sample: `docs/coach-answers/hudl-playlist-sample.csv` (85 snaps; PERSONNEL/PLAYER untagged, OFF PLAY 23/85 — sparse is normal).
+1. **Snap-level import + tendency engine** — `Opponent.plays: Play[]` (every Hudl column + `extra`), `lib/tendencies.ts` (coach's Q36 situations, formations-by-personnel, success from result/gain, tells engine = single tags + pairs with n≥5 and lift vs baseline, key-player usage, best plays by freq/success), `components/TendencyReport.tsx` with Evidence drill-downs. `scripts/tendency-check.mjs` verifies against the CSV.
+2. **Terminology** — `lib/knowledge.ts` (standard formations/concepts/backfields, alias matching), `termMap` per team, `components/UnknownTerms.tsx` asks one word at a time ("What does UTAH mean?"), Ask handles "Dallas is Snag". 113/124 sample tags resolve automatically.
+3. **Game Plan v2** — `lib/plan.ts` + `lib/useGamePlan.ts`: reactive (input hash), merge rule keeps coach items/edits, items carry `source/evidence/conceptIds`, answers only from active/backPocket concepts (`Concept.status`), Evidence + "Ask about this", best players first, 7-step Plan Status (`components/PlanStatus.tsx`).
+4. **Team model** — Base + inherited packages (`effectiveSlots(group, baseGroupFor(groups, level))` — never read `group.slots`), Varsity/JV/Freshman, `lib/skills.ts` position-type skill categories (DL/LB/DB defaults, scheme-suggested, editable; no overall rating), weekly game grades + trend, PDF roster import (`lib/pdfRoster.ts`, pdfjs-dist), `program` settings (name/level/state/classification) replace the Demo/Linville literals.
+5. **Practice script + scout cards** — `lib/practice.ts` (rep pool ranked freq × success × stress vs our rules, operation reps on personnel change, ≤3 counters), `lib/usePractice.ts`, `/practice` (include/exclude, Mon–Thu script, printable text scout cards). Sample: 51 candidates, 12 suggested.
+6. **One conversation** — `chat: ChatMessage[]`, `ai.chat()` router in `local.ts` (teach / terms / evidence / repping / ask), `components/ChatThread.tsx`, drawer in TopNav, `/chat` phone route, `BottomTabs` on phones. Teach and Ask boxes post into the same thread.
+**Still deferred:** real model behind `ai/` (needs OpenAI key + Vercel route; gh-pages mirror then retires), accounts/roles (Q3), self-scout / game review log (Q1), diagrams.
+
 ## 2. Where everything lives
 
 | Thing | Location |
