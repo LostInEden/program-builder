@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Plus, X, ChevronRight, Star, BookOpen, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 import {
   useStore, useHydrated, ADJUSTMENT_CATEGORIES, PRESSURE_GROUPS,
-  type Concept, type ConceptKind, type Responsibility,
+  type Concept, type ConceptKind, type ConceptStatus, type Responsibility,
 } from "@/lib/store";
 import { COVERAGES } from "@/lib/coverages";
 
@@ -123,7 +123,8 @@ function ConceptsInner() {
               >
                 {c.isBase && <Star size={12} className="fill-amber-400 text-amber-400 shrink-0" />}
                 <span className="truncate">{c.kind === "adjustment" && c.trigger ? `${c.trigger} = ${c.result}` : c.name}</span>
-                {!c.confirmed && <span className="ml-auto rounded-full bg-ember/10 px-1.5 py-0.5 text-[10px] font-bold text-ember shrink-0">confirm</span>}
+                {c.status === "backPocket" && <span className="rounded-full border border-line px-1.5 py-0.5 text-[10px] font-bold text-dim shrink-0">back pocket</span>}
+                {!c.confirmed &&<span className="ml-auto rounded-full bg-ember/10 px-1.5 py-0.5 text-[10px] font-bold text-ember shrink-0">confirm</span>}
                 <ChevronRight size={14} className="ml-auto text-dim shrink-0" />
               </button>
             ))}
@@ -168,7 +169,23 @@ function Editor({ c, onChange, onRemove, onConfirm }: { c: Concept; onChange: (p
       <div className={card}>
         <div className={cardHead}>
           {KIND_LABEL[c.kind].replace(/s$/, "")}
-          <label className="ml-auto normal-case tracking-normal inline-flex items-center gap-1.5 text-xs font-semibold text-dim">
+          {/* Q30: what we carry now vs what we've practiced and held back. Both
+              can be called in-season; nothing else ever gets recommended. */}
+          <div className="ml-auto normal-case tracking-normal flex gap-1 rounded-lg border border-line p-0.5">
+            {([["active", "Active"], ["backPocket", "Back pocket"]] as [ConceptStatus, string][]).map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => onChange({ status: value })}
+                title={value === "active" ? "In the plan right now" : "Practiced and available, but not part of the weekly menu"}
+                className={`rounded-md px-2 py-0.5 text-[11px] font-bold transition ${
+                  (c.status ?? "active") === value ? "bg-grass text-white" : "text-dim hover:text-ink"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="normal-case tracking-normal inline-flex items-center gap-1.5 text-xs font-semibold text-dim">
             <input type="checkbox" checked={!!c.isBase} onChange={(e) => onChange({ isBase: e.target.checked })} className="accent-grass" />
             Base {c.kind}
           </label>

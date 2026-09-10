@@ -82,11 +82,17 @@ export type PressureGroup = (typeof PRESSURE_GROUPS)[number];
 
 export type Responsibility = { id: string; role: string; job: string };
 
+// Q30: what the team actually carries right now versus what they have
+// practiced and kept in the back pocket. Both are fair game in-season; nothing
+// outside these two is ever presented as a call.
+export type ConceptStatus = "active" | "backPocket";
+
 export type Concept = {
   id: string;
   kind: ConceptKind;
   name: string;
   isBase?: boolean; // the base front / base coverage
+  status?: ConceptStatus; // default "active"
   summary: string;
   group?: PressureGroup; // pressures
   category?: AdjustmentCategory; // adjustments
@@ -108,6 +114,19 @@ export type ActivityItem = { id: string; text: string; sub?: string; ts: number 
 
 // Pre-v5 rule shape, kept only so the migration can type it.
 type LegacySchemeRule = { id: string; trigger: string; action: string; result: string };
+// Pre-v8 plan shapes (no `source`, and a separate "Best Answers" list).
+type LegacyPlanItem = { id: string; text: string; sub?: string };
+type LegacyGamePlan = {
+  opponentId?: string;
+  priorities?: LegacyPlanItem[];
+  bestPlayers?: LegacyPlanItem[];
+  threats?: LegacyPlanItem[];
+  bestAnswers?: LegacyPlanItem[];
+  concerns?: LegacyPlanItem[];
+  adjustments?: LegacyPlanItem[];
+  emphasis?: LegacyPlanItem[];
+  generatedAt?: number;
+};
 
 // ---- Opponent model ---------------------------------------------------------
 export type ScoutFormation = { id: string; name: string; snapsPct?: number | null; runPct?: number | null; notes?: string };
@@ -174,20 +193,42 @@ export type Opponent = {
   plays: Play[]; // the snap-by-snap import; every tendency below is derived from it
   playsImported: number; // rows from the last tendency-report upload (= plays.length)
   questions: { id: string; q: string; a: string; ts: number }[]; // Ask CounterScheme history
-  planStatus: { walkthrough: boolean; practicePlan: boolean };
   isDemo?: boolean;
 };
 
-export type PlanItem = { id: string; text: string; sub?: string };
+// The numbers behind a generated plan item — answer first, evidence second (Q29).
+export type PlanEvidence = {
+  summary: string;
+  n: number;
+  rate: number;
+  baseline?: number;
+  playIds: string[];
+};
+
+export type PlanItem = {
+  id: string;
+  text: string;
+  sub?: string;
+  /** Who wrote it. Regenerating only ever replaces un-edited "generated" items. */
+  source: "generated" | "coach";
+  /** Set the moment the coach changes a generated item — it is his line now. */
+  edited?: boolean;
+  evidence?: PlanEvidence;
+  conceptIds?: string[]; // the saved concepts this answer calls for
+  personnel?: string; // when the answer is broken out by grouping (Q28)
+};
+
 export type GamePlan = {
   opponentId: string;
   priorities: PlanItem[]; // top 3
-  threats: PlanItem[];
-  bestAnswers: PlanItem[];
+  bestPlayers: PlanItem[]; // Q28: their best players come first
+  threats: PlanItem[]; // the tells, each paired with an answer in our system
   concerns: PlanItem[];
   adjustments: PlanItem[];
   emphasis: PlanItem[];
   generatedAt?: number;
+  /** Hash of the opponent + scheme inputs the generated items were built from. */
+  inputHash?: string;
 };
 
 // slots: structure slot index -> ordered player ids (index 0 = starter)
@@ -521,7 +562,6 @@ export const emptyOpponent = (id: string, name: string): Opponent => ({
   plays: [],
   playsImported: 0,
   questions: [],
-  planStatus: { walkthrough: false, practicePlan: false },
 });
 
 const concept = (
@@ -534,6 +574,7 @@ const concept = (
   kind,
   name,
   summary,
+  status: "active",
   responsibilities: [],
   notes: "",
   source: "coach",
@@ -761,6 +802,7 @@ export const useStore = create<Store>()(
             {
               id,
               summary: "",
+              status: "active",
               responsibilities: [],
               notes: "",
               source: "coach",
@@ -812,7 +854,7 @@ export const useStore = create<Store>()(
         set((s) => {
           const existing = s.gamePlans.find((g) => g.opponentId === opponentId);
           const base: GamePlan = existing ?? {
-            opponentId, priorities: [], threats: [], bestAnswers: [], concerns: [], adjustments: [], emphasis: [],
+            opponentId, priorities: [], bestPlayers: [], threats: [], concerns: [], adjustments: [], emphasis: [],
           };
           const next = { ...base, ...patch };
           return {
@@ -1034,7 +1076,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 7,
+      version: 8,
       migrate: (persisted, version) => {
         const state = persisted as {
           termMap?: TermMapping[];
@@ -1043,7 +1085,7 @@ export const useStore = create<Store>()(
           schemeRules?: LegacySchemeRule[];
           concepts?: Concept[];
           opponents?: Partial<Opponent>[];
-          gamePlans?: Partial<GamePlan>[];
+          gamePlans?: LegacyGamePlan[];
           scheme?: { structureName: string; philosophyTitle?: string; philosophy: string };
         };
         if (version < 2 && state?.calls) {
@@ -1145,6 +1187,34 @@ export const useStore = create<Store>()(
           // reads standard football on its own and only asks about the words
           // that are this staff's own.
           state.termMap = Array.isArray(state.termMap) ? state.termMap : [];
+        }
+        if (version < 8) {
+          // v8: Game Plan v2. Everything already in a plan was written or kept
+          // by the coach, so it is marked "coach" — regenerating never touches
+          // it. The old "Best Answers We Already Have" list folds into Small
+          // Adjustments, which is where answers inside our system now live.
+          // Concepts get a status (Q30) and the old two-checkbox plan status
+          // goes away — the 7 steps are read from the data instead (Q40).
+          state.concepts = (state.concepts ?? []).map((c) => ({ ...c, status: c.status ?? "active" }));
+          state.gamePlans = (state.gamePlans ?? []).map((g) => {
+            const asCoach = (rows?: LegacyPlanItem[]): PlanItem[] =>
+              (rows ?? []).map((r) => ({ id: r.id, text: r.text, sub: r.sub, source: "coach" as const }));
+            return {
+              opponentId: g.opponentId ?? "",
+              priorities: asCoach(g.priorities),
+              bestPlayers: asCoach(g.bestPlayers),
+              threats: asCoach(g.threats),
+              concerns: asCoach(g.concerns),
+              adjustments: [...asCoach(g.adjustments), ...asCoach(g.bestAnswers)],
+              emphasis: asCoach(g.emphasis),
+              generatedAt: g.generatedAt,
+            };
+          });
+          state.opponents = (state.opponents ?? []).map((o) => {
+            const { planStatus, ...rest } = o as Partial<Opponent> & { planStatus?: unknown };
+            void planStatus;
+            return rest;
+          });
         }
         return state;
       },

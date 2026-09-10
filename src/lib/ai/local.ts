@@ -4,12 +4,25 @@
 
 import { COVERAGES } from "@/lib/coverages";
 import { computeFindings, SITUATIONS, type Finding } from "@/lib/analyze";
-import { DOWNS, DISTANCES, type Concept, type Opponent, type GamePlan, type PlanItem } from "@/lib/store";
+import { DOWNS, DISTANCES, type Concept, type Opponent, type GamePlan, type PlanItem, type Play } from "@/lib/store";
 import { matchTerm, parseTermAnswer, resolveTag, normalizeTerm, type TermKind } from "@/lib/knowledge";
+import {
+  tendencyReport, tellSentence, makeResolver, summarize, tag as normTag, type PlayerUsage, type Tell,
+} from "@/lib/tendencies";
+import {
+  answerFor, callName, genItem, makeKit, readConcept, tellEvidence, type PlanAnswer, type PlanKit, type PlanSections,
+} from "@/lib/plan";
 import type { AiProvider, SchemeContext, TeachResult, MatchupAnswer, TermResolution } from "./types";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
-const item = (text: string, sub?: string): PlanItem => ({ id: uid(), text, sub });
+// Generated items keep a stable id across regenerates so the merge rule can
+// tell "the same line, redrafted" from "a new line".
+const stableId = (s: string) => {
+  let x = 5381;
+  for (let i = 0; i < s.length; i++) x = ((x * 33) ^ s.charCodeAt(i)) >>> 0;
+  return x.toString(36);
+};
+const item = (text: string, sub?: string): PlanItem => ({ id: `g-${stableId(text)}`, text, sub, source: "generated" });
 const lc = (s: string) => s.toLowerCase();
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -194,12 +207,236 @@ async function analyze(ctx: SchemeContext): Promise<Finding[]> {
   return computeFindings(ctx).findings;
 }
 
-// ---- game plan -------------------------------------------------------------
+// ---- game plan (Q28–Q30) ----------------------------------------------------
 function pct(n: number | null | undefined) {
   return n == null ? null : `${Math.round(n)}%`;
 }
+const one = (n: number | null | undefined) => (n == null ? "—" : n.toFixed(1));
+const pctOf = (n: number) => `${Math.round(n * 100)}%`;
+
+/** A bracket/cone answer only if he carries one. Otherwise say so honestly. */
+function bracketLine(kit: PlanKit): string {
+  const cov = kit.coverages.find((c) => /cone|bracket|meg|mod|robber|match/i.test(c.name));
+  return cov
+    ? `On the money down, ${callName(cov)} and put two on him — everybody else plays their normal rule.`
+    : "You don't carry a bracket call — the answer is leverage and a safety who knows where he is.";
+}
+
+/** Their best players first, and a practical way to limit them (Q28, Q38). */
+function bestPlayerItems(o: Opponent, usage: PlayerUsage[], kit: PlanKit, termMap: SchemeContext["termMap"]): PlanItem[] {
+  const out: PlanItem[] = [];
+  for (const p of usage.slice(0, 4)) {
+    if (p.touches < 3) continue;
+    const named = o.keyPlayers.find((k) => k.jersey && normTag(k.jersey) === normTag(p.player));
+    const who = named ? `#${named.jersey} ${named.name}${named.pos ? ` (${named.pos})` : ""}` : `#${p.player}`;
+    const runHeavy = p.runs >= p.passes;
+    const ans = answerFor(
+      { condition: `${p.topFormation?.name ?? ""} ${p.topSituation?.name ?? ""}`, outcome: runHeavy ? "Run" : "Pass", outcomeKind: "runpass", termMap: termMap ?? [] },
+      kit,
+    );
+    const where = `He gets it most out of ${p.topFormation?.name ?? "their base look"}${p.topSituation ? ` and on ${p.topSituation.name}` : ""}.`;
+    const how = runHeavy
+      ? `${ans.text} ${where} Make somebody else carry it — extra hat to his side and tackle him for three.`
+      : `${ans.text} ${where} ${bracketLine(kit)}`;
+    out.push(
+      genItem(`bp-${p.player}`, `${who} — ${p.touches} touches, ${pctOf(p.share)} of the ball, ${one(p.avgGain)} yds a touch${p.explosive ? `, ${p.explosive} explosive` : ""}${p.tds ? `, ${p.tds} TD` : ""}`, how, {
+        evidence: { summary: `${who} with the ball`, n: p.touches, rate: p.share, playIds: p.playIds },
+        conceptIds: ans.conceptIds,
+      }),
+    );
+  }
+  // Whatever the coach knows that the tagging doesn't (Q38) — never duplicated.
+  const covered = new Set(out.map((i) => normTag(i.text.split(" ")[0].replace("#", ""))));
+  for (const k of o.keyPlayers.filter((k) => k.name.trim()).slice(0, 4)) {
+    if (k.jersey && covered.has(normTag(k.jersey))) continue;
+    if (out.length >= 5) break;
+    const isSkill = /wr|te|slot|x|z|y/i.test(k.pos ?? "");
+    const isQb = /qb|quarterback/i.test(k.pos ?? "");
+    const how = isSkill
+      ? bracketLine(kit)
+      : isQb
+        ? `Make him a thrower or a runner, not both — the edge player has him every snap and the fits stay honest behind it.`
+        : `Make somebody else beat you: extra hat to his side, get him on the ground for three, and don't let the backside end get reached.`;
+    out.push(
+      genItem(`bpn-${k.id}`, `${k.jersey ? `#${k.jersey} ` : ""}${k.name}${k.pos ? ` (${k.pos})` : ""}`, `${k.notes ? `${k.notes}. ` : ""}${how}`, {
+        conceptIds: kit.baseFront && !isSkill ? [kit.baseFront.id] : [],
+      }),
+    );
+  }
+  return out;
+}
+
+/** Every tell gets an answer inside his defense — or it becomes practice work. */
+function threatItems(tells: Tell[], kit: PlanKit, termMap: SchemeContext["termMap"], resolve: ReturnType<typeof makeResolver>) {
+  const items: PlanItem[] = [];
+  const gaps: { tell: Tell; answer: PlanAnswer }[] = [];
+  const soft: { tell: Tell; answer: PlanAnswer }[] = [];
+  for (const t of tells) {
+    const ans = answerFor(
+      { condition: t.condition, outcome: t.outcome, outcomeKind: t.outcomeKind, tags: t.tags, termMap: termMap ?? [] },
+      kit,
+    );
+    items.push(
+      genItem(`t-${t.id}`, tellSentence(t, resolve), `${ans.text}${ans.educational ? " Educational — not in your system, so don't call it Friday." : ""}`, {
+        evidence: tellEvidence(t),
+        conceptIds: ans.conceptIds,
+        personnel: t.tags.find((x) => x.field === "personnel")?.value,
+      }),
+    );
+    if (ans.practice) gaps.push({ tell: t, answer: ans });
+    else if (ans.generic) soft.push({ tell: t, answer: ans });
+  }
+  return { items, gaps, soft };
+}
+
+/** Break the answers out by grouping when the opponent actually changes personnel (Q28/Q37). */
+function personnelItems(plays: Play[], kit: PlanKit, termMap: SchemeContext["termMap"]): PlanItem[] {
+  const groups = new Map<string, Play[]>();
+  for (const p of plays) {
+    const key = normTag(p.personnel);
+    if (!key) continue;
+    groups.set(key, [...(groups.get(key) ?? []), p]);
+  }
+  if (groups.size < 2) return [];
+  const overall = summarize(plays);
+  const baseRun = overall.plays ? overall.runs / overall.plays : null;
+  const out: PlanItem[] = [];
+  for (const [group, rows] of [...groups.entries()].sort((a, b) => b[1].length - a[1].length)) {
+    if (rows.length < 8) continue;
+    const s = summarize(rows);
+    if (!s.plays) continue;
+    const run = s.runs / s.plays;
+    if (baseRun != null && Math.abs(run - baseRun) < 0.12) continue;
+    const runHeavy = baseRun == null || run > baseRun;
+    const ans = answerFor({ condition: `${group} personnel`, outcome: runHeavy ? "Run" : "Pass", outcomeKind: "runpass", termMap: termMap ?? [] }, kit);
+    out.push(
+      genItem(`per-${group}`, `${group} personnel → ${runHeavy ? "run" : "pass"} ${pctOf(run)}`, `${ans.text} That's ${Math.round(Math.abs(run - (baseRun ?? 0)) * 100)} points off how they play the rest of the game — get the personnel call out and match it before they're set.`, {
+        evidence: { summary: `${group} personnel`, n: rows.length, rate: run, baseline: baseRun ?? undefined, playIds: rows.map((p) => p.id) },
+        conceptIds: ans.conceptIds,
+        personnel: group,
+      }),
+    );
+  }
+  return out.slice(0, 4);
+}
+
+/**
+ * The plan CounterScheme drafts from the snaps: best players, the tells that
+ * are worth a call, where they stress us, the small stuff, and what we have to
+ * rep. Everything here is counted — the engine never invents a number.
+ */
+function playsPlan(o: Opponent, ctx: SchemeContext, findings: Finding[]): PlanSections {
+  const termMap = ctx.termMap ?? [];
+  const kit = makeKit(ctx.concepts);
+  const resolve = makeResolver(termMap);
+  const r = tendencyReport(o.plays);
+  // Don't hand him six versions of the same tell. Which play they run is worth
+  // more than which way it goes, so the mix is capped per kind (Q35).
+  const CAP: Record<string, number> = { play: 4, runpass: 3, direction: 2 };
+  const used: Record<string, number> = {};
+  const tells: Tell[] = [];
+  for (const t of r.actionable.length ? r.actionable : r.tells) {
+    if ((used[t.outcomeKind] ?? 0) >= (CAP[t.outcomeKind] ?? 2)) continue;
+    used[t.outcomeKind] = (used[t.outcomeKind] ?? 0) + 1;
+    tells.push(t);
+    if (tells.length >= 7) break;
+  }
+
+  const bestPlayers = bestPlayerItems(o, r.players, kit, termMap);
+  const { items: threats, gaps, soft } = threatItems(tells, kit, termMap, resolve);
+  const adjustments = personnelItems(o.plays, kit, termMap);
+
+  // -- concerns: where they stress us and we have nothing filed
+  const concerns: PlanItem[] = [];
+  for (const g of gaps.slice(0, 3)) {
+    concerns.push(
+      genItem(`gap-${g.tell.id}`, `No stored answer: ${g.tell.condition} → ${g.tell.outcome}`, g.answer.practice, {
+        evidence: tellEvidence(g.tell),
+      }),
+    );
+  }
+  // Base covers it, but there is no check on file — that's worth saying (Q31).
+  for (const s of soft.slice(0, 2)) {
+    concerns.push(
+      genItem(`soft-${s.tell.id}`, `No check on file for ${s.tell.condition}`, `They do it on ${s.tell.hits} of ${s.tell.n} snaps from that look. Base alignment covers it, but there is no rule that tells the kids what changes — write one or decide you're happy playing it straight.`, {
+        evidence: tellEvidence(s.tell),
+      }),
+    );
+  }
+  for (const p of r.best.bySuccess.slice(0, 2)) {
+    if (p.explosive < 1 || p.n < 3) continue;
+    const read = readConcept(p.name, termMap);
+    concerns.push(
+      genItem(`danger-${p.name}`, `${p.name} is their best play, not their most-called`, `${p.n} snaps, ${one(p.avgGain)} yds a pop, ${p.explosive} explosive${read.family ? ` — ${read.family.toLowerCase()} concept` : ""}. It only takes one to change the game, so it gets practice time whether they run it ten times or four.`, {
+        evidence: { summary: p.name, n: p.n, rate: p.explosiveRate ?? 0, playIds: p.playIds },
+      }),
+    );
+  }
+  findings.filter((f) => f.status === "Potential Conflict").slice(0, 2).forEach((f) => concerns.push(genItem(`fnd-${f.id}`, f.check, f.detail)));
+
+  // -- small adjustments that use what he already carries
+  if (o.tempo && /fast|tempo|hurry|no huddle/i.test(o.tempo))
+    adjustments.push(genItem("adj-tempo", "One-word calls vs their tempo", `${o.tempo} tempo — base alignment is the check when the call is late. Get lined up first and adjust second.`));
+  const screens = r.best.byFrequency.find((p) => /screen|bubble|tunnel|smoke/i.test(p.name) && p.n >= 3);
+  const cloud = kit.coverages.find((c) => /cloud/i.test(c.name));
+  if (screens && cloud)
+    adjustments.push(genItem("adj-screen", `${callName(cloud)} to the field vs their screen game`, `${screens.name} ${screens.n}× for ${one(screens.avgGain)} a throw. Corner squats, safety rotates over #1 — a turned corner is what makes a screen a big play.`, { conceptIds: [cloud.id], evidence: { summary: screens.name, n: screens.n, rate: 1, playIds: screens.playIds } }));
+  const topFormation = r.personnel.flatMap((g) => g.formations).sort((a, b) => b.n - a.n)[0];
+  if (topFormation && kit.baseFront)
+    adjustments.push(genItem("adj-form", `Set the front to ${topFormation.name} before they get set`, `${topFormation.n} snaps out of it, ${pctOf(topFormation.runRate ?? 0)} run. Live in ${callName(kit.baseFront)} against it instead of checking late.`, { conceptIds: [kit.baseFront.id] }));
+
+  // -- practice emphasis: what has to be repped this week (Q5, Q28)
+  const emphasis: PlanItem[] = [];
+  for (const g of [...gaps, ...soft].slice(0, 3))
+    emphasis.push(genItem(`emp-${g.tell.id}`, `Rep an answer for ${g.tell.condition}`, `${g.tell.outcome} on ${g.tell.hits} of ${g.tell.n} snaps from that look and there's no rule on file against it. Decide the call Monday, teach it, then make it game-like Wednesday.`, { evidence: tellEvidence(g.tell) }));
+  const dangerous = new Set(r.best.bySuccess.slice(0, 2).map((p) => p.name));
+  const mostCalled = r.best.byFrequency.find((p) => p.n >= 4 && !dangerous.has(p.name));
+  if (mostCalled)
+    emphasis.push(genItem(`emp-top-${mostCalled.name}`, `Fit ${mostCalled.name} until it's boring`, `Their most-called play — ${mostCalled.n} snaps for ${one(mostCalled.avgGain)} a snap. Every front, both hashes, base fits with no thinking.`, { evidence: { summary: mostCalled.name, n: mostCalled.n, rate: mostCalled.successRate ?? 0, playIds: mostCalled.playIds } }));
+  for (const p of r.best.bySuccess.slice(0, 2)) {
+    if (p.n < 3) continue;
+    emphasis.push(genItem(`emp-play-${p.name}`, `Fit ${p.name} from every front`, `${one(p.avgGain)} yds a snap with ${p.explosive} explosive. Both hashes, ${p.topDirection ? `${p.topDirection.toLowerCase()} first — that's where it goes` : "both directions"}.`, { evidence: { summary: p.name, n: p.n, rate: p.successRate ?? 0, playIds: p.playIds } }));
+  }
+  const groups = new Set(o.plays.map((p) => normTag(p.personnel)).filter(Boolean));
+  if (groups.size >= 2)
+    emphasis.push(genItem("emp-pers", "Personnel-change operation reps", `They play out of ${groups.size} groupings (${[...groups].slice(0, 4).join(", ")}). Rehearse the whole sequence: recognize it, communicate it, sub, take the call, align.`));
+  const thirdDown = r.situations.filter((s) => s.situation.group === "3rd/4th" && s.n >= 5);
+  const thirdPass = thirdDown.find((s) => s.runRate != null && s.runRate < 0.4);
+  if (thirdPass) {
+    const prs = kit.pressures.find((p) => p.group === "3rd Down Calls") ?? kit.pressures[0];
+    emphasis.push(genItem("emp-third", "3rd & long period", `${thirdPass.situation.group} & ${thirdPass.situation.range}: ${pctOf(1 - (thirdPass.runRate ?? 0))} pass on ${thirdPass.n} snaps. ${prs ? `${callName(prs)} with your best match coverage behind it.` : "Pick the pressure you want on the money down and rep it."}`, { conceptIds: prs ? [prs.id] : [] }));
+  }
+  if (o.redZone.trim()) emphasis.push(genItem("emp-rz", "Red zone Thursday", `${o.redZone.trim().slice(0, 120)} Short field, tight throws — rep the fits and the fade leverage.`));
+
+  // -- top 3 priorities: the biggest things on the list, said plainly
+  const priorities: PlanItem[] = [];
+  if (bestPlayers[0]) priorities.push(genItem("pri-player", `Take away ${bestPlayers[0].text.split(" — ")[0]}`, bestPlayers[0].sub));
+  for (const t of threats.slice(0, 3)) {
+    if (priorities.length >= 3) break;
+    priorities.push(genItem(`pri-${t.id}`, t.text, t.sub, { evidence: t.evidence, conceptIds: t.conceptIds }));
+  }
+  if (priorities.length < 3 && emphasis[0]) priorities.push(genItem("pri-emp", emphasis[0].text, emphasis[0].sub));
+  if (!priorities.length)
+    priorities.push(genItem("pri-none", "Not enough tagged snaps to call a priority yet", "Tag more film in Hudl — formation, play and personnel are what turn snaps into tells."));
+
+  return {
+    priorities: priorities.slice(0, 3),
+    bestPlayers: bestPlayers.slice(0, 5),
+    threats: threats.slice(0, 7),
+    concerns: concerns.slice(0, 5),
+    adjustments: adjustments.slice(0, 5),
+    emphasis: emphasis.slice(0, 6),
+  };
+}
 
 async function gamePlan(o: Opponent, ctx: SchemeContext, findings: Finding[]): Promise<Omit<GamePlan, "opponentId">> {
+  // With snaps on file the plan is built from the snaps. Without them we still
+  // draft something from whatever the coach typed in by hand.
+  if ((o.plays?.length ?? 0) >= 5) return { ...playsPlan(o, ctx, findings), generatedAt: Date.now() };
+  return { ...(await handEnteredPlan(o, ctx, findings)), generatedAt: Date.now() };
+}
+
+async function handEnteredPlan(o: Opponent, ctx: SchemeContext, findings: Finding[]): Promise<PlanSections> {
   const concepts = ctx.concepts.filter((c) => c.confirmed);
   const adjustments = concepts.filter((c) => c.kind === "adjustment");
   const coverages = concepts.filter((c) => c.kind === "coverage");
@@ -302,14 +539,18 @@ async function gamePlan(o: Opponent, ctx: SchemeContext, findings: Finding[]): P
   if (o.redZone) emphasis.push(item("Red zone Thursday", o.redZone.slice(0, 80)));
   if (emphasis.length === 0) emphasis.push(item("Base fundamentals", "Fits, leverage, and tackling until the scouting report fills in."));
 
+  // Answers we already carry belong with the rest of the small stuff now —
+  // the plan reads best players → threats → concerns → adjustments → practice.
   return {
     priorities,
+    bestPlayers: o.keyPlayers
+      .filter((k) => k.name.trim())
+      .slice(0, 4)
+      .map((k) => item(`${k.jersey ? `#${k.jersey} ` : ""}${k.name}${k.pos ? ` (${k.pos})` : ""}`, k.notes || "Add what he does well and CounterScheme will suggest how to limit him.")),
     threats: threats.slice(0, 6),
-    bestAnswers: best.slice(0, 5),
     concerns: concerns.slice(0, 5),
-    adjustments: adj.slice(0, 5),
+    adjustments: [...best.slice(0, 4), ...adj].slice(0, 6),
     emphasis: emphasis.slice(0, 5),
-    generatedAt: Date.now(),
   };
 }
 

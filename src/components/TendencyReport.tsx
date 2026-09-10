@@ -28,7 +28,8 @@ function Term({ raw, kind, resolve }: { raw: string; kind?: TermKind; resolve: T
 }
 const one = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
 
-function PlayTable({ plays }: { plays: Play[] }) {
+/** The evidence rows. Shared with the Game Plan so evidence looks the same everywhere. */
+export function PlayTable({ plays }: { plays: Play[] }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs">

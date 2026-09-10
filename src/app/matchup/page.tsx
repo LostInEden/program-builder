@@ -1,21 +1,22 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
-  Upload, Send, Plus, X, ChevronRight, Star, Target, Flag, Users2, HelpCircle, CalendarDays, Check, Circle, Pencil, Mic,
+  Upload, Send, Plus, X, ChevronRight, Target, Flag, Users2, HelpCircle, CalendarDays, Check, Pencil, Mic,
 } from "lucide-react";
 import {
   useStore, useHydrated, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
 } from "@/lib/store";
 import { ai, AI_LABEL } from "@/lib/ai";
-import { computeFindings } from "@/lib/analyze";
 import TendencyImport from "@/components/TendencyImport";
 import TendencyReport from "@/components/TendencyReport";
 import UnknownTerms from "@/components/UnknownTerms";
+import PlanStatus from "@/components/PlanStatus";
 import { headlineFromPlays } from "@/lib/tendencies";
+import { useGamePlan } from "@/lib/useGamePlan";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink px-5 py-3.5 border-b border-line flex items-center gap-3";
@@ -66,15 +67,28 @@ function MatchupInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const store = useStore();
-  const { opponents, addOpponent, updateOpponent, removeOpponent, seasonSchedule, gamePlans, updateGamePlan, termMap, addTermMapping } = store;
+  const { opponents, addOpponent, updateOpponent, removeOpponent, seasonSchedule, termMap, addTermMapping } = store;
   const [importOpen, setImportOpen] = useState(false);
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
-
   const o = opponents.find((x) => x.id === sp.get("id")) ?? opponents.find((x) => !x.isDemo) ?? opponents[0] ?? null;
+  const { plan, regenerate } = useGamePlan(o);
+
+  // "Ask about this" on a game plan item lands here with the question ready to
+  // send — answer first, evidence second, conversation whenever he wants it (Q29).
+  const askParam = sp.get("ask");
+  const filled = useRef<string | null>(null);
+  useEffect(() => {
+    if (askParam && filled.current !== askParam) {
+      filled.current = askParam;
+      setQ(askParam);
+      document.getElementById("ask-counterscheme")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [askParam]);
+
+  if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
   const set = (patch: Partial<Opponent>) => o && updateOpponent(o.id, patch);
   // With snaps on file the tiles are counted, not typed. Without them the
   // coach's hand entry is the only truth we have, so it stays editable.
@@ -88,11 +102,8 @@ function MatchupInner() {
         downDistance: d.downDistance ?? o.downDistance }
     : o;
   const go = (id: string) => router.push(`/matchup?id=${id}`);
-  const plan = o ? gamePlans.find((g) => g.opponentId === o.id) : undefined;
   const week = o?.week ? seasonSchedule.find((w) => w.week === o.week) : undefined;
   const nextWeek = seasonSchedule.find((w) => w.opponent && !w.result);
-  const scoutingDone = !!o && (o.playsImported > 0 || o.formations.length > 0 || o.concepts.length > 0 || !!o.notes);
-  const tendenciesDone = !!o && (o.runRate != null || o.personnelUsage.length > 0 || DOWNS.some((d) => DISTANCES.some((x) => o.downDistance[d][x] != null)));
 
   const askIt = async () => {
     if (!o || !q.trim() || busy) return;
@@ -113,10 +124,7 @@ function MatchupInner() {
 
   const createPlan = async () => {
     if (!o) return;
-    const ctx = { scheme: store.scheme, concepts: store.concepts, players: store.players, groups: store.groups, activeGroupId: store.activeGroupId, overrides: store.overrides, termMap };
-    const findings = computeFindings(ctx).findings;
-    const gp = await ai.gamePlan(o, ctx, findings);
-    updateGamePlan(o.id, gp);
+    await regenerate();
     router.push(`/gameplan?id=${o.id}`);
   };
 
@@ -361,22 +369,7 @@ function MatchupInner() {
                   {week ? `${new Date(week.date + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })} · ${week.homeAway === "home" ? "Home" : "Away"}` : nextWeek ? `Next on the schedule: Wk ${nextWeek.week} vs ${nextWeek.opponent}` : "Set the week above"}
                 </div>
                 <div className="mt-4 text-left">
-                  <div className={`${th} mb-2`}>Plan Status</div>
-                  {[
-                    { label: "Scouting Report", done: scoutingDone },
-                    { label: "Tendencies", done: tendenciesDone },
-                    { label: "Game Plan", done: !!plan?.priorities?.length, state: !plan && (scoutingDone || tendenciesDone) ? "In Progress" : undefined },
-                    { label: "Walkthrough", done: o.planStatus.walkthrough, toggle: () => set({ planStatus: { ...o.planStatus, walkthrough: !o.planStatus.walkthrough } }) },
-                    { label: "Practice Plan", done: o.planStatus.practicePlan, toggle: () => set({ planStatus: { ...o.planStatus, practicePlan: !o.planStatus.practicePlan } }) },
-                  ].map((s) => (
-                    <button key={s.label} onClick={s.toggle} disabled={!s.toggle} className="flex w-full items-center gap-2 py-1.5 text-sm border-b border-line/60 last:border-0 disabled:cursor-default">
-                      <span>{s.label}</span>
-                      <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-dim">
-                        {s.done ? "" : s.state ?? "Pending"}
-                        {s.done ? <Check size={15} className="text-emerald-600" /> : <Circle size={13} className="text-slate-300" />}
-                      </span>
-                    </button>
-                  ))}
+                  <PlanStatus opponent={o} plan={plan} />
                 </div>
               </div>
             </div>
@@ -451,7 +444,7 @@ function MatchupInner() {
           </div>
 
           {/* Row 4: Ask CounterScheme */}
-          <div className={`${card} grid lg:grid-cols-[1.5fr_1fr] divide-y lg:divide-y-0 lg:divide-x divide-line`}>
+          <div id="ask-counterscheme" className={`${card} grid lg:grid-cols-[1.5fr_1fr] divide-y lg:divide-y-0 lg:divide-x divide-line`}>
             <div className="p-5">
               <div className="flex items-start gap-3 mb-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-navy text-white font-extrabold text-xs">CS</span>

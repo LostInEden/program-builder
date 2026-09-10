@@ -519,8 +519,15 @@ export function computeTells(plays: Play[], opts: TellOptions = {}) {
 export function tellSentence(t: Tell, resolve?: TagResolver): string {
   const pct = Math.round(t.rate * 100);
   const base = Math.round(t.baseline * 100);
+  // Only the tags that are really opponent WORDS get a meaning next to them.
+  // "Right hash" and "3rd & 7-10" are already plain English.
   const condition = resolve
-    ? t.tags.map((tag) => decorate(tag.label, resolve(tag.value, kindOfField(tag.field)))).join(" + ")
+    ? t.tags
+        .map((tag) => {
+          const kind = kindOfField(tag.field);
+          return kind ? decorate(tag.label, resolve(tag.value, kind)) : tag.label;
+        })
+        .join(" + ")
     : t.condition;
   const outcome = resolve && t.outcomeKind === "play" ? decorate(t.outcome, resolve(t.outcome, "concept")) : t.outcome;
   if (t.outcomeKind === "runpass") return `${condition} → ${t.outcome} ${pct}% (they ${t.outcome === "Run" ? "run" : "throw"} ${base}% overall)`;
