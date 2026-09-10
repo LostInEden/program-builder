@@ -248,6 +248,20 @@ export type GamePlan = {
   inputHash?: string;
 };
 
+// What the coach kept, threw out and reordered in the week's rep pool (Q5).
+// The pool itself is always recomputed from the snaps — only his choices are
+// saved, so regenerating never quietly undoes an elimination.
+export type PracticeDayKey = "Mon" | "Tue" | "Wed" | "Thu";
+export type PracticeSelection = {
+  included: string[]; // rep ids he said yes to
+  excluded: string[]; // rep ids he threw out
+  order: string[]; // his order, for the reps he moved
+  /** Per-day overrides once he moves a rep between days. Absent = generated. */
+  days?: Partial<Record<PracticeDayKey, string[]>>;
+  notes: string;
+  generatedAt: number;
+};
+
 // One depth chart per level, plus packages that BRANCH from it (Q9, Q22).
 // The Base package owns `slots` (structure slot index -> ordered player ids,
 // index 0 = starter). A package owns only `overrides`: the spots where it
@@ -753,6 +767,8 @@ type Store = {
   teachLog: TeachEntry[];
   opponents: Opponent[];
   gamePlans: GamePlan[];
+  /** The week's rep choices, per opponent (Q5). Keyed by opponent id. */
+  practice: Record<string, PracticeSelection>;
   // What this staff's words mean (Q27). Learned one term at a time, never as a
   // setup task. Always beats the standard knowledge base.
   termMap: TermMapping[];
@@ -772,6 +788,8 @@ type Store = {
   updateOpponent: (id: string, patch: Partial<Opponent>) => void;
   removeOpponent: (id: string) => void;
   updateGamePlan: (opponentId: string, patch: Partial<GamePlan>) => void;
+  updatePractice: (opponentId: string, patch: Partial<PracticeSelection>) => void;
+  resetPractice: (opponentId: string) => void;
 
   addPlayer: (pl?: Partial<Player>) => string;
   updatePlayer: (id: string, patch: Partial<Player>) => void;
@@ -843,6 +861,7 @@ export const useStore = create<Store>()(
       teachLog: [],
       opponents: [seedOpponent],
       gamePlans: [],
+      practice: {},
       termMap: [],
 
       addTermMapping: ({ term, meaning, kind, knowledgeId }) => {
@@ -918,10 +937,15 @@ export const useStore = create<Store>()(
       updateOpponent: (id, patch) =>
         set((s) => ({ opponents: s.opponents.map((o) => (o.id === id ? { ...o, ...patch } : o)) })),
       removeOpponent: (id) =>
-        set((s) => ({
-          opponents: s.opponents.filter((o) => o.id !== id),
-          gamePlans: s.gamePlans.filter((g) => g.opponentId !== id),
-        })),
+        set((s) => {
+          const practice = { ...s.practice };
+          delete practice[id];
+          return {
+            opponents: s.opponents.filter((o) => o.id !== id),
+            gamePlans: s.gamePlans.filter((g) => g.opponentId !== id),
+            practice,
+          };
+        }),
       updateGamePlan: (opponentId, patch) =>
         set((s) => {
           const existing = s.gamePlans.find((g) => g.opponentId === opponentId);
@@ -935,6 +959,21 @@ export const useStore = create<Store>()(
               : [...s.gamePlans, next],
           };
         }),
+
+      updatePractice: (opponentId, patch) =>
+        set((s) => {
+          const base: PracticeSelection = s.practice[opponentId] ?? {
+            included: [], excluded: [], order: [], notes: "", generatedAt: 0,
+          };
+          return { practice: { ...s.practice, [opponentId]: { ...base, ...patch } } };
+        }),
+      resetPractice: (opponentId) =>
+        set((s) => ({
+          practice: {
+            ...s.practice,
+            [opponentId]: { included: [], excluded: [], order: [], notes: s.practice[opponentId]?.notes ?? "", generatedAt: Date.now() },
+          },
+        })),
 
       addPlayer: (pl = {}) => {
         const id = uid();
@@ -1229,7 +1268,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 9,
+      version: 10,
       migrate: (persisted, version) => {
         const state = persisted as {
           program?: Program;
@@ -1244,6 +1283,7 @@ export const useStore = create<Store>()(
           concepts?: Concept[];
           opponents?: Partial<Opponent>[];
           gamePlans?: LegacyGamePlan[];
+          practice?: Record<string, PracticeSelection>;
           scheme?: { structureName: string; philosophyTitle?: string; philosophy: string };
         };
         if (version < 2 && state?.calls) {
@@ -1453,6 +1493,12 @@ export const useStore = create<Store>()(
 
           // Program setup (Q6).
           state.program = { ...seedProgram, ...(state.program ?? {}) };
+        }
+        if (version < 10) {
+          // v10: practice emphasis + scout cards (Q5). Nothing to convert — the
+          // rep pool is always rebuilt from the snaps, and this only stores
+          // which reps the coach kept, threw out and reordered.
+          state.practice = state.practice && typeof state.practice === "object" ? state.practice : {};
         }
         return state;
       },

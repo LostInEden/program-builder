@@ -336,7 +336,16 @@ export type PlanStep = { n: number; label: string; done: boolean; detail: string
  * Where he is in the week, read off the data — never a stored checklist. Step 7
  * is never "done" on purpose: the plan keeps moving until kickoff.
  */
-export function planSteps(o: Opponent, plan: GamePlan | undefined, termCount: number, tellCount: number): PlanStep[] {
+/** What the practice surface knows, so steps 5 and 6 can be read off the data. */
+export type PracticeProgress = { reps: number; chosen: number; scripted: boolean };
+
+export function planSteps(
+  o: Opponent,
+  plan: GamePlan | undefined,
+  termCount: number,
+  tellCount: number,
+  practice: PracticeProgress = { reps: 0, chosen: 0, scripted: false },
+): PlanStep[] {
   const dataReady = o.plays.length > 0 || o.formations.length > 0 || o.concepts.length > 0;
   const knowledge =
     o.keyPlayers.some((k) => k.name.trim()) || !!o.notes.trim() || o.matchupNotes.length > 0 || !!o.redZone.trim() || termCount > 0;
@@ -371,8 +380,27 @@ export function planSteps(o: Opponent, plan: GamePlan | undefined, termCount: nu
       detail: collaborated ? "You've worked the plan" : planStarted ? "Drafted — add or edit a line to make it yours" : "Not generated yet",
       href: `/gameplan?id=${o.id}`,
     },
-    { n: 5, label: "Generate Practice Emphasis", done: false, detail: "Being built next", href: "/practice" },
-    { n: 6, label: "Generate Scout Cards", done: false, detail: "Being built next", href: "/practice" },
+    {
+      n: 5,
+      label: "Generate Practice Emphasis",
+      done: practice.reps > 0,
+      detail: practice.reps
+        ? `${practice.reps} candidate reps ranked — narrow them down`
+        : "Needs tagged snaps to find the reps worth practicing",
+      href: `/practice?id=${o.id}`,
+    },
+    {
+      n: 6,
+      label: "Generate Scout Cards",
+      done: practice.chosen > 0 && practice.scripted,
+      detail:
+        practice.chosen > 0 && practice.scripted
+          ? `${practice.chosen} rep${practice.chosen === 1 ? "" : "s"} on the script — Mon through Thu`
+          : practice.reps
+            ? "Pick the reps you want and the script writes itself"
+            : "Comes from the rep pool",
+      href: `/practice?id=${o.id}`,
+    },
     { n: 7, label: "Ongoing Until Game Time", done: false, detail: "Keep adding — the plan updates itself", href: `/gameplan?id=${o.id}` },
   ];
 }

@@ -198,7 +198,13 @@ function GamePlanInner() {
                 <div className={cardHead}>
                   <Icon size={14} className={color} /> {title}
                   <span className="ml-auto normal-case tracking-normal text-xs font-normal text-dim">
-                    {key === "emphasis" ? <Link href="/practice" className="font-semibold text-grass hover:underline">Open Practice →</Link> : sub}
+                    {key === "emphasis" ? (
+                      <Link href={`/practice?id=${opponent.id}`} className="font-semibold text-grass hover:underline">
+                        Build the practice script →
+                      </Link>
+                    ) : (
+                      sub
+                    )}
                   </span>
                 </div>
                 <PlanList items={(plan?.[key] as PlanItem[]) ?? []} placeholder={placeholder} onChange={(items) => setPlan({ [key]: items } as Partial<GamePlan>)} byId={byId} onAsk={ask} />

@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import {
   Home, LayoutGrid, ListOrdered, User, Ambulance, Star, ShieldCheck, Settings,
   Shield, Layers, Zap, SlidersHorizontal, BookOpen, SpellCheck, CalendarDays, Binoculars, ClipboardList, Dumbbell,
+  NotebookPen,
 } from "lucide-react";
 
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
@@ -58,6 +59,7 @@ const MATCHUP: Section[] = [
     title: "Plan",
     items: [
       { href: "/gameplan", label: "Game Plans", icon: ClipboardList },
+      { href: "/practice", label: "Practice Script", icon: NotebookPen },
       { href: "/team?view=schedule", label: "Season Schedule", icon: CalendarDays },
     ],
   },
@@ -83,7 +85,8 @@ const GENERAL: Section[] = [
 function sectionsFor(pathname: string): Section[] {
   if (pathname.startsWith("/team")) return TEAM;
   if (pathname.startsWith("/scheme") || pathname.startsWith("/analysis")) return SCHEME;
-  if (pathname.startsWith("/matchup") || pathname.startsWith("/gameplan") || pathname.startsWith("/scout")) return MATCHUP;
+  if (pathname.startsWith("/matchup") || pathname.startsWith("/gameplan") || pathname.startsWith("/practice") || pathname.startsWith("/scout"))
+    return MATCHUP;
   return GENERAL;
 }
 

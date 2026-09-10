@@ -11,6 +11,7 @@ import { Check, ChevronRight, Circle, Dot } from "lucide-react";
 import { useStore, type GamePlan, type Opponent } from "@/lib/store";
 import { computeTells } from "@/lib/tendencies";
 import { planSteps } from "@/lib/plan";
+import { usePractice } from "@/lib/usePractice";
 
 const th = "display uppercase text-[11px] tracking-widest text-dim font-semibold";
 
@@ -20,7 +21,8 @@ export default function PlanStatus({ opponent, plan, compact }: { opponent: Oppo
     () => (opponent.plays.length ? computeTells(opponent.plays).actionable.length : 0),
     [opponent.plays],
   );
-  const steps = planSteps(opponent, plan, termMap.length, tellCount);
+  const { progress } = usePractice(opponent);
+  const steps = planSteps(opponent, plan, termMap.length, tellCount, progress);
   // "Where you are" = the first step that isn't finished.
   const hereIndex = steps.findIndex((s) => !s.done);
 

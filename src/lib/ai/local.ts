@@ -12,6 +12,7 @@ import {
 import {
   answerFor, callName, genItem, makeKit, readConcept, tellEvidence, type PlanAnswer, type PlanKit, type PlanSections,
 } from "@/lib/plan";
+import { buildPracticePool, type PracticePool } from "@/lib/practice";
 import type { AiProvider, SchemeContext, TeachResult, MatchupAnswer, TermResolution } from "./types";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -695,4 +696,15 @@ async function ask(question: string, o: Opponent, ctx: SchemeContext): Promise<M
   };
 }
 
-export const localProvider: AiProvider = { name: "Local engine", teach, analyze, gamePlan, ask, resolveTerm };
+// ---- practice emphasis + scout cards (Q5) -----------------------------------
+
+/**
+ * The pool is pure arithmetic over the snaps, so the engine just delegates. The
+ * contract exists so a real model can later rewrite the "why it matters" lines
+ * in the coach's voice while the ranking stays in code.
+ */
+async function practicePool(o: Opponent, ctx: SchemeContext, plan?: GamePlan): Promise<PracticePool> {
+  return buildPracticePool({ opponent: o, concepts: ctx.concepts, termMap: ctx.termMap ?? [], plan });
+}
+
+export const localProvider: AiProvider = { name: "Local engine", teach, analyze, gamePlan, ask, resolveTerm, practicePool };

@@ -6,6 +6,7 @@
 import type { Concept, Opponent, Player, PersonnelGroup, Overrides, GamePlan } from "@/lib/store";
 import type { TermKind, TermMapping } from "@/lib/knowledge";
 import type { Finding } from "@/lib/analyze";
+import type { PracticePool } from "@/lib/practice";
 
 export type TeachResult = {
   // Concepts the parser extracted. They land unconfirmed in "Recently Added".
@@ -52,6 +53,12 @@ export interface AiProvider {
   analyze(ctx: SchemeContext): Promise<Finding[]>;
   gamePlan(opponent: Opponent, ctx: SchemeContext, findings: Finding[]): Promise<Omit<GamePlan, "opponentId">>;
   ask(question: string, opponent: Opponent, ctx: SchemeContext): Promise<MatchupAnswer>;
+  /**
+   * The week's candidate rep pool (Q5). The ranking is arithmetic and stays in
+   * `src/lib/practice.ts` — a remote model may later rewrite the "why it
+   * matters" lines, but it never gets to invent the numbers.
+   */
+  practicePool(opponent: Opponent, ctx: SchemeContext, plan?: GamePlan): Promise<PracticePool>;
   /** "What does Utah mean?" → "Utah is Trips with the TE on." */
   resolveTerm(term: string, answer: string, kind?: TermKind): Promise<TermResolution>;
 }
