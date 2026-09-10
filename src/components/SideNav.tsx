@@ -1,152 +1,171 @@
 "use client";
 
+// The one navigation (Shopify-style): top-level sections down the left, and
+// the section you're in opens its pages underneath it. Nothing up top.
+
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {
-  Home, LayoutGrid, ListOrdered, User, Ambulance, Star, ShieldCheck, Settings,
-  Shield, Layers, Zap, SlidersHorizontal, BookOpen, SpellCheck, CalendarDays, Binoculars, ClipboardList, Dumbbell,
-  NotebookPen,
+  Home, Users, Shield, Binoculars, ClipboardList, Dumbbell, ShieldCheck, BarChart3, Settings,
 } from "lucide-react";
-
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
 
-type Item = { href: string; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> };
-type Section = { title: string | null; items: Item[] };
+type Icon = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+type Child = { href: string; label: string };
+type Section = {
+  href: string;
+  label: string;
+  icon: Icon;
+  /** Paths (prefixes) that count as "inside" this section. */
+  match: string[];
+  children?: Child[];
+  badge?: (s: BadgeState) => string | null;
+};
+type BadgeState = { pending: number; players: number };
 
-const TEAM: Section[] = [
-  { title: null, items: [{ href: "/team", label: "Overview", icon: Home }] },
+const SECTIONS: Section[] = [
+  { href: "/", label: "Home", icon: Home, match: ["/"] },
   {
-    title: "Team",
-    items: [
-      { href: "/team?view=depth", label: "Depth Chart", icon: LayoutGrid },
-      { href: "/team?view=roster", label: "Roster", icon: ListOrdered },
-      { href: "/team?view=profiles", label: "Player Profiles", icon: User },
-      { href: "/team?view=weights", label: "Weight Room", icon: Dumbbell },
-      { href: "/team?view=injuries", label: "Injuries", icon: Ambulance },
-      { href: "/team?view=watchlist", label: "Watch List", icon: Star },
+    href: "/team",
+    label: "My Team",
+    icon: Users,
+    match: ["/team"],
+    badge: (s) => (s.players ? String(s.players) : null),
+    children: [
+      { href: "/team?view=depth", label: "Depth Chart" },
+      { href: "/team?view=roster", label: "Roster" },
+      { href: "/team?view=profiles", label: "Player Profiles" },
+      { href: "/team?view=weights", label: "Weight Room" },
+      { href: "/team?view=injuries", label: "Injuries" },
+      { href: "/team?view=watchlist", label: "Watch List" },
+      { href: "/team?view=schedule", label: "Season Schedule" },
     ],
   },
-  { title: "Analysis", items: [{ href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck }] },
-  { title: "Settings", items: [{ href: "/settings", label: "Settings", icon: Settings }] },
+  {
+    href: "/scheme",
+    label: "My Scheme",
+    icon: Shield,
+    match: ["/scheme"],
+    badge: (s) => (s.pending ? `${s.pending} to confirm` : null),
+    children: [
+      { href: "/scheme/concepts?kind=front", label: "Fronts" },
+      { href: "/scheme/concepts?kind=coverage", label: "Coverages" },
+      { href: "/scheme/concepts?kind=pressure", label: "Pressures" },
+      { href: "/scheme/concepts?kind=adjustment", label: "Adjustments" },
+      { href: "/scheme/coverages", label: "Coverage Library" },
+      { href: "/scheme/terminology", label: "Terminology" },
+    ],
+  },
+  { href: "/matchup", label: "Opponent Matchup", icon: Binoculars, match: ["/matchup", "/scout"] },
+  { href: "/gameplan", label: "Game Plans", icon: ClipboardList, match: ["/gameplan"] },
+  { href: "/practice", label: "Practice Script", icon: Dumbbell, match: ["/practice"] },
+  { href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck, match: ["/analysis"] },
+  { href: "/reports", label: "Reports", icon: BarChart3, match: ["/reports"] },
 ];
 
-const SCHEME: Section[] = [
-  { title: null, items: [{ href: "/scheme", label: "Overview", icon: Home }] },
-  {
-    title: "Scheme",
-    items: [
-      { href: "/scheme/concepts?kind=front", label: "Fronts", icon: Shield },
-      { href: "/scheme/concepts?kind=coverage", label: "Coverages", icon: Layers },
-      { href: "/scheme/concepts?kind=pressure", label: "Pressures", icon: Zap },
-      { href: "/scheme/concepts?kind=adjustment", label: "Adjustments", icon: SlidersHorizontal },
-    ],
-  },
-  {
-    title: "Reference",
-    items: [
-      { href: "/scheme/coverages", label: "Coverage Library", icon: BookOpen },
-      { href: "/scheme/terminology", label: "Terminology", icon: SpellCheck },
-    ],
-  },
-  { title: "Analysis", items: [{ href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck }] },
-  { title: "Settings", items: [{ href: "/settings", label: "Settings", icon: Settings }] },
-];
-
-const MATCHUP: Section[] = [
-  { title: null, items: [{ href: "/matchup", label: "Opponent Matchup", icon: Binoculars }] },
-  {
-    title: "Plan",
-    items: [
-      { href: "/gameplan", label: "Game Plans", icon: ClipboardList },
-      { href: "/practice", label: "Practice Script", icon: NotebookPen },
-      { href: "/team?view=schedule", label: "Season Schedule", icon: CalendarDays },
-    ],
-  },
-  { title: "Analysis", items: [{ href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck }] },
-  { title: "Settings", items: [{ href: "/settings", label: "Settings", icon: Settings }] },
-];
-
-const GENERAL: Section[] = [
-  { title: null, items: [{ href: "/", label: "Home", icon: Home }] },
-  {
-    title: "Systems",
-    items: [
-      { href: "/team", label: "My Team", icon: User },
-      { href: "/scheme", label: "My Scheme", icon: Shield },
-      { href: "/matchup", label: "Opponent Matchup", icon: Binoculars },
-      { href: "/gameplan", label: "Game Plans", icon: ClipboardList },
-    ],
-  },
-  { title: "Analysis", items: [{ href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck }] },
-  { title: "Settings", items: [{ href: "/settings", label: "Settings", icon: Settings }] },
-];
-
-function sectionsFor(pathname: string): Section[] {
-  if (pathname.startsWith("/team")) return TEAM;
-  if (pathname.startsWith("/scheme") || pathname.startsWith("/analysis")) return SCHEME;
-  if (pathname.startsWith("/matchup") || pathname.startsWith("/gameplan") || pathname.startsWith("/practice") || pathname.startsWith("/scout"))
-    return MATCHUP;
-  return GENERAL;
+function inSection(pathname: string, sec: Section) {
+  return sec.match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(m + "/")));
 }
 
-// The program the coach entered in Settings (Q6) — never a hard-coded school.
 function ProgramCard() {
   const hydrated = useHydrated();
   const program = useStore((s) => s.program);
   const season = new Date().getFullYear();
   return (
-    <Link href="/settings" className="mt-auto border-t border-line px-4 py-4 flex items-center gap-3 hover:bg-slate-50">
+    <div className="border-t border-line px-4 py-3.5 flex items-center gap-3">
       <span className="grid size-9 place-items-center rounded-full bg-navy text-white text-[11px] font-bold">
         {hydrated ? initialsOf(program.name) : ""}
       </span>
       <div className="leading-tight min-w-0">
         <div className="text-sm font-semibold text-ink truncate">{hydrated ? program.name : ""}</div>
-        <div className="text-xs text-dim truncate">
-          {hydrated ? `${program.level || "Varsity"} Defense · ${season}` : ""}
-        </div>
+        <div className="text-xs text-dim truncate">{hydrated ? `${program.level || "Varsity"} Defense · ${season}` : ""}</div>
       </div>
-    </Link>
+    </div>
   );
 }
 
 function SideNavInner() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  if (pathname.startsWith("/scheme/playbook")) return null;
+  const sp = useSearchParams();
+  const hydrated = useHydrated();
+  const pending = useStore((s) => s.concepts.filter((c) => !c.confirmed).length);
+  const players = useStore((s) => s.players.length);
+  if (pathname.startsWith("/scheme/playbook") || pathname.startsWith("/chat")) return null;
 
-  const view = searchParams.get("view");
-  const kind = searchParams.get("kind");
-  const current = view ? `${pathname}?view=${view}` : kind ? `${pathname}?kind=${kind}` : pathname;
-  const sections = sectionsFor(pathname);
+  const isCurrentChild = (href: string) => {
+    if (!href.includes("?")) return pathname === href;
+    const [p, q] = href.split("?");
+    if (pathname !== p) return false;
+    return [...new URLSearchParams(q).entries()].every(([k, v]) => sp.get(k) === v);
+  };
+  const badges: BadgeState = { pending: hydrated ? pending : 0, players: hydrated ? players : 0 };
 
   return (
-    <aside className="w-56 shrink-0 border-r border-line bg-white hidden lg:flex flex-col sticky top-[61px] h-[calc(100vh-61px)]">
-      <nav className="flex flex-col px-3 pt-4 gap-0.5 overflow-y-auto">
-        {sections.map((sec, si) => (
-          <div key={si} className="mb-2">
-            {sec.title && (
-              <div className="display uppercase text-[10px] font-bold tracking-[0.15em] text-dim/80 px-3 pt-3 pb-1.5">{sec.title}</div>
-            )}
-            {sec.items.map(({ href, label, icon: Icon }) => {
-              const active = current === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] font-medium transition-colors ${
-                    active ? "bg-grass/10 text-grass" : "text-dim hover:text-ink hover:bg-slate-50"
-                  }`}
-                >
-                  <Icon size={17} strokeWidth={2} />
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+    <aside className="w-60 shrink-0 border-r border-line bg-white hidden lg:flex flex-col sticky top-[61px] h-[calc(100vh-61px)]">
+      <nav className="flex-1 overflow-y-auto px-3 pt-3">
+        {SECTIONS.map((sec) => {
+          const active = inSection(pathname, sec);
+          const onOverview = active && pathname === sec.href && (sec.children ? !sec.children.some((c) => isCurrentChild(c.href)) : true);
+          const badge = sec.badge?.(badges);
+          return (
+            <div key={sec.href} className="mb-0.5">
+              <Link
+                href={sec.href}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] font-semibold transition-colors ${
+                  active ? "bg-slate-100 text-ink" : "text-ink/80 hover:bg-slate-50 hover:text-ink"
+                }`}
+              >
+                <sec.icon size={17} strokeWidth={2} className={active ? "text-grass" : "text-dim"} />
+                <span className="flex-1">{sec.label}</span>
+                {badge && (
+                  <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                    sec.href === "/scheme" ? "bg-ember/10 text-ember" : "bg-slate-200/70 text-dim"
+                  }`}>{badge}</span>
+                )}
+              </Link>
+              {active && sec.children && (
+                <div className="mt-0.5 mb-1.5 flex flex-col">
+                  <Link
+                    href={sec.href}
+                    className={`ml-5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                      onOverview ? "bg-grass/10 text-grass" : "text-dim hover:text-ink hover:bg-slate-50"
+                    }`}
+                  >
+                    Overview
+                  </Link>
+                  {sec.children.map((c) => {
+                    const cur = isCurrentChild(c.href);
+                    return (
+                      <Link
+                        key={c.href}
+                        href={c.href}
+                        className={`ml-5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                          cur ? "bg-grass/10 text-grass" : "text-dim hover:text-ink hover:bg-slate-50"
+                        }`}
+                      >
+                        {c.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
+      <div className="px-3 pb-2">
+        <Link
+          href="/settings"
+          className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] font-semibold transition-colors ${
+            pathname.startsWith("/settings") ? "bg-slate-100 text-ink" : "text-ink/80 hover:bg-slate-50"
+          }`}
+        >
+          <Settings size={17} strokeWidth={2} className={pathname.startsWith("/settings") ? "text-grass" : "text-dim"} />
+          Settings
+        </Link>
+      </div>
       <ProgramCard />
     </aside>
   );

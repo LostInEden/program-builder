@@ -2,21 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Users, Shield, Binoculars, ClipboardList, BarChart3, Search, Bell, ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Bell, ChevronDown } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
 import ChatDrawer from "@/components/ChatDrawer";
 
-const NAV = [
-  { href: "/team", label: "My Team", icon: Users },
-  { href: "/scheme", label: "My Scheme", icon: Shield },
-  { href: "/matchup", label: "Opponent Matchup", icon: Binoculars },
-  { href: "/gameplan", label: "Game Plans", icon: ClipboardList },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-];
-
+// Navigation lives in the left bar only (Shopify-style). The top bar is
+// identity, search, the conversation, updates, and the coach chip.
 export default function TopNav() {
-  const pathname = usePathname();
   const router = useRouter();
   const hydrated = useHydrated();
   const players = useStore((s) => s.players);
@@ -45,35 +38,15 @@ export default function TopNav() {
           <span className="display text-xl font-extrabold tracking-tight text-navy">CounterScheme</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1 h-full">
-          {NAV.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`relative flex items-center gap-2 px-4 h-[60px] text-[15px] font-semibold transition-colors ${
-                  active ? "text-grass" : "text-dim hover:text-ink"
-                }`}
-              >
-                <Icon size={17} strokeWidth={2.1} />
-                {label}
-                {active && <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-t bg-grass" />}
-              </Link>
-            );
-          })}
-        </nav>
-
         <div className="ml-auto flex items-center gap-3">
-          <ChatDrawer />
-          <div className="relative hidden lg:block">
+          <div className="relative hidden md:block">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onBlur={() => setTimeout(() => setQ(""), 200)}
-              placeholder="Search players, teams,..."
-              className="w-60 rounded-lg border border-line bg-pitch pl-9 pr-3 py-2 text-sm placeholder:text-dim/70 focus:outline-none focus:border-grass"
+              placeholder="Search players..."
+              className="w-72 rounded-lg border border-line bg-pitch pl-9 pr-3 py-2 text-sm placeholder:text-dim/70 focus:outline-none focus:border-grass"
             />
             {hydrated && matches.length > 0 && (
               <div className="absolute top-full mt-1 w-full rounded-xl border border-line bg-white shadow-lg overflow-hidden">
@@ -95,6 +68,7 @@ export default function TopNav() {
             )}
           </div>
 
+          <ChatDrawer />
           <div className="relative">
             <button
               onClick={() => setBellOpen((o) => !o)}
