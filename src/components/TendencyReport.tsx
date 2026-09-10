@@ -16,14 +16,16 @@ const th = "display uppercase text-[11px] tracking-widest text-dim font-semibold
 
 const pc = (v: number | null | undefined) => (v == null ? "—" : `${Math.round(v * 100)}%`);
 
-/** Raw tag stays primary; what it means rides alongside it (Q27). */
-function Term({ raw, kind, resolve }: { raw: string; kind?: TermKind; resolve: TagResolver }) {
-  const meaning = shortMeaning(resolve(raw, kind), 44);
+/** Raw tag stays primary; what it means rides alongside it (Q27) — on one
+ *  line, clipped, with the full meaning on hover so tables never balloon. */
+function Term({ raw, kind, resolve, max = 44 }: { raw: string; kind?: TermKind; resolve: TagResolver; max?: number }) {
+  const full = shortMeaning(resolve(raw, kind), 200);
+  const meaning = shortMeaning(resolve(raw, kind), max);
   return (
-    <>
-      {raw}
-      {meaning && <span className="ml-1 font-normal text-dim" title={meaning}>({meaning})</span>}
-    </>
+    <span className="inline-flex max-w-full items-baseline gap-1 whitespace-nowrap" title={full || undefined}>
+      <span>{raw}</span>
+      {meaning && <span className="truncate font-normal text-dim">({meaning})</span>}
+    </span>
   );
 }
 const one = (v: number | null | undefined) => (v == null ? "—" : v.toFixed(1));
@@ -101,6 +103,7 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
   const resolve = useMemo(() => makeResolver(termMap), [termMap]);
   const byId = useMemo(() => new Map(plays.map((p) => [p.id, p])), [plays]);
   const [showMore, setShowMore] = useState(false);
+  const [allForms, setAllForms] = useState(false);
   const [personnelOpen, setPersonnelOpen] = useState<string | null>(r.personnel[0]?.personnel ?? null);
 
   if (!plays.length) return null;
@@ -152,7 +155,7 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
                     <td className="px-2 py-1.5 text-right tabular-nums">{s.n}</td>
                     <td className="px-2 py-1.5 text-right tabular-nums font-bold">{s.runRate == null ? "—" : `${Math.round(s.runRate * 100)}% run`}</td>
                     <td className="px-2 py-1.5 text-right tabular-nums">{one(s.avgGain)}</td>
-                    <td className="px-3 py-1.5 text-dim truncate">{s.topFormation ? <><Term raw={s.topFormation.name} kind="formation" resolve={resolve} /> <span className="tabular-nums">×{s.topFormation.n}</span></> : "—"}</td>
+                    <td className="px-3 py-1.5 text-dim max-w-[240px]"><div className="flex items-baseline gap-1 overflow-hidden">{s.topFormation ? <><Term raw={s.topFormation.name} kind="formation" resolve={resolve} max={28} /> <span className="shrink-0 tabular-nums">×{s.topFormation.n}</span></> : "—"}</div></td>
                   </tr>
                 ))}
               </tbody>
@@ -163,9 +166,10 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
 
         <div className={`${card} flex flex-col`}>
           <div className={cardHead}><Layers size={14} className="text-dim" /> Formations by Personnel</div>
-          <div className="flex-1">
+          <div className="flex-1 max-h-[520px] overflow-y-auto">
             {r.personnel.map((g) => {
               const open = personnelOpen === g.personnel;
+              const rows = allForms ? g.formations : g.formations.slice(0, 12);
               return (
                 <div key={g.personnel} className="border-b border-line/60 last:border-0">
                   <button onClick={() => setPersonnelOpen(open ? null : g.personnel)} className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-slate-50">
@@ -184,14 +188,21 @@ export default function TendencyReport({ plays }: { plays: Play[] }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {g.formations.map((f) => (
+                        {rows.map((f) => (
                           <tr key={f.name} className="border-b border-line/60 last:border-0">
-                            <td className="px-4 py-1 font-semibold">{<Term raw={f.name} kind="formation" resolve={resolve} />}</td>
+                            <td className="px-4 py-1 font-semibold max-w-[260px]"><div className="overflow-hidden"><Term raw={f.name} kind="formation" resolve={resolve} max={30} /></div></td>
                             <td className="px-2 py-1 text-right tabular-nums">{f.n}</td>
                             <td className="px-2 py-1 text-right tabular-nums">{pc(f.runRate)}</td>
-                            <td className="px-3 py-1 text-dim truncate">{f.topPlay ? <><Term raw={f.topPlay.name} kind="concept" resolve={resolve} /> <span className="tabular-nums">×{f.topPlay.n}</span></> : "—"}</td>
+                            <td className="px-3 py-1 text-dim max-w-[200px]"><div className="flex items-baseline gap-1 overflow-hidden">{f.topPlay ? <><Term raw={f.topPlay.name} kind="concept" resolve={resolve} max={20} /> <span className="shrink-0 tabular-nums">×{f.topPlay.n}</span></> : "—"}</div></td>
                           </tr>
                         ))}
+                        {g.formations.length > 12 && (
+                          <tr><td colSpan={4} className="px-4 py-2 text-center">
+                            <button onClick={() => setAllForms((v) => !v)} className="text-xs font-bold text-grass hover:underline">
+                              {allForms ? "Show the top 12" : `Show all ${g.formations.length} formations`}
+                            </button>
+                          </td></tr>
+                        )}
                         {!g.formations.length && <tr><td colSpan={4} className="px-4 py-3 text-center text-xs text-dim">No formations tagged on these snaps.</td></tr>}
                       </tbody>
                     </table>

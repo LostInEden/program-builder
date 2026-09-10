@@ -105,6 +105,8 @@ function MatchupInner() {
   // coach's hand entry is the only truth we have, so it stays editable.
   const plays = o?.plays ?? [];
   const d = plays.length ? headlineFromPlays(plays) : null;
+  // Play names are usually tagged on only some snaps; rates built on them say so.
+  const taggedPlays = plays.filter((p) => p.play.trim()).length;
   // Scalars + the heatmap come off the snaps; the editable tables keep the
   // stored rows (the import already wrote the computed ones into them).
   const view = o && d
@@ -147,7 +149,7 @@ function MatchupInner() {
   };
 
   return (
-    <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-[1600px] mx-auto">
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Opponent Matchup</h1>
@@ -237,8 +239,12 @@ function MatchupInner() {
                 <div className="grid grid-cols-2 sm:grid-cols-4">
                   <Stat value={view?.runRate ?? null} label="Run Rate" sub={view?.runRate != null ? `(${100 - view.runRate}% Pass)` : undefined} />
                   <Stat value={view?.firstDownRun ?? null} label="1st Down Run" />
-                  <Stat value={view?.rpoRate ?? null} label="RPO Rate" />
-                  <Stat value={view?.signatureRate ?? null} label={view?.signatureConcept ? `Plays to ${view.signatureConcept}` : "Top Concept"} />
+                  <Stat value={view?.rpoRate ?? null} label="RPO Rate" sub={taggedPlays ? `of ${taggedPlays} plays with a name` : undefined} />
+                  <Stat
+                    value={view?.signatureRate ?? null}
+                    label={view?.signatureConcept ? `Top play: ${view.signatureConcept}` : "Top Play"}
+                    sub={taggedPlays ? `of ${taggedPlays} plays with a name` : undefined}
+                  />
                 </div>
                 {editing && !d && (
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 border-t border-line p-3 text-xs">
@@ -324,8 +330,8 @@ function MatchupInner() {
           </div>
 
           {/* Row 2: game plan summary · matchup notes · up next */}
-          <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_0.9fr] items-stretch">
-            <div className={`${card} flex flex-col`}>
+          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr] lg:grid-rows-[auto_1fr] items-stretch">
+            <div className={`${card} flex flex-col lg:col-start-1 lg:row-start-1`}>
               <div className={cardHead}><Target size={14} className="text-grass" /> Game Plan Summary</div>
               <div className="p-5">
                 <div className={`${th} mb-3`}>Top 3 Priorities</div>
@@ -348,7 +354,7 @@ function MatchupInner() {
               </div>
             </div>
 
-            <div className={`${card} flex flex-col`}>
+            <div className={`${card} flex flex-col lg:col-start-1 lg:row-start-2`}>
               <div className={cardHead}>
                 Matchup Notes
                 <button onClick={() => set({ matchupNotes: [...o.matchupNotes, { id: uid(), label: "", value: "" }] })} className="ml-auto normal-case tracking-normal text-xs font-semibold text-dim hover:text-ink inline-flex items-center gap-1"><Plus size={12} /> Add</button>
@@ -371,7 +377,7 @@ function MatchupInner() {
               </div>
             </div>
 
-            <div className={`${card} flex flex-col`}>
+            <div className={`${card} flex flex-col lg:col-start-2 lg:row-span-2`}>
               <div className={cardHead}><CalendarDays size={14} className="text-dim" /> Up Next</div>
               <div className="p-5 text-center">
                 <div className="flex items-center justify-center gap-3 mb-2">

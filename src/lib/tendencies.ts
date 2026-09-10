@@ -734,6 +734,10 @@ export function headlineFromPlays(plays: Play[]): Partial<Opponent> {
   const runs = counted.filter((p) => p.playType === "Run").length;
   const first = counted.filter((p) => p.down === 1);
   const firstRuns = first.filter((p) => p.playType === "Run").length;
+  // Play names are often tagged on only some snaps (23 of 85 in the coach's
+  // sample). Rates that depend on the play name use the TAGGED snaps as the
+  // denominator, otherwise a top play reads as "4%" and means nothing.
+  const tagged = plays.filter((p) => p.play.trim()).length;
   const rpo = plays.filter((p) => /rpo/i.test(p.play)).length;
   const rows = playRows(plays).sort((a, b) => b.n - a.n);
   const top = rows[0];
@@ -745,9 +749,9 @@ export function headlineFromPlays(plays: Play[]): Partial<Opponent> {
     playsImported: plays.length,
     runRate: counted.length ? pct(runs, counted.length) : null,
     firstDownRun: first.length >= 5 ? pct(firstRuns, first.length) : null,
-    rpoRate: rpo ? pct(rpo, plays.length) : null,
+    rpoRate: rpo && tagged ? pct(rpo, tagged) : null,
     signatureConcept: top ? top.name : "",
-    signatureRate: top ? pct(top.n, plays.length) : null,
+    signatureRate: top && tagged ? pct(top.n, tagged) : null,
     personnelUsage: personnel.slice(0, 6).map((g) => ({ id: uid(), group: g.personnel, pct: pct(g.n, plays.length) })),
     downDistance: downDistanceFromPlays(plays),
     formations: forms.slice(0, 10).map((f) => ({
