@@ -119,6 +119,31 @@ export type DownDistanceGrid = Record<(typeof DOWNS)[number], Record<(typeof DIS
 export const emptyGrid = (): DownDistanceGrid =>
   Object.fromEntries(DOWNS.map((d) => [d, Object.fromEntries(DISTANCES.map((x) => [x, null]))])) as DownDistanceGrid;
 
+// One row of the opponent's Hudl play-by-play export — every column the coach
+// tags (Q34). Unmapped columns are kept verbatim in `extra` so nothing is lost.
+export type Play = {
+  id: string;
+  num: string;
+  odk: string;
+  personnel: string;
+  backfield: string;
+  down: number | null;
+  distance: number | null;
+  hash: string;
+  yardLine: string;
+  playType: "Run" | "Pass" | "";
+  result: string;
+  gain: number | null;
+  formation: string;
+  play: string;
+  strength: string;
+  direction: string;
+  player: string;
+  quarter: string;
+  motion: string;
+  extra: Record<string, string>;
+};
+
 export type Opponent = {
   id: string;
   name: string;
@@ -143,7 +168,8 @@ export type Opponent = {
   matchupNotes: { id: string; label: string; value: string }[]; // Favorite Concept, Pass Game, Red Zone, 2-Point…
   redZone: string;
   notes: string;
-  playsImported: number; // rows from the last tendency-report upload
+  plays: Play[]; // the snap-by-snap import; every tendency below is derived from it
+  playsImported: number; // rows from the last tendency-report upload (= plays.length)
   questions: { id: string; q: string; a: string; ts: number }[]; // Ask CounterScheme history
   planStatus: { walkthrough: boolean; practicePlan: boolean };
   isDemo?: boolean;
@@ -489,6 +515,7 @@ export const emptyOpponent = (id: string, name: string): Opponent => ({
   matchupNotes: [],
   redZone: "",
   notes: "",
+  plays: [],
   playsImported: 0,
   questions: [],
   planStatus: { walkthrough: false, practicePlan: false },
@@ -979,7 +1006,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 5,
+      version: 6,
       migrate: (persisted, version) => {
         const state = persisted as {
           calls?: Call[];
@@ -1072,6 +1099,16 @@ export const useStore = create<Store>()(
             concerns: g.concerns ?? [],
             adjustments: g.adjustments ?? [],
             emphasis: g.emphasis ?? [],
+          }));
+        }
+        if (version < 6) {
+          // v6: opponents carry the snap-by-snap import. Nothing to convert —
+          // old opponents just start with an empty play list and keep their
+          // hand-entered tendencies until a report is uploaded.
+          state.opponents = (state.opponents ?? []).map((o) => ({
+            ...o,
+            plays: Array.isArray(o.plays) ? o.plays : [],
+            playsImported: Array.isArray(o.plays) ? o.plays.length : (o.playsImported ?? 0),
           }));
         }
         return state;

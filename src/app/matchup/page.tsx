@@ -13,6 +13,8 @@ import {
 import { ai, AI_LABEL } from "@/lib/ai";
 import { computeFindings } from "@/lib/analyze";
 import TendencyImport from "@/components/TendencyImport";
+import TendencyReport from "@/components/TendencyReport";
+import { headlineFromPlays } from "@/lib/tendencies";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink px-5 py-3.5 border-b border-line flex items-center gap-3";
@@ -30,19 +32,19 @@ function Stat({ value, label, sub }: { value: number | null; label: string; sub?
   );
 }
 
-function Cell({ v, onChange }: { v: number | null; onChange: (n: number | null) => void }) {
+function Cell({ v, onChange, readOnly }: { v: number | null; onChange: (n: number | null) => void; readOnly?: boolean }) {
   const run = v != null && v >= 50;
   return (
     <div className={`relative rounded-md border px-1 py-1.5 text-center text-xs font-bold ${
       v == null ? "border-line bg-slate-50 text-dim" : run ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-sky-200 bg-sky-50 text-sky-700"
     }`}>
       {v == null ? "—" : run ? `Run ${v}%` : `Pass ${100 - v}%`}
-      <input
+      {!readOnly && <input
         type="number" min={0} max={100} value={v ?? ""} placeholder="run %"
         onChange={(e) => onChange(e.target.value === "" ? null : Math.max(0, Math.min(100, Number(e.target.value))))}
         className="absolute inset-0 w-full h-full opacity-0 focus:opacity-100 focus:bg-white rounded-md text-center text-xs text-ink"
         aria-label="Run percent"
-      />
+      />}
     </div>
   );
 }
@@ -73,6 +75,17 @@ function MatchupInner() {
 
   const o = opponents.find((x) => x.id === sp.get("id")) ?? opponents.find((x) => !x.isDemo) ?? opponents[0] ?? null;
   const set = (patch: Partial<Opponent>) => o && updateOpponent(o.id, patch);
+  // With snaps on file the tiles are counted, not typed. Without them the
+  // coach's hand entry is the only truth we have, so it stays editable.
+  const plays = o?.plays ?? [];
+  const d = plays.length ? headlineFromPlays(plays) : null;
+  // Scalars + the heatmap come off the snaps; the editable tables keep the
+  // stored rows (the import already wrote the computed ones into them).
+  const view = o && d
+    ? { ...o, runRate: d.runRate ?? null, firstDownRun: d.firstDownRun ?? null, rpoRate: d.rpoRate ?? null,
+        signatureConcept: d.signatureConcept ?? "", signatureRate: d.signatureRate ?? null,
+        downDistance: d.downDistance ?? o.downDistance }
+    : o;
   const go = (id: string) => router.push(`/matchup?id=${id}`);
   const plan = o ? gamePlans.find((g) => g.opponentId === o.id) : undefined;
   const week = o?.week ? seasonSchedule.find((w) => w.week === o.week) : undefined;
@@ -195,12 +208,12 @@ function MatchupInner() {
               <div className={`${card} lg:col-start-2 lg:row-start-1 flex flex-col`}>
                 <div className={cardHead}>Offensive Tendencies (Season) {o.playsImported > 0 && <span className="ml-auto normal-case tracking-normal text-xs font-normal text-dim">{o.playsImported} plays imported</span>}</div>
                 <div className="grid grid-cols-4">
-                  <Stat value={o.runRate} label="Run Rate" sub={o.runRate != null ? `(${100 - o.runRate}% Pass)` : undefined} />
-                  <Stat value={o.firstDownRun} label="1st Down Run" />
-                  <Stat value={o.rpoRate} label="RPO Rate" />
-                  <Stat value={o.signatureRate} label={o.signatureConcept ? `Plays to ${o.signatureConcept}` : "Top Concept"} />
+                  <Stat value={view?.runRate ?? null} label="Run Rate" sub={view?.runRate != null ? `(${100 - view.runRate}% Pass)` : undefined} />
+                  <Stat value={view?.firstDownRun ?? null} label="1st Down Run" />
+                  <Stat value={view?.rpoRate ?? null} label="RPO Rate" />
+                  <Stat value={view?.signatureRate ?? null} label={view?.signatureConcept ? `Plays to ${view.signatureConcept}` : "Top Concept"} />
                 </div>
-                {editing && (
+                {editing && !d && (
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 border-t border-line p-3 text-xs">
                     {([["runRate", "Run %"], ["firstDownRun", "1st down run %"], ["rpoRate", "RPO %"], ["signatureRate", "Top concept %"]] as [keyof Opponent, string][]).map(([k, label]) => (
                       <label key={k} className="text-dim">{label}<input type="number" value={(o[k] as number | null) ?? ""} onChange={(e) => set({ [k]: e.target.value === "" ? null : Number(e.target.value) } as Partial<Opponent>)} className={`${input} mt-1 w-full`} /></label>
@@ -208,8 +221,9 @@ function MatchupInner() {
                     <label className="text-dim">Top concept<input value={o.signatureConcept} onChange={(e) => set({ signatureConcept: e.target.value })} className={`${input} mt-1 w-full`} /></label>
                   </div>
                 )}
+                {d && <div className="border-t border-line px-5 py-1.5 text-center text-[11px] text-dim">Counted from the {plays.length} snaps you uploaded.</div>}
                 <div className="border-t border-line px-5 py-2.5 text-center">
-                  <button onClick={() => document.getElementById("full-tendencies")?.scrollIntoView({ behavior: "smooth" })} className="inline-flex items-center gap-1 text-sm font-bold text-grass hover:underline">View Full Tendencies <ChevronRight size={14} /></button>
+                  <button onClick={() => document.getElementById(d ? "tendency-report" : "full-tendencies")?.scrollIntoView({ behavior: "smooth" })} className="inline-flex items-center gap-1 text-sm font-bold text-grass hover:underline">View Full Tendencies <ChevronRight size={14} /></button>
                 </div>
               </div>
 
@@ -264,17 +278,17 @@ function MatchupInner() {
                 <div className="p-3 flex-1 flex flex-col justify-center">
                   <div className="grid grid-cols-[76px_repeat(4,1fr)] gap-1.5 text-center">
                     <div />
-                    {DOWNS.map((d) => <div key={d} className={`${th} py-1 whitespace-nowrap`}>{d} Down</div>)}
+                    {DOWNS.map((dn) => <div key={dn} className={`${th} py-1 whitespace-nowrap`}>{dn} Down</div>)}
                     {DISTANCES.map((dist) => (
                       <div key={dist} className="contents">
                         <div className="text-[11px] font-bold text-ink/80 self-center text-left pl-1">{dist}</div>
-                        {DOWNS.map((d) => (
-                          <Cell key={`${d}-${dist}`} v={o.downDistance[d][dist]} onChange={(n) => set({ downDistance: { ...o.downDistance, [d]: { ...o.downDistance[d], [dist]: n } } })} />
+                        {DOWNS.map((down) => (
+                          <Cell key={`${down}-${dist}`} v={(view ?? o).downDistance[down][dist]} readOnly={!!d} onChange={(n) => set({ downDistance: { ...o.downDistance, [down]: { ...o.downDistance[down], [dist]: n } } })} />
                         ))}
                       </div>
                     ))}
                   </div>
-                  <p className="mt-2 text-[10px] text-dim">Click a cell to enter run %. Green = run, blue = pass.</p>
+                  <p className="mt-2 text-[10px] text-dim">{d ? "Counted from the uploaded snaps (3+ per cell). Green = run, blue = pass." : "Click a cell to enter run %. Green = run, blue = pass."}</p>
                 </div>
               </div>
             </div>
@@ -362,7 +376,20 @@ function MatchupInner() {
             </div>
           </div>
 
-          {/* Row 3: full tendencies (formations + concepts) */}
+          {/* Row 3: the Tendency Report — only real once snaps are on file */}
+          {plays.length > 0 ? (
+            <TendencyReport plays={plays} />
+          ) : (
+            <div className={`${card} px-5 py-6 text-center`}>
+              <div className="font-bold mb-1">No Tendency Report yet</div>
+              <p className="text-sm text-dim max-w-xl mx-auto">
+                Upload the full Hudl play-by-play — one row per snap — and CounterScheme reads the snaps itself: their situations, what they line up in out of each personnel group, their best plays, and the tells worth building an answer for. Everything you type below still works in the meantime.
+              </p>
+              <button onClick={() => setImportOpen(true)} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep"><Upload size={15} /> Upload Report</button>
+            </div>
+          )}
+
+          {/* Row 4: full tendencies (formations + concepts) */}
           <div id="full-tendencies" className="grid gap-4 lg:grid-cols-2 items-stretch">
             <div className={`${card} flex flex-col`}>
               <div className={cardHead}>
