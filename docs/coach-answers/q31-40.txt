@@ -1,0 +1,79 @@
+CounterScheme
+Engineer Discovery Questions 31–40
+Defensive Analysis &amp; Opponent Matchup
+31. What’s the difference, to you, between a “concern” and a “recommendation”? How blunt should it be?
+The AI should identify what it sees and give a clear recommendation when there is a solution. Be direct—don’t dance around the issue. Explain the reasoning so the coach learns from it. It can also ask good questions when they help the coach think deeper, but it shouldn’t turn every answer into a back-and-forth. The goal is to communicate and teach like a knowledgeable coach would.
+32. Should it ever suggest something you don’t already carry, or only work with your calls?
+The AI should prioritize the coach’s system and CounterScheme’s library. When there are gaps, it can pull in basic football knowledge from trusted, credible sources to help complete the picture. Outside information should support the system, not override it. Recommendations should still be based on verified information, actual data, and proven football concepts.
+33. Should it re-run automatically every time you change something, or only when you press a button?
+The system should automatically update the analysis when something changes so the information stays current. It shouldn’t feel like the coach has to re-run the entire system every time they make an adjustment.
+34. Send me a real Hudl breakdown/tendency export — play-by-play. Which columns do you tag?
+CounterScheme should import the full Hudl play-by-play breakdown with one row for every snap. The system should ingest all available columns and remain flexible because different staffs may tag different information.
+Core fields should include: Play #, ODK, Personnel, Backfield, Down, Distance, Hash, Yard Line, Play Type, Result, Gain/Loss, Offensive Formation, Offensive Play, Offensive Strength, Play Direction, Player, Quarter, and Motion.
+Motion should be supported as a core field even though it is not tagged in the attached example. If a staff tags motion in Hudl, CounterScheme should import and analyze it.
+The AI should analyze the raw snap-level data itself to identify the opponent’s strongest tendencies and tells rather than requiring coaches to create separate tendency reports.
+Reference file: PlaylistData_2026-09-10.xlsx — actual Hudl play-by-play export supplied with these answers.
+35. Which tendencies matter most?
+There should not be a predetermined ranking of tendencies because every opponent has different tells. CounterScheme’s job is to analyze all available data and determine where the strongest predictive tendencies are for that specific opponent.
+Find where we “make the most money” — the tendencies that give us the clearest advantage.
+Determine what is most predictive of run/pass, play concept, direction, or another meaningful outcome.
+Identify combinations that reveal more than individual tags do, such as formation + backfield alignment + down/distance.
+Separate actionable tendencies from statistics that are interesting but do not help the game plan.
+Show the evidence/sample size behind meaningful tendencies.
+Bottom line: Don’t tell me every tendency. Figure out which ones give away what the opponent is doing and tell me where we need to focus.
+36. Do these down-and-distance buckets work for you?
+Use the following situational breakdown as the default, while retaining the exact down and distance for every snap underneath the groups.
+Down
+Distance
+Situation
+1st
+10
+Normal
+1st
+10+
+Penalty / Behind Sticks
+2nd
+1–3
+Short
+2nd
+4–6
+Manageable
+2nd
+7–9
+Medium
+2nd
+10+
+Long
+3rd / 4th
+1–2
+Short Yardage
+3rd / 4th
+3–6
+Manageable
+3rd / 4th
+7–10
+Medium
+3rd / 4th
+11+
+Long
+37. Personnel numbers or formation names? Both?
+Use both personnel groupings and formation names. Formations should also be grouped by personnel so a coach can quickly see what formations an opponent uses from 10, 11, 12, 20, 21 personnel, etc.
+The AI should analyze them individually and together. Example: 11 Personnel → Trey → Counter 65%. This helps show how the offense changes based on who is on the field and how they align.
+38. What do you want captured for the opponent’s key players?
+CounterScheme should be flexible because coaches will have different levels of opponent personnel information. An opponent roster should not be required.
+Upload an opponent roster if the coach has one.
+Tell the AI through chat/text/voice a player’s name, jersey number, position, strengths, or anything else the coach knows.
+Recommend that coaches tag the ball carrier/target by jersey number in Hudl when possible. This should be optional, but it gives the AI better player-usage data.
+CounterScheme should combine whatever information is available with the snap-by-snap breakdown to determine who the key players are, how they are being used, when they are most involved, what they do well, and how the defense can limit them.
+39. Do you want to capture anything about the opponent’s staff, tempo, or offensive style?
+Capture basic information about the opponent’s offensive style, tempo, and any important coaching tendencies. Keep this lightweight and optional.
+Coaches can tell the AI what they know through chat, and CounterScheme can identify patterns from available data when possible. Examples include hurry-up vs. slow tempo, run-heavy vs. pass-heavy, offensive style/system, sideline checks, or a noticeable coordinator tendency.
+The purpose is to give the AI more context when building the game plan—not create another scouting assignment for the coach.
+40. Plan Status checklist: Scouting Report → Tendencies → Game Plan → Walkthrough → Practice Plan. Right order? What means done?
+1. Prepare Opponent Data Coach names/tags plays and formations in Hudl and uploads the full play-by-play spreadsheet described in Question 34.
+2. Add Coach Knowledge Coach can add information through text or voice, including key players, film observations, offensive style, coaching tendencies, or anything the Hudl data does not capture.
+3. Generate Tendency / Scouting Report CounterScheme analyzes the Hudl data and coach input and identifies the most important tendencies—especially where we can “make the most money.”
+4. Collaborate on Game Plan CounterScheme provides recommendations and evidence. The coach and AI work through the plan together, with the coach ultimately controlling the final decisions.
+5. Generate Practice Emphasis CounterScheme identifies what needs the most attention during the practice week based on the opponent and the developing game plan.
+6. Generate Scout Cards CounterScheme creates the scout cards/scripts needed to give the defense the opponent looks they need throughout the week.
+7. Ongoing Until Game Time The process is never technically done. Coaches can add information, change calls, or adjust the plan throughout the week. CounterScheme should update accordingly. Plan Status shows where the coach is in the process, not permanently completed tasks.

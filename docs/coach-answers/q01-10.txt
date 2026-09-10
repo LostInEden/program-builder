@@ -1,0 +1,109 @@
+CounterScheme
+Engineer Questions 1–10 — Coaching Experience
+These answers are meant to capture the full weekly coaching experience while keeping Version 1 focused. CounterScheme should fit how a football staff already works, use information coaches already create, and help turn that information into a better weekly game plan.
+1. Walk me through your week from Saturday morning to Friday kickoff. When do you watch film, when do you scout, when do you build the game plan, and when is it “locked”?
+Answer: Saturday and Sunday are both game-planning days. Saturday starts with a quick closeout of the previous game, but the staff also immediately begins learning the next opponent and building the general direction of the new plan.
+• Saturday — Previous game: close out Friday night by self-scouting our defense. Review what fronts, coverages and pressures we called, when we called them, and how they performed. Also review the player grades/notes the position coaches already produce. CounterScheme should organize this existing information, not create another Saturday task.
+• Saturday — Next opponent: immediately begin watching the next opponent. The first goal is to understand their overall offensive identity before getting too deep into percentages — who their best players are, what personnel they live in, their main formations/motions, their base run and pass concepts, how they use the quarterback/RB/TE, and what they appear to want to hang their hat on.
+• While watching Saturday film, coaches begin naming/tagging formations, concepts, personnel and other useful information in Hudl. As more film is tagged, the report becomes more reliable and starts showing the tendencies the staff will use to build the plan.
+• As enough Hudl data is tagged, the coach can upload/export the report into CounterScheme. CounterScheme should organize those tendencies instead of making the coach enter the same information again.
+• Saturday is already a game-planning day. As I learn the opponent, I am forming early answers: What do they do that worries me? What do we already do well against them? Where can their offense stress our rules, leverage or run fits? Is there a matchup or personnel issue we need to account for? CounterScheme should be able to help organize and challenge those early thoughts even while the tendency picture is still developing.
+• Sunday — deeper game planning: now that more film has been watched and the Hudl tags are producing a better tendency picture, dig into the details — down/distance, formation, personnel, motion, field/hash, backfield alignment, concept, direction and special situations. The point is not just to know their percentages; it is to understand what those tendencies mean against our defense.
+• Sunday is where CounterScheme should really connect My Team + My Scheme + Opponent. It should identify where our current defense is sound, where the opponent may create stress, and offer a small number of practical answers. Those answers may be a call we already carry, a small adjustment/check, a personnel suggestion, or something we need to emphasize in practice. I do not want the system constantly trying to reinvent our defense.
+• Monday — WALK IT / UNDERSTAND IT: teach opponent identity, personnel, formations, motions, base concepts, checks and why we are doing what we are doing.
+• Tuesday — JOG IT / APPLY IT: apply the plan at moderate tempo with a different mix of opponent concepts and pressure points.
+• Wednesday — FULL SPEED: game-like execution, communication, substitutions, critical pressure-point plays and important situations.
+• Thursday — CLEANUP: essential reminders, alerts, situations and confidence. Do not overload the players.
+• Friday — execute the plan.
+• The plan is largely established once it is taught to the players, but coaches need to be able to make small adjustments throughout the week based on practice without rebuilding everything.
+2. Which days and times would you realistically open this app? Sunday night? Every morning? Only Tuesday and Wednesday?
+Answer: I would use CounterScheme throughout the week. Saturday and Sunday are the heaviest use, but it should remain useful every day.
+• Saturday: previous-game self-scout, begin opponent film/tendencies, start the game-plan conversation.
+• Sunday: heavy opponent analysis and game-plan building.
+• Monday-Thursday: review the active plan, access practice information, make small adjustments and ask football questions.
+• AI should already know My Team, My Scheme, the current opponent and the current weekly plan so I do not have to keep re-explaining the situation. The conversation should feel like talking to another coach who has already been in the staff room all week.
+• If I have an idea away from the office, I want to be able to ask CounterScheme about it quickly and continue the same football conversation.
+3. Who else touches the defense besides you — coordinator, position coaches, a GA? Should any of them be able to change things in the app, or only see them?
+Answer: CounterScheme should reflect how a real coaching staff works without making permissions complicated.
+• Head Coach/Admin: control of the entire program, both sides of the ball and account/staff permissions.
+• Coordinator: control of his side of the ball and the ability to edit the football information/game plan for that side.
+• Assistant Coach: can use CounterScheme, work with his position group, interact with AI and edit football content as allowed.
+• Assistant coaches should not automatically control billing, accounts or admin settings.
+• Head coach/admin can give someone additional privileges when needed.
+• Keep the permission structure simple for V1.
+4. Where do you do this work — laptop, iPad, phone, a tablet in the press box? Which one most?
+Answer: Laptop/web is the primary workspace. iPad is important for meetings and reviewing information. Phone is a quick-access tool, especially for AI.
+• Laptop: full CounterScheme experience and the main place coaches build the game plan.
+• iPad: needs to be visually clean and appealing for meetings, planning and looking through information.
+• Phone: functional rather than feature-heavy. Coaches are not going to build an entire game plan on a phone.
+• Prioritize AI chat on the phone. If I am with my family on a weekend and have a football idea, I want to pull out my phone and ask CounterScheme about it.
+• Phone should also allow quick review of the current plan, opponent notes and important team information.
+5. What do you use today for each job: Hudl (which plan — do you have Hudl Assist / auto-breakdowns?), MaxPreps, Excel or Google Sheets, paper? What’s the one thing you’d be happiest to stop doing by hand?
+Answer: The biggest time/stress point is turning film and tendencies into an intentional practice/scout script. The system should help find the reps that actually matter instead of simply generating more information.
+• Hudl remains part of the workflow. Coaches watch film and tag/name plays there, then CounterScheme uses the uploaded report/tendency data.
+• CounterScheme should identify the opponent’s base offense, most-used concepts, successful concepts, personnel tendencies and important situations. Frequency matters, but success and matchup matter too — a play does not have to be their most-called play to deserve practice time if it is especially dangerous against what we do.
+• It should compare those tendencies to OUR saved defense and identify plays/concepts that create pressure points against our rules, run fits, coverage leverage, checks or personnel. The goal is to answer, 'What specifically do our kids need to see this week?'
+• I usually start with more plays than I will actually practice and then eliminate them. CounterScheme should mirror that thought process: build a larger candidate pool from the opponent data, explain why the important reps matter, and help the coach narrow it to the essentials.
+• Practice time is limited. Do not overwhelm the players just because the system found 30 useful plays.
+• Each practice rep should keep the important details available from the breakdown: personnel, formation, play/concept, direction, hash, motion/backfield alignment and situation.
+• Personnel changes are huge. If the opponent changes personnel, the scout period should rehearse the game operation: recognize personnel, communicate it, make our package/substitution change if needed, receive the call, align and execute.
+• Monday, Tuesday and Wednesday should not be the exact same script. Important concepts will repeat because players need repetition, but the presentation and purpose should progress: teach it Monday, apply it Tuesday, and make it game-like Wednesday.
+• CounterScheme can also suggest a small number of logical counters or answers the opponent could use against our plan, but this should not turn into endless guessing.
+• For V1, the main win is helping the coach identify, prioritize and organize the correct reps. Perfect automatic drawing of every scout card can come later.
+6. Team identity for the app: school name, mascot, colors, logo, level/classification — what information do you want a coach to enter about their program when they first set up CounterScheme?
+Answer: Keep this simple. Coaches care more about getting into the football than spending time building a profile.
+• Team/school name
+• Level
+• State
+• Classification
+• Mascot and logo can be optional.
+• No need for extensive branding or setup in V1.
+7. Can you send me a real roster export (Hudl, MaxPreps, or SportsEngine — a CSV or spreadsheet)? Blank out names if you want. I build the importer against whatever columns your file actually has.
+Answer: Most teams will already have a Google Sheet, Excel file or similar roster. CounterScheme should use what the staff already has instead of requiring manual entry.
+• Basic fields: jersey number, player name, position(s), grade/class, height and weight.
+• Allow multiple positions for one player.
+• Missing information should not stop the import. Coaches can complete it later.
+• Allow simple column matching because different staffs/files may label the same information differently.
+• Create one player profile per athlete and reuse it throughout CounterScheme.
+8. Can you send me a sample player data file with whatever you track beyond the roster — height/weight, 40, shuttle, vertical, bench/squat/clean, position grades, anything like that? Even 10–15 players is enough.
+Answer: Coaches may have additional athletic and weight-room information, but they will not always have every measurement. Let them provide whatever they already track.
+• Possible information: 40 time, shuttle, vertical, bench, squat, clean and other testing numbers.
+• All extra measurables should be optional.
+• Keep athletic ability separate from football skill. A great athlete is not automatically a great football player, and a limited athlete can still be a very good football player.
+• For V1, this information is supporting context that helps CounterScheme understand what type of athletes are on the roster and whether a recommendation realistically fits the personnel. It does not need to become a separate strength, testing or player-development system.
+9. Depth chart: how deep do you keep it — 2 or 3 per spot? Separate depth charts for Base, Nickel, Dime, Goal Line, or one chart with sub-packages? Which packages do you actually carry in a season?
+Answer: Use one main Varsity Base depth chart. Personnel packages should branch from that base because high-school staffs usually change only one or two players rather than building completely different units.
+• Allow up to 3-deep, but do not require every spot to have three players.
+• Coach can add, rename or remove packages based on what his team actually carries.
+• Do not force package names such as Nickel, Dime or Goal Line.
+• When a package is created, it inherits the Base personnel. The coach only changes the player(s) who differ.
+• Everywhere I have coached, we basically carried a Base package and a Heavy package. Another staff may use something different.
+• If the Base starter changes, packages should inherit that change unless the coach specifically overrides that position in a package.
+• Also provide JV and Freshman depth charts, but keep them secondary in the interface. Varsity should open by default.
+• Use the same player profile across Varsity/JV/Freshman so players are not duplicated.
+10. Player skill ratings: I built five — Tackling, Coverage, Block Shedding, Pursuit/Effort, Football IQ — each 1 to 5. Are those the right five? Anything to add (speed, physicality, ball skills, run-fit discipline) or drop? Would you grade a lineman on different things than a corner?
+Answer: Football-skill ratings should be position-specific, scheme-specific and customizable. They are important because CounterScheme needs to understand what the players can do, but player grading is not the main purpose of V1.
+• CounterScheme should use the responsibilities already entered in My Scheme to suggest around five relevant categories for each position.
+• Coach can accept, add, remove or rename those categories.
+• If the player is not asked to perform a skill in our defense, do not force the coach to grade it. Example: if we do not play man coverage, Man Coverage does not need to be one of the main grades.
+• Use a simple 1–5 scale: 1 = major weakness, 2 = below average, 3 = solid/functional, 4 = good, 5 = difference-maker.
+• Example DL categories: Get-Off, Block Destruction, Run Fit/Gap Control, Pass Rush, Football IQ.
+• Example LB categories: Run Fits, Block Destruction, Tackling, Coverage, Football IQ.
+• DB categories should adjust to the actual coverage, leverage and run-support responsibilities in that defense.
+• Keep speed, strength and testing numbers separate from football-skill grades.
+• The initial ratings mainly teach CounterScheme what each player can and cannot reasonably be asked to do within our defense. The value is not producing an overall rating; the value is helping the system understand whether a player fits the responsibility we are asking him to execute.
+• During the season, position coaches can optionally enter/upload one overall weekly game grade plus short notes/stats they already track.
+• CounterScheme can use those recent grades quietly in the background to recognize whether a player appears to be improving, staying steady or struggling over multiple weeks. One bad game should not automatically trigger a personnel recommendation.
+• That trend should only surface when it is relevant to a football decision. Example: if this week’s opponent is going to repeatedly attack a gap that our current player has struggled to secure, and another player has been performing better in the skills required for that job, CounterScheme may suggest considering the other player for reps, a role or a package. The suggestion should explain the football reason, not simply say one player has a higher grade.
+• Personnel ideas are suggestions only. CounterScheme never automatically changes a starter, moves a player or edits the depth chart.
+• For V1, do not turn this into a full grading/player-development platform. Snap-by-snap grading, handwritten-grade recognition, advanced development tracking and automatic player messages can be added later.
+Overall Coaching Experience We Are Trying to Capture
+• CounterScheme should fit into what coaches already do rather than create more work.
+• Use Hudl reports, roster sheets, existing grades and other information the staff already produces whenever possible.
+• The software should understand the coach’s terminology, scheme, personnel and weekly opponent.
+• The AI should think through problems from a football perspective: scheme solution, rule/check solution, call solution and, when relevant, a personnel suggestion.
+• Give the coach a few useful answers instead of a giant information dump.
+• Keep the player-facing plan simple even when the analysis behind it is complex.
+• The coach always makes the final decision. CounterScheme is there to organize information, identify things the staff may miss, challenge or confirm ideas, and help put the best product on the field.
+• CounterScheme should not just report tendencies. It should connect tendencies to our actual defensive rules and explain why something matters.
+• The weekly experience should move naturally from film → tendencies → matchup questions → game-plan answers → practice priorities → execution. That is the coaching process CounterScheme needs to support.

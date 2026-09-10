@@ -1,0 +1,59 @@
+CounterScheme
+Engineer Build Notes — Questions 21–30
+V1-focused requirements based on coaching workflow and game-planning discussions
+21. Device Support
+Primary platform should be a laptop/web experience. This is where coaches will do the majority of their detailed work.
+iPad support is important for staff meetings and should be visually strong and easy to navigate.
+Phone should be designed mainly for quick check-ins and AI chat rather than heavy setup or editing.
+22. Depth Charts &amp; Packages
+Allow up to three players at each position on the depth chart, but do not require all three slots to be filled. Two-deep will be common, and a coach should also be able to enter only one player if needed.
+Every team starts with one Base package. Do not clutter the page with multiple empty packages that make coaches feel like they have more work to complete.
+Teams can add additional packages only if they use them (Heavy, Nickel, Goal Line, etc.).
+Varsity remains the main depth chart. JV and Freshman should be important secondary tabs that are easy to access without competing with the varsity view.
+23. Player Skill Ratings
+Use the previously established customizable, position-specific player rating system.
+Initial categories can include Tackling, Coverage, Block Shedding, Pursuit/Effort, and Football IQ, but teams should be able to customize categories based on position and their own philosophy.
+Player evaluation should support the system's football decisions without becoming a major workload for coaches.
+24. Roster Input
+Support the common file types coaches already use, especially CSV/spreadsheet-style roster files and PDF.
+Do not force coaches into one rigid upload format. The system should extract the useful information it can from the document.
+Core roster information is name, position, and class/grade. Additional measurables can be included when available.
+Partial data should be acceptable; coaches should not have to complete every field before using CounterScheme.
+25. Scheme &amp; Coverage Library
+CounterScheme should support the coach's actual defensive system, including spot-drop zone if that is what the team runs.
+The software should not force every team into match coverage.
+CounterScheme can proactively recommend match coverages because of their advantages, but recommendations should remain educational and respect the coach's system.
+Calls should be detailed enough for the system to understand alignment, leverage, responsibilities, rules, and terminology by position.
+26. How Coaches Interact With CounterScheme
+Information input should primarily happen through AI chat. Coaches should be able to type or use speech-to-text naturally instead of filling out long forms.
+Each major area can have a dashboard that gives the coach a clean overall view of that section.
+Buttons should take coaches into deeper pieces or trigger repeatable actions such as generating a practice script, opening detailed information, or creating an output.
+Overall interaction model: conversational input, clean dashboard view, buttons for deeper actions.
+27. Opponent Data &amp; Terminology Mapping
+Opponent data will primarily come from the team's Hudl tendency report. Typical tags include formations, play names, running back alignment, play direction, play type, and any additional categories that staff chooses to tag.
+CounterScheme needs to understand what those labels mean structurally, even when different staffs use different terminology.
+Use a standardized football knowledge base for common formations, concepts, alignments, and structures rather than requiring every coach to build a complete terminology dictionary up front.
+When the AI encounters an unknown term, it should ask the coach conversationally. Example: 'What does Dallas mean?' The coach can answer, 'Dallas is Snag.'
+Once clarified, CounterScheme should remember that terminology for that team. Mapping should happen as needed, not as a large setup task before the coach can use the system.
+Goal: automate recognition whenever possible and only ask the coach when the system truly needs clarification.
+28. Game Plan Output
+The game plan should not be a data dump. The AI's job is to identify which opponent information actually matters and can create an advantage.
+Start with the opponent's best players, what they do well, and practical ways to limit them.
+Identify the opponent's best plays and the meaningful tendencies connected to personnel, formations, alignments, motions, situations, down-and-distance, field location, and other useful indicators.
+Prioritize actionable tendencies. Example: 'When the back and H are on the same side, expect Counter' is more useful than simply saying the opponent runs the ball 60% of the time.
+Situational tendencies matter. Example: if the opponent repeatedly throws a boundary comeback on 3rd-and-5+, surface that tendency because the defense can build a specific answer for it.
+Explain how the opponent's scheme stresses the coach's defense. Plays or structures that are poor matchups for the defense should become practice priorities.
+Adjustments must remain rule-based and inside the team's system. Examples: a specific Trips check, a specific 12-personnel front, or a bracket/cone call in a defined situation.
+Break down useful answers by personnel groupings such as 10, 11, and 12 personnel when that is relevant to the opponent.
+The AI should suggest solutions, but game planning should be collaborative. The coach can give an idea, the AI can evaluate/refine it, and the two work toward the final answer. The software should feel like an intelligent assistant coach, not something dictating the game plan.
+29. Recommendations, Evidence &amp; AI Conversation
+Every important tendency surfaced in the game plan should have a suggested response or solution within the team's defense.
+Keep the first view simple: show the tendency and recommendation without overwhelming the coach.
+Include an Evidence option/tag that lets the coach drill into the supporting data and reasoning when desired.
+The coach should also be able to open AI chat directly from the recommendation and talk through alternatives, ask why, or propose a different solution.
+Design principle: answer first, evidence second, conversation whenever needed.
+30. Freedom to Suggest Outside the Coach's System
+During the season, CounterScheme should stay within the team's existing calls and scheme.
+Do not recommend installing an entirely new coverage, front, or concept during game week just because it looks good theoretically.
+If a concept is already part of the team's toolkit or something they have practiced and kept 'in the back pocket,' the AI can recommend using it.
+Core philosophy: Do what you do, but do it really well. CounterScheme should help teams become more detailed and better executed rather than giving them a huge menu of options they cannot master.
