@@ -8,7 +8,7 @@ import {
   Upload, Send, Plus, X, ChevronRight, Target, Flag, Users2, HelpCircle, CalendarDays, Check, Pencil, Mic,
 } from "lucide-react";
 import {
-  useStore, useHydrated, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
+  useStore, useHydrated, initialsOf, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
 } from "@/lib/store";
 import { ai, AI_LABEL } from "@/lib/ai";
 import TendencyImport from "@/components/TendencyImport";
@@ -362,7 +362,7 @@ function MatchupInner() {
                 <div className="flex items-center justify-center gap-3 mb-2">
                   <span className="grid size-11 place-items-center rounded-full bg-red-600 text-white font-extrabold">{o.name.slice(0, 1)}</span>
                   <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold text-dim">VS</span>
-                  <span className="grid size-11 place-items-center rounded-full bg-navy text-white font-extrabold">DH</span>
+                  <span className="grid size-11 place-items-center rounded-full bg-navy text-white font-extrabold">{initialsOf(store.program.name)}</span>
                 </div>
                 <div className="font-extrabold">vs. {o.name}</div>
                 <div className="text-sm text-dim">

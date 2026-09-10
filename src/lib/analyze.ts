@@ -6,11 +6,14 @@ import { getStructure } from "@/lib/football";
 import { COVERAGES } from "@/lib/coverages";
 import {
   slotLabelOf,
+  baseGroupFor,
+  effectiveSlots,
   type Player,
   type PersonnelGroup,
   type Overrides,
   type Concept,
 } from "@/lib/store";
+import { gradeTrend } from "@/lib/skills";
 
 export type Status = "Sound" | "Needs Review" | "Potential Conflict";
 
@@ -53,6 +56,8 @@ export const SITUATIONS: { key: string; label: string; words: string[]; category
 export function computeFindings(input: AnalysisInput): { findings: Finding[]; groupName: string; structureName: string } {
   const { groups, activeGroupId, players, scheme, overrides, concepts } = input;
   const group = groups.find((g) => g.id === activeGroupId) ?? groups[0];
+  // A package is only Base plus the spots the coach changed (Q9).
+  const slots = effectiveSlots(group, baseGroupFor(groups, group.level));
   const structure = getStructure(group.structureId);
   const byId = new Map(players.map((p) => [p.id, p]));
   const label = (i: number) => slotLabelOf(overrides, group.structureId, i);
@@ -169,24 +174,41 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
   });
 
   // ---- 5. Personnel vs scheme ---------------------------------------------
-  const starters = Object.entries(group.slots)
+  const starters = Object.entries(slots)
     .filter(([, ids]) => ids.length > 0)
     .map(([k, ids]) => ({ slot: Number(k), pl: byId.get(ids[0]) }))
     .filter((e) => e.pl) as { slot: number; pl: Player }[];
-  const skill = (p: Player, k: "tackle" | "coverage" | "blockShed" | "pursuit" | "iq") => p.skills?.[k] ?? null;
+  // Grades are keyed by skill-category id now (lib/skills). Take the first id
+  // the coach actually kept — his categories are his to rename or remove.
+  const skill = (p: Player, ...keys: string[]) => {
+    for (const k of keys) {
+      const v = p.skills?.[k];
+      if (typeof v === "number") return v;
+    }
+    return null;
+  };
+  const COVERAGE_KEYS = ["manCoverage", "coverage", "zoneDrops"];
+  const TACKLE_KEYS = ["tackling", "runFit", "runSupport"];
+  // A quiet trend only ever explains a finding — it never moves anybody (Q10).
+  const strugglingNote = (pl: Player) => {
+    const t = gradeTrend(pl.weeklyGrades);
+    return t && t.trend === "struggling"
+      ? ` Weekly grades have him trending down (${t.avg}/5 over weeks ${t.weeks.join(", ")}) — worth a look, not an automatic change.`
+      : "";
+  };
   const dbStarters = starters.filter((e) => ["deep"].includes(structure.slots[e.slot].level));
-  const covGrades = dbStarters.map((e) => skill(e.pl, "coverage")).filter((v): v is number => v != null);
+  const covGrades = dbStarters.map((e) => skill(e.pl, ...COVERAGE_KEYS)).filter((v): v is number => v != null);
   const manHeavy = coverages.filter((c) => has(c.name, "cover 1", "cover 0", "man", "meg", "2-man", "robber"));
   if (covGrades.length >= 2 && manHeavy.length) {
     const avg = covGrades.reduce((a, b) => a + b, 0) / covGrades.length;
-    const weak = dbStarters.filter((e) => (skill(e.pl, "coverage") ?? 5) <= 2);
+    const weak = dbStarters.filter((e) => (skill(e.pl, ...COVERAGE_KEYS) ?? 5) <= 2);
     findings.push({
       id: "man-fit",
       check: "Man coverage vs your corners",
       status: avg < 3 ? "Potential Conflict" : "Sound",
       detail:
         avg < 3
-          ? `Starting secondary averages ${avg.toFixed(1)}/5 in coverage, but you carry ${manHeavy.map((c) => c.name).join(", ")}. ${weak.map((e) => `${label(e.slot)} ${e.pl.name}`).join(", ")} would be isolated.`
+          ? `Starting secondary averages ${avg.toFixed(1)}/5 in coverage, but you carry ${manHeavy.map((c) => c.name).join(", ")}. ${weak.map((e) => `${label(e.slot)} ${e.pl.name}`).join(", ")} would be isolated.${weak.map((e) => strugglingNote(e.pl)).join("")}`
           : `Secondary averages ${avg.toFixed(1)}/5 in coverage — good enough to carry ${manHeavy.map((c) => c.name).join(", ")}.`,
       affected: avg < 3 ? weak.map((e) => label(e.slot)) : undefined,
       why: "Man coverages put a defender alone on a receiver with limited help. Skill ratings are the only thing that tells the engine whether that's a strength or a liability.",
@@ -195,7 +217,7 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
     });
   }
   const boxStarters = starters.filter((e) => structure.slots[e.slot].level !== "deep");
-  const tackleGrades = boxStarters.map((e) => skill(e.pl, "tackle")).filter((v): v is number => v != null);
+  const tackleGrades = boxStarters.map((e) => skill(e.pl, ...TACKLE_KEYS)).filter((v): v is number => v != null);
   if (tackleGrades.length >= 3) {
     const avg = tackleGrades.reduce((a, b) => a + b, 0) / tackleGrades.length;
     const runFirst = has(scheme.philosophy, "run");
@@ -205,7 +227,10 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
       status: runFirst && avg < 3 ? "Needs Review" : "Sound",
       detail:
         runFirst && avg < 3
-          ? `Your philosophy leads with the run but the box averages ${avg.toFixed(1)}/5 in tackling.`
+          ? `Your philosophy leads with the run but the box averages ${avg.toFixed(1)}/5 in tackling and run fits.${boxStarters
+              .filter((e) => (skill(e.pl, ...TACKLE_KEYS) ?? 5) <= 2)
+              .map((e) => strugglingNote(e.pl))
+              .join("")}`
           : `Box averages ${avg.toFixed(1)}/5 tackling — consistent with ${runFirst ? "a run-first identity" : "the stated philosophy"}.`,
       why: "Gap integrity is only as good as the tackle at the end of it. Missed tackles turn sound fits into explosives.",
       suggestion: runFirst && avg < 3 ? "Practice emphasis: tackling circuit for the second level; consider Tite to keep the ends in the B gaps and shorten the LBs' runs." : undefined,
@@ -219,7 +244,7 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
       status: "Needs Review",
       detail: `${rated} of ${players.length} players have football skill ratings. Personnel checks stay shallow until the starters are graded.`,
       affected: ["Player Profiles"],
-      why: "Tackling, coverage, block shedding, pursuit, and IQ are what let the analyst say *who* creates the advantage or the problem — not just how many bodies are in the box.",
+      why: "The skill categories you keep per position are what let the analyst say *who* creates the advantage or the problem — not just how many bodies are in the box.",
       suggestion: "Grade the eleven starters first (Player Profiles → Football Skills). Five clicks each.",
     });
   }
@@ -228,7 +253,7 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
   const starterIds = starters.map((e) => e.pl.id);
   const dupeIds = [...new Set(starterIds.filter((id, i) => starterIds.indexOf(id) !== i))];
   const unavailable = starters.filter((e) => e.pl.status !== "Healthy");
-  const openIdx = structure.slots.map((_, i) => i).filter((i) => !(group.slots[i]?.length > 0));
+  const openIdx = structure.slots.map((_, i) => i).filter((i) => !(slots[i]?.length > 0));
   if (dupeIds.length) {
     findings.push({
       id: "depth",

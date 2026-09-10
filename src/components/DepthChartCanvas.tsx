@@ -21,6 +21,7 @@ export default function DepthChartCanvas({
   overrides = {},
   onSlotClick,
   selectedSlot,
+  changedSlots,
   className = "",
 }: {
   structureId: string;
@@ -29,6 +30,8 @@ export default function DepthChartCanvas({
   overrides?: Overrides;
   onSlotClick?: (index: number) => void;
   selectedSlot?: number | null;
+  /** Spots this package changes from Base — marked so inheritance is visible. */
+  changedSlots?: number[];
   className?: string;
 }) {
   const structure = getStructure(structureId);
@@ -109,7 +112,11 @@ export default function DepthChartCanvas({
             >
               {label}
             </span>
-            <span className="-mt-0.5 min-w-[86px] max-w-32 rounded-md border border-line bg-white shadow-sm px-2 pt-1.5 pb-1 text-left">
+            <span
+              className={`-mt-0.5 min-w-[86px] max-w-32 rounded-md border bg-white shadow-sm px-2 pt-1.5 pb-1 text-left ${
+                changedSlots?.includes(i) ? "border-grass ring-1 ring-grass/30" : "border-line"
+              }`}
+            >
               {ids.length === 0 && <span className="block text-[10px] text-dim/70 italic px-0.5">open</span>}
               {ids.slice(0, 2).map((pid, depth) => {
                 const p = byId.get(pid);

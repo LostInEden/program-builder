@@ -6,9 +6,12 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import {
   Search, Upload, Plus, Pencil, X, ChevronRight, ArrowUp, ArrowDown, Check,
-  Star, Users, ClipboardCheck, Ambulance, UserPlus, LayoutGrid,
+  Star, Users, ClipboardCheck, Ambulance, UserPlus, LayoutGrid, Undo2, Trash2,
 } from "lucide-react";
-import { useStore, useHydrated, slotLabelOf, fmtHeight, overallRating, type Player } from "@/lib/store";
+import {
+  useStore, useHydrated, slotLabelOf, fmtHeight, baseGroupFor, effectiveSlots, overriddenSlots,
+  TEAM_LEVELS, type Player, type TeamLevel,
+} from "@/lib/store";
 import { getStructure, structures, type Concept } from "@/lib/football";
 import DepthChartCanvas from "@/components/DepthChartCanvas";
 import RosterImport from "@/components/RosterImport";
@@ -27,39 +30,15 @@ const CONCEPT_POS: Record<Concept, string[]> = {
   "Hybrid / Overhang": ["LB", "S", "SS", "DB", "DE"],
 };
 
-function Stars({ value, onChange }: { value: number | null | undefined; onChange?: (v: number | null) => void }) {
-  const v = value ?? 0;
-  return (
-    <span className="inline-flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <button
-          key={i}
-          type="button"
-          disabled={!onChange}
-          onClick={() => onChange?.(v === i ? null : i)}
-          className={onChange ? "cursor-pointer" : "cursor-default"}
-          aria-label={`Rate ${i}`}
-        >
-          <Star
-            size={13}
-            className={i <= v ? "fill-amber-400 text-amber-400" : "text-slate-300"}
-          />
-        </button>
-      ))}
-    </span>
-  );
-}
-
 const card = "rounded-xl border border-line bg-card shadow-sm";
 const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink px-5 py-3.5 border-b border-line flex items-center gap-3";
 const th = "display uppercase text-[11px] tracking-widest text-dim font-semibold";
 
 function RosterRows({
-  players, watchList, onRate, limit,
+  players, watchList, limit,
 }: {
   players: Player[];
   watchList: string[];
-  onRate: (id: string, v: number | null) => void;
   limit?: number;
 }) {
   const shown = limit ? players.slice(0, limit) : players;
@@ -77,7 +56,6 @@ function RosterRows({
           <th className={`${th} text-right px-4 py-2.5`}>Bench</th>
           <th className={`${th} text-right px-4 py-2.5`}>Squat</th>
           <th className={`${th} text-right px-4 py-2.5`}>Vert</th>
-          <th className={`${th} text-left px-4 py-2.5`}>Rating</th>
         </tr>
       </thead>
       <tbody>
@@ -100,14 +78,11 @@ function RosterRows({
             <td className="px-4 py-2.5 text-right tabular-nums">{p.bench ?? "—"}</td>
             <td className="px-4 py-2.5 text-right tabular-nums">{p.squat ?? "—"}</td>
             <td className="px-4 py-2.5 text-right tabular-nums">{p.vertical ? `${p.vertical}"` : "—"}</td>
-            <td className="px-4 py-2.5">
-              <Stars value={overallRating(p)} onChange={(v) => onRate(p.id, v)} />
-            </td>
           </tr>
         ))}
         {shown.length === 0 && (
           <tr>
-            <td colSpan={11} className="px-4 py-8 text-center text-dim">No players.</td>
+            <td colSpan={10} className="px-4 py-8 text-center text-dim">No players.</td>
           </tr>
         )}
       </tbody>
@@ -123,8 +98,8 @@ function TeamPageInner() {
 
   const {
     players, groups, activeGroupId, overrides, watchList, activity,
-    setActiveGroup, setSlotPlayers, setGroupStructure, addGroup, addPlayer, updatePlayer,
-    setSlotOverride, seasonSchedule, updateScheduleWeek, toggleWatch,
+    setActiveGroup, setSlotPlayers, clearSlotOverride, setGroupStructure, addGroup, renameGroup, removeGroup,
+    addPlayer, updatePlayer, setSlotOverride, seasonSchedule, updateScheduleWeek, toggleWatch,
   } = useStore();
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState(false);
@@ -134,6 +109,10 @@ function TeamPageInner() {
   const [showAllPlayers, setShowAllPlayers] = useState(false);
 
   const group = groups.find((g) => g.id === activeGroupId) ?? groups[0];
+  const level: TeamLevel = group?.level ?? "Varsity";
+  const base = baseGroupFor(groups, level);
+  const slots = effectiveSlots(group, base);
+  const changedSlots = overriddenSlots(group);
   const structure = getStructure(group?.structureId ?? "3-4");
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
 
@@ -155,10 +134,9 @@ function TeamPageInner() {
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
 
   const injured = players.filter((p) => p.status !== "Healthy");
-  const filledSlots = Object.values(group.slots).filter((ids) => ids.length > 0).length;
-  const onRate = (id: string, v: number | null) => updatePlayer(id, { rating: v });
+  const filledSlots = Object.values(slots).filter((ids) => ids.length > 0).length;
 
-  const slotIds = selectedSlot !== null ? (group.slots[selectedSlot] ?? []) : [];
+  const slotIds = selectedSlot !== null ? (slots[selectedSlot] ?? []) : [];
   const move = (i: number, dir: -1 | 1) => {
     if (selectedSlot === null) return;
     const next = [...slotIds];
@@ -171,7 +149,7 @@ function TeamPageInner() {
   const titleFor: Record<string, [string, string]> = {
     overview: ["My Team", "Manage your roster, depth chart, and team information."],
     depth: ["Depth Chart", "Assign, reorder, and rename positions on the field."],
-    roster: ["Roster", "Every player with measurables and ratings."],
+    roster: ["Roster", "Every player with measurables. Football skill grades live on the player profile."],
     profiles: ["Player Profiles", "Open a player to edit identity, measurables, and evaluation."],
     injuries: ["Injuries", "Availability status for every player."],
     watchlist: ["Watch List", "Players you're keeping an eye on."],
@@ -182,9 +160,35 @@ function TeamPageInner() {
 
   const depthEditor = (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      {/* Levels — Varsity is the chart, JV and Freshman ride alongside (Q22) */}
+      <div className="mb-3 flex items-center gap-1 border-b border-line">
+        {TEAM_LEVELS.map((lv) => {
+          const active = lv === level;
+          const target = baseGroupFor(groups, lv);
+          return (
+            <button
+              key={lv}
+              onClick={() => { if (target) { setActiveGroup(target.id); setSelectedSlot(null); } }}
+              className={`relative px-4 py-2 text-sm font-semibold transition-colors ${
+                active ? "text-grass" : "text-dim hover:text-ink"
+              }`}
+            >
+              {lv}
+              {active && <span className="absolute inset-x-2 -bottom-px h-[3px] rounded-t bg-grass" />}
+            </button>
+          );
+        })}
+        <span className="ml-auto pb-2 text-xs text-dim">Same player profiles on every level.</span>
+      </div>
+
       <div className="mb-2 flex items-center justify-between">
         <div className="display uppercase text-xs font-bold tracking-[0.15em] text-dim">
-          {group.name} ({structure.name})
+          {level} · {group.name} ({structure.name})
+          {!group.isBase && (
+            <span className="ml-2 normal-case tracking-normal font-normal text-[11px]">
+              inherits Base — {changedSlots.length} spot{changedSlots.length === 1 ? "" : "s"} changed
+            </span>
+          )}
         </div>
         <button
           onClick={() => { setEditing((e) => !e); setSelectedSlot(null); }}
@@ -199,9 +203,10 @@ function TeamPageInner() {
 
       <DepthChartCanvas
         structureId={group.structureId}
-        slots={group.slots}
+        slots={slots}
         players={players}
         overrides={overrides}
+        changedSlots={changedSlots}
         onSlotClick={editing ? (i) => setSelectedSlot(i) : undefined}
         selectedSlot={selectedSlot}
       />
@@ -237,7 +242,22 @@ function TeamPageInner() {
               </div>
 
               <div>
-                <label className="block text-xs text-dim mb-1">Depth order — first is the starter</label>
+                <label className="flex flex-wrap items-center gap-2 text-xs text-dim mb-1">
+                  Depth order — first is the starter, up to three deep
+                  {!group.isBase &&
+                    (changedSlots.includes(selectedSlot) ? (
+                      <button
+                        onClick={() => clearSlotOverride(group.id, selectedSlot)}
+                        className="inline-flex items-center gap-1 rounded-full border border-line bg-white px-2.5 py-0.5 font-semibold text-dim hover:text-ink hover:border-dim"
+                      >
+                        <Undo2 size={11} /> Back to Base
+                      </button>
+                    ) : (
+                      <span className="rounded-full border border-line bg-white px-2.5 py-0.5">
+                        Inherited from Base — change it here and only this spot stops following.
+                      </span>
+                    ))}
+                </label>
                 <div className="flex flex-col gap-1.5">
                   {slotIds.map((id, i) => {
                     const pl = byId.get(id);
@@ -303,32 +323,69 @@ function TeamPageInner() {
       )}
 
       <div className="mt-4">
-        <div className="display uppercase text-xs font-bold tracking-[0.15em] text-dim mb-2">Personnel Groups</div>
+        <div className="display uppercase text-xs font-bold tracking-[0.15em] text-dim mb-2">
+          {level} Packages
+        </div>
         <div className="flex flex-wrap gap-2">
-          {groups.map((g) => (
-            <button
-              key={g.id}
-              onClick={() => { setActiveGroup(g.id); setSelectedSlot(null); }}
-              className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
-                g.id === group.id ? "border-grass bg-grass/10 text-grass" : "border-line text-dim hover:text-ink hover:border-dim"
-              }`}
-            >
-              {g.name}
-              <span className="ml-2 text-xs font-normal opacity-70">
-                {Object.values(g.slots).filter((ids) => ids.length > 0).length}/{getStructure(g.structureId).slots.length}
-              </span>
-            </button>
-          ))}
+          {groups
+            .filter((g) => g.level === level)
+            .map((g) => {
+              const eff = effectiveSlots(g, base);
+              const on = g.id === group.id;
+              return (
+                <span
+                  key={g.id}
+                  className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+                    on ? "border-grass bg-grass/10 text-grass" : "border-line text-dim hover:text-ink hover:border-dim"
+                  }`}
+                >
+                  <button onClick={() => { setActiveGroup(g.id); setSelectedSlot(null); }}>
+                    {g.name}
+                    <span className="ml-2 text-xs font-normal opacity-70">
+                      {Object.values(eff).filter((ids) => ids.length > 0).length}/{getStructure(g.structureId).slots.length}
+                      {!g.isBase && ` · ${overriddenSlots(g).length} changed`}
+                    </span>
+                  </button>
+                  {on && !g.isBase && (
+                    <>
+                      <button
+                        onClick={() => {
+                          const name = window.prompt("Rename package:", g.name);
+                          if (name?.trim()) renameGroup(g.id, name.trim());
+                        }}
+                        className="text-dim hover:text-ink"
+                        aria-label="Rename package"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Remove the ${g.name} package? Base is untouched.`)) removeGroup(g.id);
+                        }}
+                        className="text-red-500/70 hover:text-red-600"
+                        aria-label="Remove package"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </>
+                  )}
+                </span>
+              );
+            })}
           <button
             onClick={() => {
-              const name = window.prompt("Package name (your terminology):");
-              if (name?.trim()) addGroup(name.trim());
+              const name = window.prompt("Package name (your terminology — Heavy, Nickel, whatever you call it):");
+              if (name?.trim()) { setActiveGroup(addGroup(name.trim(), level)); setSelectedSlot(null); }
             }}
             className="rounded-lg border border-dashed border-line px-4 py-2 text-sm text-dim hover:text-ink hover:border-dim"
           >
-            + Custom
+            + Add package
           </button>
         </div>
+        <p className="mt-2 text-xs text-dim">
+          Packages branch from {level} Base. Change a Base starter and every package follows unless you changed that spot
+          here.
+        </p>
       </div>
     </motion.div>
   );
@@ -379,12 +436,13 @@ function TeamPageInner() {
               <div className="p-4">
                 <DepthChartCanvas
                   structureId={group.structureId}
-                  slots={group.slots}
+                  slots={slots}
                   players={players}
                   overrides={overrides}
+                  changedSlots={changedSlots}
                 />
                 <div className="mt-2 text-center text-sm text-dim">
-                  {structure.name} · {group.name} —{" "}
+                  {structure.name} · {level} {group.name} —{" "}
                   <Link href="/team?view=depth" className="text-grass font-semibold hover:underline">
                     edit depth chart
                   </Link>
@@ -409,7 +467,7 @@ function TeamPageInner() {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <RosterRows players={filtered} watchList={watchList} onRate={onRate} limit={8} />
+                <RosterRows players={filtered} watchList={watchList} limit={8} />
               </div>
               <div className="border-t border-line px-5 py-3 text-center">
                 <Link href="/team?view=roster" className="inline-flex items-center gap-1 text-sm font-semibold text-grass hover:underline">
@@ -497,7 +555,7 @@ function TeamPageInner() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <RosterRows players={filtered} watchList={watchList} onRate={onRate} />
+            <RosterRows players={filtered} watchList={watchList} />
           </div>
         </div>
       )}
@@ -514,7 +572,6 @@ function TeamPageInner() {
                 <div className="text-xs text-dim">
                   {p.positions.join("/") || "No position"} · {p.cls || "—"} · {p.status}
                 </div>
-                <Stars value={overallRating(p)} />
               </div>
               <ChevronRight size={15} className="ml-auto text-dim" />
             </Link>

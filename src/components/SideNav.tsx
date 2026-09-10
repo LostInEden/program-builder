@@ -8,6 +8,8 @@ import {
   Shield, Layers, Zap, SlidersHorizontal, BookOpen, SpellCheck, CalendarDays, Binoculars, ClipboardList, Dumbbell,
 } from "lucide-react";
 
+import { useStore, useHydrated, initialsOf } from "@/lib/store";
+
 type Item = { href: string; label: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number }> };
 type Section = { title: string | null; items: Item[] };
 
@@ -85,6 +87,26 @@ function sectionsFor(pathname: string): Section[] {
   return GENERAL;
 }
 
+// The program the coach entered in Settings (Q6) — never a hard-coded school.
+function ProgramCard() {
+  const hydrated = useHydrated();
+  const program = useStore((s) => s.program);
+  const season = new Date().getFullYear();
+  return (
+    <Link href="/settings" className="mt-auto border-t border-line px-4 py-4 flex items-center gap-3 hover:bg-slate-50">
+      <span className="grid size-9 place-items-center rounded-full bg-navy text-white text-[11px] font-bold">
+        {hydrated ? initialsOf(program.name) : ""}
+      </span>
+      <div className="leading-tight min-w-0">
+        <div className="text-sm font-semibold text-ink truncate">{hydrated ? program.name : ""}</div>
+        <div className="text-xs text-dim truncate">
+          {hydrated ? `${program.level || "Varsity"} Defense · ${season}` : ""}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 function SideNavInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -122,13 +144,7 @@ function SideNavInner() {
         ))}
       </nav>
 
-      <div className="mt-auto border-t border-line px-4 py-4 flex items-center gap-3">
-        <span className="grid size-9 place-items-center rounded-full bg-navy text-white text-[11px] font-bold">DH</span>
-        <div className="leading-tight">
-          <div className="text-sm font-semibold text-ink">Demo High School</div>
-          <div className="text-xs text-dim">Varsity Defense · 2026</div>
-        </div>
-      </div>
+      <ProgramCard />
     </aside>
   );
 }

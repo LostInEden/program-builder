@@ -1,11 +1,13 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { ArrowLeft, Trash2, Star } from "lucide-react";
-import { useStore, useHydrated, SKILLS, overallRating, type Player, type Evaluation } from "@/lib/store";
+import { ArrowLeft, Trash2, Star, SlidersHorizontal, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useStore, useHydrated, type Player, type Evaluation } from "@/lib/store";
+import { categoriesFor, gradeTrend, SKILL_SCALE, TREND_COPY } from "@/lib/skills";
+import SkillCategoriesPanel from "@/components/SkillCategoriesPanel";
 
 const numFields: { key: keyof Player; label: string; group: string; unit?: string }[] = [
   { key: "heightIn", label: "Height", group: "Body", unit: "in" },
@@ -47,6 +49,11 @@ function PlayerProfile() {
   const removePlayer = useStore((s) => s.removePlayer);
   const watchList = useStore((s) => s.watchList);
   const toggleWatch = useStore((s) => s.toggleWatch);
+  const skillCategories = useStore((s) => s.skillCategories);
+  const seasonSchedule = useStore((s) => s.seasonSchedule);
+  const setWeeklyGrade = useStore((s) => s.setWeeklyGrade);
+  const clearWeeklyGrade = useStore((s) => s.clearWeeklyGrade);
+  const [catsOpen, setCatsOpen] = useState(false);
 
   if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
   if (!player)
@@ -61,6 +68,11 @@ function PlayerProfile() {
 
   const setNum = (key: keyof Player, v: string) =>
     updatePlayer(id, { [key]: v === "" ? null : parseFloat(v) } as Partial<Player>);
+
+  const { categories, guessed } = categoriesFor(skillCategories, player.positions);
+  const trend = gradeTrend(player.weeklyGrades);
+  const gradeFor = (week: number) => player.weeklyGrades?.find((g) => g.week === week);
+  const TrendIcon = trend?.trend === "improving" ? TrendingUp : trend?.trend === "struggling" ? TrendingDown : Minus;
 
   return (
     <div className="px-6 py-8 max-w-4xl mx-auto">
@@ -134,29 +146,51 @@ function PlayerProfile() {
           </div>
         </div>
 
-        {/* Football skill ratings — what the analysis engine reasons with */}
+        {/* Football skills — position-specific categories (Q10) */}
         <div className="rounded-xl border border-line bg-card/80 p-5 mb-5">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex flex-wrap items-center gap-3 mb-3">
             <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim">Football Skills</div>
-            <span className="ml-auto text-sm text-dim">
-              Overall{" "}
-              <span className="font-extrabold text-ink tabular-nums">{overallRating(player) ?? "—"}</span>
-              <span className="text-xs">/5</span>
-            </span>
+            {trend && (
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                  trend.trend === "improving"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : trend.trend === "struggling"
+                      ? "border-amber-200 bg-amber-50 text-amber-700"
+                      : "border-line bg-slate-50 text-dim"
+                }`}
+                title={`Weeks ${trend.weeks.join(", ")} · ${trend.avg}/5 average`}
+              >
+                <TrendIcon size={12} /> {TREND_COPY[trend.trend]}
+              </span>
+            )}
+            <button
+              onClick={() => setCatsOpen(true)}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-dim hover:text-ink hover:border-dim"
+            >
+              <SlidersHorizontal size={13} /> Edit categories
+            </button>
           </div>
+          {guessed && (
+            <p className="mb-3 text-xs text-dim">
+              No defensive position on file for {player.name} — every category is shown. Set his position above and the
+              list narrows to what he actually does.
+            </p>
+          )}
           <div className="grid gap-2 sm:grid-cols-2">
-            {SKILLS.map((s) => {
-              const v = player.skills?.[s.key] ?? null;
+            {categories.map((s) => {
+              const v = player.skills?.[s.id] ?? null;
               return (
-                <div key={s.key} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm">
+                <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm">
                   <span className="font-semibold">{s.label}</span>
                   <span className="inline-flex gap-0.5">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <button
                         key={i}
                         type="button"
-                        onClick={() => updatePlayer(id, { skills: { ...player.skills, [s.key]: v === i ? null : i } })}
-                        aria-label={`${s.label} ${i}`}
+                        onClick={() => updatePlayer(id, { skills: { ...player.skills, [s.id]: v === i ? null : i } })}
+                        aria-label={`${s.label} ${i} — ${SKILL_SCALE[i - 1].label}`}
+                        title={`${i} · ${SKILL_SCALE[i - 1].label}`}
                       >
                         <Star size={16} className={v != null && i <= v ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-amber-300"} />
                       </button>
@@ -165,10 +199,68 @@ function PlayerProfile() {
                 </div>
               );
             })}
+            {categories.length === 0 && (
+              <div className="text-sm text-dim">No categories saved for this position yet — add them above.</div>
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-dim">
+            {SKILL_SCALE.map((s) => (
+              <span key={s.value} className="rounded-full border border-line bg-white px-2 py-0.5">
+                <b className="text-ink">{s.value}</b> {s.label}
+              </span>
+            ))}
           </div>
           <p className="mt-2 text-xs text-dim">
-            1 = liability, 3 = solid starter, 5 = best on the field. These drive the personnel checks in Defensive Analysis and the matchups in Game Plans.
+            These say what this player can reasonably be asked to do in your defense. Athletic testing stays separate,
+            below.
           </p>
+        </div>
+
+        {/* Weekly game grades (Q10) — optional, one row per week */}
+        <div className="rounded-xl border border-line bg-card/80 p-5 mb-5">
+          <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-1">Weekly Game Grades</div>
+          <p className="mb-3 text-xs text-dim">
+            One overall grade and a short note per game — whatever the position coach already writes down. Optional, and
+            it never moves anybody on the depth chart.
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {seasonSchedule
+              .filter((w) => w.opponent)
+              .map((w) => {
+                const g = gradeFor(w.week);
+                return (
+                  <div key={w.week} className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="w-28 shrink-0 text-dim">
+                      Wk {w.week} <span className="text-xs">{w.opponent}</span>
+                    </span>
+                    <span className="inline-flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() =>
+                            g?.grade === i ? clearWeeklyGrade(id, w.week) : setWeeklyGrade(id, w.week, { grade: i })
+                          }
+                          aria-label={`Week ${w.week} grade ${i}`}
+                          title={`${i} · ${SKILL_SCALE[i - 1].label}`}
+                        >
+                          <Star
+                            size={15}
+                            className={g?.grade && i <= g.grade ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-amber-300"}
+                          />
+                        </button>
+                      ))}
+                    </span>
+                    <input
+                      value={g?.note ?? ""}
+                      onChange={(e) => setWeeklyGrade(id, w.week, { note: e.target.value })}
+                      placeholder="Note (optional)"
+                      className="flex-1 min-w-40 rounded-lg border border-line bg-slate-50 px-3 py-1.5 text-sm"
+                    />
+                  </div>
+                );
+              })}
+          </div>
         </div>
 
         {/* Measurables */}
@@ -235,6 +327,8 @@ function PlayerProfile() {
           <Trash2 size={15} /> Remove player
         </button>
       </motion.div>
+
+      {catsOpen && <SkillCategoriesPanel onClose={() => setCatsOpen(false)} />}
     </div>
   );
 }

@@ -16,8 +16,18 @@ import {
 } from "@/lib/football";
 import type { StrengthRule } from "@/lib/recognize";
 import { normalizeTerm, type TermKind, type TermMapping } from "@/lib/knowledge";
+import {
+  DEFAULT_SKILL_CATEGORIES,
+  cloneSkillCategories,
+  positionTypesOf,
+  type PositionType,
+  type SkillCategories,
+  type SkillCategory,
+  type WeeklyGrade,
+} from "@/lib/skills";
 
 export type { TermKind, TermMapping };
+export type { PositionType, SkillCategories, SkillCategory, WeeklyGrade };
 
 export type Evaluation = {
   skill?: string;
@@ -44,26 +54,33 @@ export type Player = {
   forty?: number | null;
   flying10?: number | null;
   shuttle?: number | null;
-  rating?: number | null; // coach's overall grade, 1–5
-  skills?: Partial<Record<SkillKey, number | null>>; // football skill ratings, 1–5
+  /** Football skill grades, 1–5, keyed by skill category id (see lib/skills). */
+  skills?: Record<string, number | null>;
+  /** Optional weekly game grade + short note the position coaches already keep. */
+  weeklyGrades?: WeeklyGrade[];
   eval: Evaluation;
 };
 
-export const SKILLS: { key: SkillKey; label: string }[] = [
-  { key: "tackle", label: "Tackling" },
-  { key: "coverage", label: "Coverage" },
-  { key: "blockShed", label: "Block Shedding" },
-  { key: "pursuit", label: "Pursuit / Effort" },
-  { key: "iq", label: "Football IQ" },
-];
-export type SkillKey = "tackle" | "coverage" | "blockShed" | "pursuit" | "iq";
+// Pre-v9 skill keys, kept only so the migration can type them.
+type LegacySkillKey = "tackle" | "coverage" | "blockShed" | "pursuit" | "iq";
 
-// Overall grade: explicit rating wins, otherwise the mean of entered skills.
-export function overallRating(p: Player): number | null {
-  if (p.rating != null) return p.rating;
-  const vals = Object.values(p.skills ?? {}).filter((v): v is number => typeof v === "number");
-  return vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 2) / 2 : null;
-}
+// The program itself (Q6) — kept deliberately short. Mascot and coach name are
+// optional; nobody should spend setup time on branding.
+export type Program = {
+  name: string;
+  level: string;
+  state: string;
+  classification: string;
+  mascot?: string;
+  coachName?: string;
+};
+
+export const TEAM_LEVELS = ["Varsity", "JV", "Freshman"] as const;
+export type TeamLevel = (typeof TEAM_LEVELS)[number];
+
+/** Initials for the little program chips — "Demo High School" → "DH". */
+export const initialsOf = (name: string) =>
+  (name.trim().split(/\s+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2) || "CS").toUpperCase();
 
 // ---- Scheme model -----------------------------------------------------------
 // The saved defensive model the coach's spec calls for. Every entry is a named,
@@ -231,13 +248,43 @@ export type GamePlan = {
   inputHash?: string;
 };
 
-// slots: structure slot index -> ordered player ids (index 0 = starter)
+// One depth chart per level, plus packages that BRANCH from it (Q9, Q22).
+// The Base package owns `slots` (structure slot index -> ordered player ids,
+// index 0 = starter). A package owns only `overrides`: the spots where it
+// differs from Base. Change a Base starter and every package follows unless
+// that spot was specifically overridden.
 export type PersonnelGroup = {
   id: string;
   name: string; // coach terminology preserved
+  level: TeamLevel;
   structureId: string;
-  slots: Record<number, string[]>;
+  isBase: boolean;
+  slots: Record<number, string[]>; // Base only
+  overrides: Record<number, string[]>; // packages only
 };
+
+/** The Base package for a level — every package on that level inherits it. */
+export const baseGroupFor = (groups: PersonnelGroup[], level: TeamLevel) =>
+  groups.find((g) => g.isBase && g.level === level);
+
+/**
+ * Who actually lines up in this package: Base unless this spot was overridden.
+ * Everything that reads a depth chart goes through here. A package built on a
+ * different structure can't inherit by slot index, so it stands on its own.
+ */
+export function effectiveSlots(
+  group: PersonnelGroup | undefined,
+  base: PersonnelGroup | undefined,
+): Record<number, string[]> {
+  if (!group) return {};
+  if (group.isBase) return group.slots ?? {};
+  const inherited = base && base.structureId === group.structureId ? (base.slots ?? {}) : {};
+  return { ...inherited, ...(group.overrides ?? {}) };
+}
+
+/** Slot indices this package changes from Base. */
+export const overriddenSlots = (group: PersonnelGroup | undefined) =>
+  group && !group.isBase ? Object.keys(group.overrides ?? {}).map(Number) : [];
 
 // Coach terminology overrides per structure slot: what the coach calls the
 // position, and (optionally) which standardized concept it maps to internally.
@@ -342,13 +389,22 @@ const seedSchedule: ScheduleWeek[] = [
   { week: 11, date: "2026-10-30", opponent: "East Ridge", homeAway: "away" },
 ];
 
+// Q22: one Base per level and nothing else. Empty packages just make the page
+// look like unfinished homework — the coach adds the ones he actually carries.
 const seedGroups: PersonnelGroup[] = [
-  { id: "base", name: "Base", structureId: "3-4", slots: baseSlots },
-  { id: "nickel", name: "Nickel", structureId: "4-2-5", slots: {} },
-  { id: "dime", name: "Dime", structureId: "3-2-6", slots: {} },
-  { id: "heavy", name: "Heavy", structureId: "4-3", slots: {} },
-  { id: "goalline", name: "Goal Line", structureId: "4-3", slots: {} },
+  { id: "base", name: "Base", level: "Varsity", structureId: "3-4", isBase: true, slots: baseSlots, overrides: {} },
+  { id: "base-jv", name: "Base", level: "JV", structureId: "3-4", isBase: true, slots: {}, overrides: {} },
+  { id: "base-fr", name: "Base", level: "Freshman", structureId: "3-4", isBase: true, slots: {}, overrides: {} },
 ];
+
+const seedProgram: Program = {
+  name: "Demo High School",
+  level: "Varsity",
+  state: "TN",
+  classification: "",
+  mascot: "",
+  coachName: "Coach Linville",
+};
 
 const look = (preset: string) => offensivePresets[preset].map((m) => ({ ...m }));
 const L = (id: string, anchor: string, kind: DrawLine["kind"], points: [number, number][]): DrawLine => ({
@@ -676,6 +732,8 @@ const seedOpponent: Opponent = {
 };
 
 type Store = {
+  program: Program;
+  skillCategories: SkillCategories;
   players: Player[];
   groups: PersonnelGroup[];
   activeGroupId: string;
@@ -721,10 +779,22 @@ type Store = {
   importPlayers: (rows: Partial<Player>[]) => number;
   applyWeightRoom: (rows: (Partial<Player> & { name?: string })[]) => number;
 
+  setProgram: (patch: Partial<Program>) => void;
+  setSkillCategories: (type: PositionType, cats: SkillCategory[]) => void;
+  addSkillCategory: (type: PositionType, cat: SkillCategory) => void;
+  removeSkillCategory: (type: PositionType, id: string) => void;
+  renameSkillCategory: (type: PositionType, id: string, label: string) => void;
+  resetSkillCategories: (type?: PositionType) => void;
+  setWeeklyGrade: (playerId: string, week: number, patch: Partial<WeeklyGrade>) => void;
+  clearWeeklyGrade: (playerId: string, week: number) => void;
+
   setActiveGroup: (id: string) => void;
   setGroupStructure: (groupId: string, structureId: string) => void;
   setSlotPlayers: (groupId: string, slotIndex: number, playerIds: string[]) => void;
-  addGroup: (name: string) => void;
+  clearSlotOverride: (groupId: string, slotIndex: number) => void;
+  addGroup: (name: string, level?: TeamLevel) => string;
+  renameGroup: (id: string, name: string) => void;
+  removeGroup: (id: string) => void;
 
   setScheme: (patch: Partial<{ structureName: string; philosophyTitle: string; philosophy: string }>) => void;
   setSlotOverride: (structureId: string, slotIndex: number, patch: SlotOverride) => void;
@@ -747,6 +817,8 @@ type Store = {
 export const useStore = create<Store>()(
   persist(
     (set, get) => ({
+      program: seedProgram,
+      skillCategories: cloneSkillCategories(),
       players: seedPlayers,
       groups: seedGroups,
       activeGroupId: "base",
@@ -883,7 +955,10 @@ export const useStore = create<Store>()(
           groups: s.groups.map((g) => ({
             ...g,
             slots: Object.fromEntries(
-              Object.entries(g.slots).map(([k, ids]) => [k, ids.filter((x) => x !== id)]),
+              Object.entries(g.slots ?? {}).map(([k, ids]) => [k, ids.filter((x) => x !== id)]),
+            ),
+            overrides: Object.fromEntries(
+              Object.entries(g.overrides ?? {}).map(([k, ids]) => [k, ids.filter((x) => x !== id)]),
             ),
           })),
         })),
@@ -919,25 +994,103 @@ export const useStore = create<Store>()(
         return players.length;
       },
 
+      setProgram: (patch) => set((s) => ({ program: { ...s.program, ...patch } })),
+      setSkillCategories: (type, cats) =>
+        set((s) => ({ skillCategories: { ...s.skillCategories, [type]: cats.map((c) => ({ ...c })) } })),
+      addSkillCategory: (type, cat) =>
+        set((s) =>
+          (s.skillCategories[type] ?? []).some((c) => c.id === cat.id)
+            ? s
+            : { skillCategories: { ...s.skillCategories, [type]: [...(s.skillCategories[type] ?? []), { ...cat }] } },
+        ),
+      removeSkillCategory: (type, id) =>
+        set((s) => ({
+          skillCategories: { ...s.skillCategories, [type]: (s.skillCategories[type] ?? []).filter((c) => c.id !== id) },
+        })),
+      renameSkillCategory: (type, id, label) =>
+        set((s) => ({
+          skillCategories: {
+            ...s.skillCategories,
+            [type]: (s.skillCategories[type] ?? []).map((c) => (c.id === id ? { ...c, label } : c)),
+          },
+        })),
+      resetSkillCategories: (type) =>
+        set((s) =>
+          type
+            ? { skillCategories: { ...s.skillCategories, [type]: DEFAULT_SKILL_CATEGORIES[type].map((c) => ({ ...c })) } }
+            : { skillCategories: cloneSkillCategories() },
+        ),
+      setWeeklyGrade: (playerId, week, patch) =>
+        set((s) => ({
+          players: s.players.map((p) => {
+            if (p.id !== playerId) return p;
+            const rows = [...(p.weeklyGrades ?? [])];
+            const i = rows.findIndex((g) => g.week === week);
+            const next: WeeklyGrade = { week, grade: 0, note: "", ...(i >= 0 ? rows[i] : {}), ...patch };
+            if (i >= 0) rows[i] = next;
+            else rows.push(next);
+            return { ...p, weeklyGrades: rows.sort((a, b) => a.week - b.week) };
+          }),
+        })),
+      clearWeeklyGrade: (playerId, week) =>
+        set((s) => ({
+          players: s.players.map((p) =>
+            p.id === playerId ? { ...p, weeklyGrades: (p.weeklyGrades ?? []).filter((g) => g.week !== week) } : p,
+          ),
+        })),
+
       setActiveGroup: (id) => set({ activeGroupId: id }),
       setGroupStructure: (groupId, structureId) =>
         set((s) => ({
-          groups: s.groups.map((g) => (g.id === groupId ? { ...g, structureId, slots: {} } : g)),
+          groups: s.groups.map((g) => (g.id === groupId ? { ...g, structureId, slots: {}, overrides: {} } : g)),
         })),
+      // Base writes the depth chart itself; a package writes only an override
+      // for that one spot, so everything else keeps following Base.
       setSlotPlayers: (groupId, slotIndex, playerIds) =>
         set((s) => ({
           groups: s.groups.map((g) => {
             if (g.id !== groupId) return g;
-            const slots = { ...g.slots };
-            if (playerIds.length === 0) delete slots[slotIndex];
-            else slots[slotIndex] = playerIds;
-            return { ...g, slots };
+            if (g.isBase) {
+              const slots = { ...g.slots };
+              if (playerIds.length === 0) delete slots[slotIndex];
+              else slots[slotIndex] = playerIds;
+              return { ...g, slots };
+            }
+            return { ...g, overrides: { ...g.overrides, [slotIndex]: playerIds } };
           }),
         })),
-      addGroup: (name) =>
+      clearSlotOverride: (groupId, slotIndex) =>
         set((s) => ({
-          groups: [...s.groups, { id: uid(), name, structureId: "3-4", slots: {} }],
+          groups: s.groups.map((g) => {
+            if (g.id !== groupId || g.isBase) return g;
+            const overrides = { ...g.overrides };
+            delete overrides[slotIndex];
+            return { ...g, overrides };
+          }),
         })),
+      addGroup: (name, level = "Varsity") => {
+        const id = uid();
+        const base = baseGroupFor(get().groups, level);
+        set((s) => ({
+          groups: [
+            ...s.groups,
+            { id, name, level, structureId: base?.structureId ?? "3-4", isBase: false, slots: {}, overrides: {} },
+          ],
+          activity: [{ id: uid(), text: name, sub: `${level} package added`, ts: Date.now() }, ...s.activity].slice(0, 25),
+        }));
+        return id;
+      },
+      renameGroup: (id, name) =>
+        set((s) => ({ groups: s.groups.map((g) => (g.id === id ? { ...g, name } : g)) })),
+      removeGroup: (id) =>
+        set((s) => {
+          const g = s.groups.find((x) => x.id === id);
+          if (!g || g.isBase) return s; // Base is the chart — it never goes away
+          return {
+            groups: s.groups.filter((x) => x.id !== id),
+            activeGroupId: s.activeGroupId === id ? (baseGroupFor(s.groups, g.level)?.id ?? "base") : s.activeGroupId,
+          };
+        }),
 
       setScheme: (patch) => set((s) => ({ scheme: { ...s.scheme, ...patch } })),
       setSlotOverride: (structureId, slotIndex, patch) =>
@@ -1076,9 +1229,14 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 8,
+      version: 9,
       migrate: (persisted, version) => {
         const state = persisted as {
+          program?: Program;
+          skillCategories?: SkillCategories;
+          players?: (Partial<Player> & { rating?: number | null; skills?: Record<string, number | null> })[];
+          groups?: (Partial<PersonnelGroup> & { slots?: Record<number, string[]> })[];
+          activeGroupId?: string;
           termMap?: TermMapping[];
           calls?: Call[];
           formationTemplates?: Record<string, OffMarker[]>;
@@ -1215,6 +1373,86 @@ export const useStore = create<Store>()(
             void planStatus;
             return rest;
           });
+        }
+        if (version < 9) {
+          // v9: the team model the coach described (Q6, Q9, Q10, Q22–Q24).
+          //
+          // Depth chart — the old "base" group becomes the Varsity Base chart.
+          // The seeded-but-empty Nickel / Dime / Heavy / Goal Line packages go
+          // away (Q22: don't hand a staff four empty charts). Anything the
+          // coach actually filled in survives as a Varsity package whose
+          // overrides are exactly the spots he assigned, so it now inherits
+          // Base everywhere else. JV and Freshman start with an empty Base.
+          const SEEDED_EMPTY = new Set(["nickel", "dime", "heavy", "goalline"]);
+          const old = state.groups ?? [];
+          const oldBase = old.find((g) => g.id === "base") ?? old[0];
+          const nonEmpty = (slots: Record<number, string[]> = {}) =>
+            Object.fromEntries(Object.entries(slots).filter(([, ids]) => (ids ?? []).length > 0));
+          const varsityBase: PersonnelGroup = {
+            id: "base",
+            name: oldBase?.name || "Base",
+            level: "Varsity",
+            structureId: oldBase?.structureId ?? "3-4",
+            isBase: true,
+            slots: nonEmpty(oldBase?.slots),
+            overrides: {},
+          };
+          const packages: PersonnelGroup[] = old
+            .filter((g) => g.id !== varsityBase.id)
+            .map((g) => ({ g, kept: nonEmpty(g.slots) }))
+            .filter(({ g, kept }) => !(SEEDED_EMPTY.has(g.id ?? "") && Object.keys(kept).length === 0))
+            .map(({ g, kept }) => ({
+              id: g.id ?? uid(),
+              name: g.name ?? "Package",
+              level: "Varsity" as TeamLevel,
+              structureId: g.structureId ?? varsityBase.structureId,
+              isBase: false,
+              slots: {},
+              overrides: kept,
+            }));
+          state.groups = [
+            varsityBase,
+            ...packages,
+            { id: "base-jv", name: "Base", level: "JV", structureId: varsityBase.structureId, isBase: true, slots: {}, overrides: {} },
+            { id: "base-fr", name: "Base", level: "Freshman", structureId: varsityBase.structureId, isBase: true, slots: {}, overrides: {} },
+          ];
+          if (!state.groups.some((g) => g.id === state.activeGroupId)) state.activeGroupId = "base";
+
+          // Skill ratings — the five fixed keys become position-specific
+          // categories. The overall star rating is gone entirely (Q10: the
+          // value is knowing what a player can be asked to do, not a number).
+          state.skillCategories = cloneSkillCategories();
+          const LEGACY: Record<LegacySkillKey, string> = {
+            tackle: "tackling",
+            coverage: "coverage",
+            blockShed: "blockDestruction",
+            pursuit: "", // resolved per player below — it's a run-responsibility grade
+            iq: "iq",
+          };
+          state.players = (state.players ?? []).map((pl) => {
+            const oldSkills = (pl.skills ?? {}) as Partial<Record<LegacySkillKey, number | null>>;
+            const skills: Record<string, number | null> = {};
+            for (const [k, v] of Object.entries(oldSkills)) {
+              if (v == null) continue;
+              const key = LEGACY[k as LegacySkillKey];
+              if (key) skills[key] = v;
+              else if (k === "pursuit") {
+                // Pursuit / Effort is the old name for the run-responsibility
+                // grade; write it into whichever one his position uses.
+                const types = positionTypesOf(pl.positions ?? []);
+                const targets = (types.length ? types : (["DL", "LB", "DB"] as PositionType[])).map((t) =>
+                  t === "DB" ? "runSupport" : "runFit",
+                );
+                for (const t of new Set(targets)) skills[t] = v;
+              } else skills[k] = v;
+            }
+            const { rating, ...rest } = pl;
+            void rating;
+            return { ...rest, skills, weeklyGrades: Array.isArray(pl.weeklyGrades) ? pl.weeklyGrades : [] };
+          });
+
+          // Program setup (Q6).
+          state.program = { ...seedProgram, ...(state.program ?? {}) };
         }
         return state;
       },

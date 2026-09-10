@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Users, Shield, ShieldCheck, Binoculars, ClipboardList, ChevronRight, Check, Circle } from "lucide-react";
-import { useStore, useHydrated } from "@/lib/store";
+import { useStore, useHydrated, baseGroupFor, effectiveSlots } from "@/lib/store";
 import { computeFindings } from "@/lib/analyze";
 import { getStructure } from "@/lib/football";
 
@@ -17,7 +17,7 @@ export default function Home() {
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
 
   const group = groups.find((g) => g.id === activeGroupId) ?? groups[0];
-  const filled = Object.values(group.slots).filter((ids) => ids.length > 0).length;
+  const filled = Object.values(effectiveSlots(group, baseGroupFor(groups, group.level))).filter((ids) => ids.length > 0).length;
   const rated = players.filter((p) => p.skills && Object.values(p.skills).some((v) => v != null)).length;
   const confirmed = concepts.filter((c) => c.confirmed);
   const real = opponents.filter((o) => !o.isDemo);

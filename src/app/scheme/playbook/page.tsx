@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
-import { useStore, useHydrated, slotLabelOf, PRESET_PLAYS, type PlaybookSection } from "@/lib/store";
+import { useStore, useHydrated, slotLabelOf, baseGroupFor, effectiveSlots, PRESET_PLAYS, type PlaybookSection } from "@/lib/store";
 import {
   getStructure,
   offensivePresets,
@@ -33,6 +33,8 @@ export default function PlaybookPage() {
   if (!hydrated) return <div className="px-8 py-10 display text-dim">Loading…</div>;
 
   const group = groups.find((g) => g.id === activeGroupId) ?? groups[0];
+  // Packages inherit the level's Base chart (Q9) — read the effective spots.
+  const groupSlots = effectiveSlots(group, baseGroupFor(groups, group.level));
   const structure = getStructure(group.structureId);
   const byId = new Map(players.map((p) => [p.id, p]));
   const sectionCalls = section === "Playbook" ? calls : calls.filter((c) => c.section === section);
@@ -215,7 +217,7 @@ export default function PlaybookPage() {
               <StudioCanvas
                 call={call}
                 structureId={group.structureId}
-                groupSlots={group.slots}
+                groupSlots={groupSlots}
                 players={players}
                 labelFor={label}
                 selection={selection}
@@ -362,9 +364,9 @@ export default function PlaybookPage() {
               <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">Assignment</div>
               <div className="mb-2 flex items-baseline gap-2">
                 <span className="display text-2xl font-bold text-ember">{label(selDef)}</span>
-                {(group.slots[selDef] ?? [])[0] && (
+                {(groupSlots[selDef] ?? [])[0] && (
                   <span className="text-sm text-dim">
-                    #{byId.get(group.slots[selDef][0])?.jersey} {byId.get(group.slots[selDef][0])?.name}
+                    #{byId.get(groupSlots[selDef][0])?.jersey} {byId.get(groupSlots[selDef][0])?.name}
                   </span>
                 )}
               </div>

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Users, Shield, Binoculars, ClipboardList, BarChart3, Search, Bell, ChevronDown } from "lucide-react";
-import { useStore, useHydrated } from "@/lib/store";
+import { useStore, useHydrated, initialsOf } from "@/lib/store";
 
 const NAV = [
   { href: "/team", label: "My Team", icon: Users },
@@ -20,6 +20,9 @@ export default function TopNav() {
   const hydrated = useHydrated();
   const players = useStore((s) => s.players);
   const activity = useStore((s) => s.activity);
+  const program = useStore((s) => s.program);
+  // Until the store rehydrates, show the program identity the server rendered.
+  const coachName = hydrated ? (program.coachName?.trim() || program.name) : "";
   const [q, setQ] = useState("");
   const [bellOpen, setBellOpen] = useState(false);
 
@@ -120,13 +123,16 @@ export default function TopNav() {
             )}
           </div>
 
-          <button className="flex items-center gap-2 rounded-full border border-line pl-1.5 pr-3 py-1.5 hover:border-dim">
+          <Link
+            href="/settings"
+            className="flex items-center gap-2 rounded-full border border-line pl-1.5 pr-3 py-1.5 hover:border-dim"
+          >
             <span className="grid size-7 place-items-center rounded-full bg-navy text-white text-[11px] font-bold">
-              CL
+              {coachName ? initialsOf(coachName) : ""}
             </span>
-            <span className="text-sm font-semibold hidden sm:block">Coach Linville</span>
+            <span className="text-sm font-semibold hidden sm:block">{coachName || " "}</span>
             <ChevronDown size={14} className="text-dim" />
-          </button>
+          </Link>
         </div>
       </div>
     </header>
