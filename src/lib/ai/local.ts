@@ -10,7 +10,8 @@ import {
   tendencyReport, tellSentence, makeResolver, summarize, tag as normTag, type PlayerUsage, type Tell,
 } from "@/lib/tendencies";
 import {
-  answerFor, callName, genItem, makeKit, readConcept, tellEvidence, type PlanAnswer, type PlanKit, type PlanSections,
+  answerFor, callName, genItem, lockable, makeKit, readConcept, tellEvidence,
+  type PlanAnswer, type PlanKit, type PlanSections,
 } from "@/lib/plan";
 import {
   buildPracticePool, buildScript, emptySelection, poolSummary, pruneSelection, selectedReps,
@@ -272,6 +273,18 @@ function bestPlayerItems(o: Opponent, usage: PlayerUsage[], kit: PlanKit, termMa
   return out;
 }
 
+/**
+ * How hard we're allowed to talk about a tell (Q45). Ten snaps and thirty
+ * points above normal is the only bar that earns "lock it in"; everything under
+ * it is an option with the count attached.
+ */
+function confidenceClause(t: Tell): string {
+  const pts = Math.round(t.lift * 100);
+  return lockable(t.n, t.lift)
+    ? `${t.hits} of ${t.n} snaps, ${pts} points above their normal — strong enough to lock in.`
+    : `${t.hits} of ${t.n} snaps, ${pts} points above their normal — an option with evidence, not strong enough to lock in.`;
+}
+
 /** Every tell gets an answer inside his defense — or it becomes practice work. */
 function threatItems(tells: Tell[], kit: PlanKit, termMap: SchemeContext["termMap"], resolve: ReturnType<typeof makeResolver>) {
   const items: PlanItem[] = [];
@@ -283,7 +296,7 @@ function threatItems(tells: Tell[], kit: PlanKit, termMap: SchemeContext["termMa
       kit,
     );
     items.push(
-      genItem(`t-${t.id}`, tellSentence(t, resolve), `${ans.text}${ans.educational ? " Educational — not in your system, so don't call it Friday." : ""}`, {
+      genItem(`t-${t.id}`, tellSentence(t, resolve), `${ans.text}${ans.educational ? " Educational — not in your system, so don't call it Friday." : ""} ${confidenceClause(t)}`, {
         evidence: tellEvidence(t),
         conceptIds: ans.conceptIds,
         personnel: t.tags.find((x) => x.field === "personnel")?.value,
@@ -414,24 +427,26 @@ function playsPlan(o: Opponent, ctx: SchemeContext, findings: Finding[]): PlanSe
   }
   if (o.redZone.trim()) emphasis.push(genItem("emp-rz", "Red zone Thursday", `${o.redZone.trim().slice(0, 120)} Short field, tight throws — rep the fits and the fade leverage.`));
 
-  // -- top 3 priorities: the biggest things on the list, said plainly
+  // -- priorities: however many actually matter (Q44). No filler, no fixed
+  // three — a priority earns its place by being one of the strongest tells on
+  // their film, or by being the player who has to be accounted for.
   const priorities: PlanItem[] = [];
   if (bestPlayers[0]) priorities.push(genItem("pri-player", `Take away ${bestPlayers[0].text.split(" — ")[0]}`, bestPlayers[0].sub));
-  for (const t of threats.slice(0, 3)) {
-    if (priorities.length >= 3) break;
-    priorities.push(genItem(`pri-${t.id}`, t.text, t.sub, { evidence: t.evidence, conceptIds: t.conceptIds }));
+  const strong = tells.filter((t) => t.actionable);
+  for (const t of threats) {
+    const tell = strong.find((x) => `g-t-${x.id}` === t.id);
+    if (!tell) continue;
+    priorities.push(genItem(`pri-${tell.id}`, t.text, t.sub, { evidence: t.evidence, conceptIds: t.conceptIds }));
+    if (priorities.length >= 6) break;
   }
-  if (priorities.length < 3 && emphasis[0]) priorities.push(genItem("pri-emp", emphasis[0].text, emphasis[0].sub));
-  if (!priorities.length)
-    priorities.push(genItem("pri-none", "Not enough tagged snaps to call a priority yet", "Tag more film in Hudl — formation, play and personnel are what turn snaps into tells."));
 
   return {
-    priorities: priorities.slice(0, 3),
-    bestPlayers: bestPlayers.slice(0, 5),
-    threats: threats.slice(0, 7),
-    concerns: concerns.slice(0, 5),
-    adjustments: adjustments.slice(0, 5),
-    emphasis: emphasis.slice(0, 6),
+    priorities,
+    bestPlayers,
+    threats,
+    concerns,
+    adjustments,
+    emphasis,
   };
 }
 
@@ -479,8 +494,9 @@ async function handEnteredPlan(o: Opponent, ctx: SchemeContext, findings: Findin
     cands.push({ score: 40, it: item("Red zone run fits", o.redZone.slice(0, 90)) });
   if (o.runRate != null && o.runRate >= 60 && !cands.some((c) => c.it.text.includes("early downs")))
     cands.push({ score: o.runRate - 5, it: item("Out-number the run", `${pct(o.runRate)} run rate overall.`) });
-  const priorities = cands.sort((a, b) => b.score - a.score).slice(0, 3).map((c) => c.it);
-  if (priorities.length === 0) priorities.push(item("Enter tendencies to generate priorities", "Run rate, 1st-down run, down & distance, and concepts drive this list."));
+  // However many matter, in order (Q44) — an empty list is honest, not a hole
+  // to fill with a placeholder.
+  const priorities = cands.sort((a, b) => b.score - a.score).map((c) => c.it);
 
   // -- best answers we already have
   const best: PlanItem[] = [];
@@ -503,7 +519,6 @@ async function handEnteredPlan(o: Opponent, ctx: SchemeContext, findings: Findin
   }
   if (pressures.some((p) => p.group === "3rd Down Calls") && thirdLongPass != null)
     best.push(item(`${pressures.find((p) => p.group === "3rd Down Calls")!.name} on 3rd & long`, "Your saved 3rd-down pressure — protection has to account for the 5th rusher."));
-  if (best.length === 0) best.push(item("No saved rules match their tendencies yet", "Teach a rule on My Scheme and it will show up here."));
 
   // -- concerns
   const concerns: PlanItem[] = [];
@@ -520,7 +535,6 @@ async function handEnteredPlan(o: Opponent, ctx: SchemeContext, findings: Findin
     if (relevant && !hasAnswer(s.words)) concerns.push(item(`No stored answer: ${s.label}`, `They show it — ${s.fallback}`));
   }
   findings.filter((f) => f.status === "Potential Conflict").forEach((f) => concerns.push(item(f.check, f.detail)));
-  if (concerns.length === 0) concerns.push(item("Nothing flagged against their tendencies", "Your saved rules cover what they show most."));
 
   // -- small adjustments
   const adj: PlanItem[] = [];
@@ -534,7 +548,6 @@ async function handEnteredPlan(o: Opponent, ctx: SchemeContext, findings: Findin
     adj.push(item(`Bracket #${o.keyPlayers.find((k) => /wr|te/i.test(k.pos ?? ""))!.jersey ?? ""} on 3rd down`, "Cone him on the money down; MEG elsewhere."));
   if (o.signatureConcept && /zone/i.test(o.signatureConcept))
     adj.push(item("Ends squeeze, backers scrape", `${o.signatureConcept} lives on the cutback — the backside end can't get reached.`));
-  if (adj.length === 0) adj.push(item("Enter their concepts and personnel", "Adjustments are matched to your saved fronts and coverages."));
 
   // -- practice / call emphasis
   const emphasis: PlanItem[] = [];
@@ -543,7 +556,6 @@ async function handEnteredPlan(o: Opponent, ctx: SchemeContext, findings: Findin
   if (o.rpoRate != null && o.rpoRate >= 40) emphasis.push(item("RPO conflict drill", "Overhang and Mike: run key first, then re-route #2."));
   if (passes.some((p) => /cross|post|wheel/i.test(p.name))) emphasis.push(item("Match rules vs crossers and wheels", "Overhang expands with the wheel; CUT call on crossers (Coverage Library)."));
   if (o.redZone) emphasis.push(item("Red zone Thursday", o.redZone.slice(0, 80)));
-  if (emphasis.length === 0) emphasis.push(item("Base fundamentals", "Fits, leverage, and tackling until the scouting report fills in."));
 
   // Answers we already carry belong with the rest of the small stuff now —
   // the plan reads best players → threats → concerns → adjustments → practice.
@@ -551,12 +563,11 @@ async function handEnteredPlan(o: Opponent, ctx: SchemeContext, findings: Findin
     priorities,
     bestPlayers: o.keyPlayers
       .filter((k) => k.name.trim())
-      .slice(0, 4)
-      .map((k) => item(`${k.jersey ? `#${k.jersey} ` : ""}${k.name}${k.pos ? ` (${k.pos})` : ""}`, k.notes || "Add what he does well and CounterScheme will suggest how to limit him.")),
-    threats: threats.slice(0, 6),
-    concerns: concerns.slice(0, 5),
-    adjustments: [...best.slice(0, 4), ...adj].slice(0, 6),
-    emphasis: emphasis.slice(0, 5),
+      .map((k) => item(`${k.jersey ? `#${k.jersey} ` : ""}${k.name}${k.pos ? ` (${k.pos})` : ""}`, k.notes || undefined)),
+    threats,
+    concerns,
+    adjustments: [...best, ...adj],
+    emphasis,
   };
 }
 

@@ -252,9 +252,34 @@ export type PlanItem = {
   personnel?: string; // when the answer is broken out by grouping (Q28)
 };
 
+export type PlanSectionKey = "priorities" | "bestPlayers" | "threats" | "concerns" | "adjustments" | "emphasis";
+
+/**
+ * One line the scouting report would change (Q47). A MAJOR change — the snaps
+ * re-imported, or the base front/coverage swapped — never rewrites the plan on
+ * its own: the redraft is staged here and the coach accepts it line by line.
+ */
+export type PlanChange = {
+  id: string; // the plan item id this change is about
+  section: PlanSectionKey;
+  kind: "add" | "replace" | "remove";
+  item?: PlanItem; // the new line (add / replace)
+  prev?: PlanItem; // what is on the plan today (replace / remove)
+};
+
+export type PendingUpdate = {
+  createdAt: number;
+  /** What changed, in the coach's words: "Snaps re-imported (85 → 102)". */
+  reason: string;
+  /** The input fingerprints this draft was built from — see lib/plan.ts. */
+  inputHash: string;
+  majorHash: string;
+  changes: PlanChange[];
+};
+
 export type GamePlan = {
   opponentId: string;
-  priorities: PlanItem[]; // top 3
+  priorities: PlanItem[]; // however many actually matter (Q44) — never padded
   bestPlayers: PlanItem[]; // Q28: their best players come first
   threats: PlanItem[]; // the tells, each paired with an answer in our system
   concerns: PlanItem[];
@@ -263,6 +288,12 @@ export type GamePlan = {
   generatedAt?: number;
   /** Hash of the opponent + scheme inputs the generated items were built from. */
   inputHash?: string;
+  /** Fingerprint of the MAJOR inputs (snaps, base front, base coverage). */
+  majorHash?: string;
+  /** A staged redraft waiting on the coach (Q47). */
+  pendingUpdate?: PendingUpdate;
+  /** Lines he told us to leave off — a staged "add" he said no to. */
+  declined?: string[];
 };
 
 // What the coach kept, threw out and reordered in the week's rep pool (Q5).
@@ -1302,7 +1333,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 11,
+      version: 12,
       migrate: (persisted, version) => {
         const state = persisted as {
           program?: Program;
@@ -1543,6 +1574,19 @@ export const useStore = create<Store>()(
           // already knows who we're talking about.
           state.chat = Array.isArray(state.chat) ? state.chat.slice(-CHAT_CAP) : [];
           state.lastOpponentId = typeof state.lastOpponentId === "string" ? state.lastOpponentId : null;
+        }
+        if (version < 12) {
+          // v12: the living plan (Q47). Plans made before this release have no
+          // staged redraft and no record of which snaps/base calls they were
+          // built from — clear both so the first major change after upgrading
+          // stages a review instead of silently rewriting his lines.
+          state.gamePlans = (state.gamePlans ?? []).map((g) => {
+            const { pendingUpdate, majorHash, declined, ...rest } = g as LegacyGamePlan & {
+              pendingUpdate?: unknown; majorHash?: unknown; declined?: unknown;
+            };
+            void pendingUpdate; void majorHash; void declined;
+            return rest;
+          });
         }
         return state;
       },

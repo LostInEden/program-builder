@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
-  Upload, Send, Plus, X, ChevronRight, Target, Flag, Users2, HelpCircle, CalendarDays, Check, Pencil, Mic,
+  Upload, Send, Plus, X, ChevronRight, Target, Flag, Users2, HelpCircle, CalendarDays, Check, Pencil, Mic, Binoculars,
 } from "lucide-react";
 import {
   useStore, useHydrated, initialsOf, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
 } from "@/lib/store";
 import { AI_LABEL } from "@/lib/ai";
 import TendencyImport from "@/components/TendencyImport";
-import TendencyReport from "@/components/TendencyReport";
+import { TopTellsCard } from "@/components/TendencyReport";
 import UnknownTerms from "@/components/UnknownTerms";
 import PlanStatus from "@/components/PlanStatus";
 import { headlineFromPlays } from "@/lib/tendencies";
@@ -153,7 +153,7 @@ function MatchupInner() {
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Opponent Matchup</h1>
-          <p className="text-dim mt-0.5">Scouting, tendencies, and game plan insights to help you win.</p>
+          <p className="text-dim mt-0.5">Scouting Report = What they do. Game Plan = What we&apos;re going to do about it.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {opponents.length > 0 && (
@@ -256,7 +256,11 @@ function MatchupInner() {
                 )}
                 {d && <div className="border-t border-line px-5 py-1.5 text-center text-[11px] text-dim">Counted from the {plays.length} snaps you uploaded.</div>}
                 <div className="border-t border-line px-5 py-2.5 text-center">
-                  <button onClick={() => document.getElementById(d ? "tendency-report" : "full-tendencies")?.scrollIntoView({ behavior: "smooth" })} className="inline-flex items-center gap-1 text-sm font-bold text-grass hover:underline">View Full Tendencies <ChevronRight size={14} /></button>
+                  {d ? (
+                    <Link href={`/scouting?id=${o.id}`} className="inline-flex items-center gap-1 text-sm font-bold text-grass hover:underline">Open the full Scouting Report <ChevronRight size={14} /></Link>
+                  ) : (
+                    <button onClick={() => document.getElementById("full-tendencies")?.scrollIntoView({ behavior: "smooth" })} className="inline-flex items-center gap-1 text-sm font-bold text-grass hover:underline">View Full Tendencies <ChevronRight size={14} /></button>
+                  )}
                 </div>
               </div>
 
@@ -400,11 +404,22 @@ function MatchupInner() {
             </div>
           </div>
 
-          {/* Row 3: the Tendency Report — only real once snaps are on file */}
+          {/* Row 3: the top tells only — the long report lives on /scouting (Q43) */}
           {plays.length > 0 ? (
             <>
               <UnknownTerms plays={plays} />
-              <TendencyReport plays={plays} />
+              <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr] items-start">
+                <TopTellsCard plays={plays} href={`/scouting?id=${o.id}`} />
+                <div className={`${card} flex flex-col`}>
+                  <div className={cardHead}><Binoculars size={14} className="text-grass" /> Scouting Report</div>
+                  <div className="flex-1 px-5 py-4 text-sm text-dim">
+                    Personnel, top formations, top plays, best players and every tell — read off the {plays.length} snaps you uploaded — live on the Scouting Report. It prints clean for the staff.
+                  </div>
+                  <div className="border-t border-line px-5 py-2.5">
+                    <Link href={`/scouting?id=${o.id}`} className="inline-flex items-center gap-1 text-sm font-bold text-grass hover:underline">Open the Scouting Report <ChevronRight size={14} /></Link>
+                  </div>
+                </div>
+              </div>
             </>
           ) : (
             <div className={`${card} px-5 py-6 text-center`}>

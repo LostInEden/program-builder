@@ -57,7 +57,14 @@ const SECTIONS: Section[] = [
       { href: "/scheme/terminology", label: "Terminology" },
     ],
   },
-  { href: "/matchup", label: "Opponent Matchup", icon: Binoculars, match: ["/matchup", "/scout"] },
+  {
+    href: "/matchup",
+    label: "Opponent Matchup",
+    icon: Binoculars,
+    match: ["/matchup", "/scout", "/scouting"],
+    // Q43: the scouting report is the long half of the matchup — what they do.
+    children: [{ href: "/scouting", label: "Scouting Report" }],
+  },
   { href: "/gameplan", label: "Game Plans", icon: ClipboardList, match: ["/gameplan"] },
   { href: "/practice", label: "Practice Script", icon: Dumbbell, match: ["/practice"] },
   { href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck, match: ["/analysis"] },

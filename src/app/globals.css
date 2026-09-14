@@ -95,3 +95,49 @@ select optgroup {
 *::-webkit-scrollbar { width: 10px; height: 10px; }
 *::-webkit-scrollbar-thumb { background: #d3dae5; border-radius: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- Paper (Q44) ---------------------------------------------------------
+   Print / Save as PDF for the Game Plan and the Scouting Report: the app's
+   chrome disappears, the page goes white, and the sections break cleanly.
+   Mark anything that shouldn't be on paper `no-print`; wrap a page body in
+   `print-root`; `print-section` starts a new sheet. */
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  .stadium-bg {
+    background: #fff !important;
+  }
+  header,
+  aside,
+  body > nav,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding-bottom: 0 !important;
+  }
+  .print-root {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .print-card,
+  .print-keep {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+  .print-section {
+    break-before: page;
+  }
+  .print-section:first-of-type {
+    break-before: auto;
+  }
+  * {
+    box-shadow: none !important;
+  }
+}

@@ -48,7 +48,7 @@ line(`file: ${path.relative(root, csvPath)} — ${plays.length} offensive snaps`
 line(`saved defense: ${st.concepts.filter((c) => c.confirmed).length} concepts (${st.concepts.filter((c) => (c.status ?? "active") === "backPocket").length} back pocket)`);
 
 for (const [key, title] of [
-  ["priorities", "TOP 3 PRIORITIES"],
+  ["priorities", "PRIORITIES"],
   ["bestPlayers", "THEIR BEST PLAYERS"],
   ["threats", "TOP THREATS & TELLS (answer inside our system)"],
   ["concerns", "CONCERNS"],
@@ -90,4 +90,34 @@ line(`stable: ${h1 === h2}   changes with the data: ${h1 !== h3}   (${h1} / ${h3
 rule("PLAN STATUS (Q40)");
 for (const s of P.planSteps(opponent, { ...stored, generatedAt: Date.now() }, 0, T.computeTells(plays).actionable.length)) {
   line(`  ${s.n}. ${s.done ? "[x]" : "[ ]"} ${s.label.padEnd(30)} ${s.detail}`);
+}
+
+rule("LIVING PLAN (Q47)");
+// A MAJOR change — fewer snaps on file — must stage a review, not overwrite.
+const fewer = { ...opponent, plays: plays.slice(0, 60) };
+const major1 = P.majorInputHash(opponent, st.concepts);
+const major2 = P.majorInputHash(fewer, st.concepts);
+line(`major hash moves when the snaps do: ${major1 !== major2}`);
+line(`major hash ignores a note: ${major1 === P.majorInputHash({ ...opponent, notes: "changed" }, st.concepts)}`);
+const redraft = await A.localProvider.gamePlan(fewer, ctx, findings);
+const changes = P.diffPlan(stored, redraft, []);
+line(`staged lines: ${changes.length} (add ${changes.filter((c) => c.kind === "add").length}, replace ${changes.filter((c) => c.kind === "replace").length}, drop ${changes.filter((c) => c.kind === "remove").length})`);
+line(`nothing staged against a coach or edited line: ${changes.every((c) => !(c.prev && (c.prev.source === "coach" || c.prev.edited)))}`);
+const first = changes[0];
+if (first) {
+  const accepted = { ...stored, ...P.applyChange(stored, first) };
+  const kept = { ...stored, ...P.keepMine(stored, first) };
+  const inAccepted = (accepted[first.section] ?? []).find((it) => it.id === first.id);
+  line(`accept applies the new line: ${first.kind === "remove" ? !inAccepted : inAccepted?.text === first.item.text}`);
+  line(`keep mine protects it forever: ${first.kind === "add" ? (kept.declined ?? []).includes(first.id) : !!(kept[first.section] ?? []).find((it) => it.id === first.id)?.edited}`);
+}
+const all = { ...stored, ...P.applyAll(stored, { changes, createdAt: 0, reason: "", inputHash: "h2", majorHash: major2 }) };
+line(`accept all leaves no staged line behind: ${P.diffPlan(all, redraft, []).length === 0}`);
+line(`coach line still there after accept all: ${all.threats.some((t) => t.id === "coach-1")}`);
+
+rule("NO FORCED COUNTS (Q44)");
+const bare = { ...opponent, plays: [], keyPlayers: [], matchupNotes: [], formations: [], concepts: [], personnelUsage: [], notes: "", redZone: "" };
+const barePlan = await A.localProvider.gamePlan(bare, ctx, findings);
+for (const k of ["priorities", "bestPlayers", "threats", "concerns", "adjustments", "emphasis"]) {
+  line(`  ${k.padEnd(12)} ${(barePlan[k] ?? []).length} line(s)${(barePlan[k] ?? []).length ? ` — ${barePlan[k][0].text.slice(0, 60)}` : ""}`);
 }

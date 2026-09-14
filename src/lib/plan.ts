@@ -12,7 +12,9 @@
 //      stored answer, we say so and it becomes a practice priority (Q28/Q30).
 
 import { matchTerm, normalizeTerm, type TermMapping } from "@/lib/knowledge";
-import type { Concept, GamePlan, Opponent, PlanEvidence, PlanItem } from "@/lib/store";
+import type {
+  Concept, GamePlan, Opponent, PendingUpdate, PlanChange, PlanEvidence, PlanItem, PlanSectionKey,
+} from "@/lib/store";
 import { tag as normTag, type Tell, type TellTag } from "@/lib/tendencies";
 
 // ---- item helpers -----------------------------------------------------------
@@ -84,13 +86,140 @@ export function mergeSection(prev: PlanItem[] = [], generated: PlanItem[] = []):
   return out;
 }
 
-export type PlanSections = Omit<GamePlan, "opponentId" | "generatedAt" | "inputHash">;
-const SECTION_KEYS: (keyof PlanSections)[] = ["priorities", "bestPlayers", "threats", "concerns", "adjustments", "emphasis"];
+export type PlanSections = Record<PlanSectionKey, PlanItem[]>;
+export const SECTION_KEYS: PlanSectionKey[] = ["priorities", "bestPlayers", "threats", "concerns", "adjustments", "emphasis"];
 
-export function mergeGamePlan(prev: GamePlan | undefined, fresh: PlanSections, inputHash: string): Omit<GamePlan, "opponentId"> {
+export const SECTION_TITLES: Record<PlanSectionKey, string> = {
+  priorities: "Priorities",
+  bestPlayers: "Their Best Players",
+  threats: "Top Threats & Tells",
+  concerns: "Concerns",
+  adjustments: "Small Adjustments",
+  emphasis: "Practice Emphasis",
+};
+
+export function mergeGamePlan(
+  prev: GamePlan | undefined,
+  fresh: PlanSections,
+  inputHash: string,
+  majorHash?: string,
+): Omit<GamePlan, "opponentId"> {
   const out = {} as PlanSections;
-  for (const key of SECTION_KEYS) out[key] = mergeSection(prev?.[key], fresh[key]);
-  return { ...out, generatedAt: Date.now(), inputHash };
+  const declined = new Set(prev?.declined ?? []);
+  for (const key of SECTION_KEYS) out[key] = mergeSection(prev?.[key], fresh[key].filter((it) => !declined.has(it.id)));
+  return { ...out, generatedAt: Date.now(), inputHash, majorHash: majorHash ?? prev?.majorHash, declined: prev?.declined };
+}
+
+// ---- major vs minor change (Q47) -------------------------------------------
+
+/**
+ * The three things that are never allowed to quietly rewrite the plan: the
+ * snaps themselves (re-imported or a different count) and the two calls the
+ * whole defense is built on. Everything else — a note, a key player, a term
+ * answer, a rule taught — is a small change and updates the lines as it lands.
+ */
+export function majorInputHash(o: Opponent, concepts: Concept[]): string {
+  const kit = makeKit(concepts);
+  const snaps = o.plays.map((p) => `${p.num}|${p.formation}|${p.play}|${p.personnel}|${p.down}|${p.distance}`).join(";");
+  return hash(`${o.plays.length}##${snaps}##${kit.baseFront?.name ?? ""}##${kit.baseCoverage?.name ?? ""}`);
+}
+
+/** What actually changed, said plainly, for the banner. */
+export function majorChangeReason(prev: GamePlan | undefined, o: Opponent, concepts: Concept[]): string {
+  const kit = makeKit(concepts);
+  const bits: string[] = [];
+  if (o.plays.length) bits.push(`${o.plays.length} snaps on file`);
+  if (kit.baseFront) bits.push(`base front ${kit.baseFront.name}`);
+  if (kit.baseCoverage) bits.push(`base coverage ${kit.baseCoverage.name}`);
+  void prev;
+  return bits.length ? `The scouting report changed — now ${bits.join(", ")}.` : "The scouting report changed.";
+}
+
+// ---- staging a redraft instead of overwriting (Q47) -------------------------
+
+const sameLine = (a: PlanItem, b: PlanItem) => a.text === b.text && (a.sub ?? "") === (b.sub ?? "");
+
+/**
+ * Line-by-line difference between what is on the plan today and the redraft.
+ * Coach lines and edited lines are invisible to this on purpose — they are his,
+ * and nothing staged here can touch them.
+ */
+export function diffPlan(current: GamePlan | undefined, fresh: PlanSections, declined: string[] = []): PlanChange[] {
+  const out: PlanChange[] = [];
+  const skip = new Set(declined);
+  for (const section of SECTION_KEYS) {
+    const now = (current?.[section] ?? []).filter((it) => !keepIt(it));
+    const next = (fresh[section] ?? []).filter((it) => !skip.has(it.id));
+    const byId = new Map(now.map((it) => [it.id, it]));
+    for (const it of next) {
+      const prev = byId.get(it.id);
+      if (!prev) out.push({ id: it.id, section, kind: "add", item: it });
+      else if (!sameLine(prev, it)) out.push({ id: it.id, section, kind: "replace", item: it, prev });
+    }
+    const keepIds = new Set(next.map((it) => it.id));
+    for (const it of now) if (!keepIds.has(it.id)) out.push({ id: it.id, section, kind: "remove", prev: it });
+  }
+  return out;
+}
+
+/** Say yes to one staged line. */
+export function applyChange(plan: GamePlan, c: PlanChange): Partial<GamePlan> {
+  const rows = [...(plan[c.section] ?? [])];
+  if (c.kind === "remove") return { [c.section]: rows.filter((it) => it.id !== c.id) } as Partial<GamePlan>;
+  if (!c.item) return {};
+  const at = rows.findIndex((it) => it.id === c.id);
+  if (at >= 0) rows[at] = { ...c.item };
+  else rows.push({ ...c.item });
+  return { [c.section]: rows } as Partial<GamePlan>;
+}
+
+/**
+ * "Keep mine" — the line he kept becomes his, so no future redraft ever comes
+ * back for it. A staged line he never wanted is remembered as declined.
+ */
+export function keepMine(plan: GamePlan, c: PlanChange): Partial<GamePlan> {
+  if (c.kind === "add") return { declined: [...new Set([...(plan.declined ?? []), c.id])] };
+  const rows = (plan[c.section] ?? []).map((it) => (it.id === c.id ? { ...it, edited: true } : it));
+  return { [c.section]: rows } as Partial<GamePlan>;
+}
+
+/** Fold every remaining staged line in at once. */
+export function applyAll(plan: GamePlan, pending: PendingUpdate): Partial<GamePlan> {
+  let patch: Partial<GamePlan> = {};
+  let working = plan;
+  for (const c of pending.changes) {
+    const p = applyChange(working, c);
+    patch = { ...patch, ...p };
+    working = { ...working, ...p };
+  }
+  return patch;
+}
+
+/** The plan is caught up: clear the banner and record what it now reflects. */
+export const settleUpdate = (pending: PendingUpdate): Partial<GamePlan> => ({
+  inputHash: pending.inputHash,
+  majorHash: pending.majorHash,
+  pendingUpdate: undefined,
+  generatedAt: Date.now(),
+});
+
+// ---- lock-in language (Q45) -------------------------------------------------
+
+/** The bar for "lock it in": ten snaps of it, and thirty points off normal. */
+export const LOCK_IN_N = 10;
+export const LOCK_IN_LIFT = 0.3;
+
+export const lockable = (n: number, lift: number) => n >= LOCK_IN_N && lift >= LOCK_IN_LIFT;
+
+/**
+ * One clause, appended to a generated answer. Anything under the bar is an
+ * option with the evidence attached — never a rule.
+ */
+export function lockInNote(n: number, lift: number): string {
+  const pts = Math.round(lift * 100);
+  return lockable(n, lift)
+    ? `${n} snaps at ${pts} points above their normal — that's strong enough to lock in.`
+    : `${n} snap${n === 1 ? "" : "s"} at ${pts} points above their normal — worth an option, not strong enough to lock in yet.`;
 }
 
 /** Did the coach put his own hand on this plan yet? (Plan Status step 4.) */
@@ -368,10 +497,10 @@ export function planSteps(
     },
     {
       n: 3,
-      label: "Generate Tendency Report",
+      label: "Scouting Report",
       done: tellCount > 0,
       detail: tellCount > 0 ? `${tellCount} tendenc${tellCount === 1 ? "y" : "ies"} worth an answer` : "Needs tagged snaps to find tells",
-      href: `/matchup?id=${o.id}`,
+      href: `/scouting?id=${o.id}`,
     },
     {
       n: 4,
