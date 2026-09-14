@@ -1,0 +1,72 @@
+CounterScheme
+Engineer Discovery Questions 41–50
+Game planning, practice workflow, AI coaching style, and core coaching philosophy
+41. Real “Ask CounterScheme” Opponent Questions
+These are examples of the kinds of questions a coach should be able to ask naturally through chat. They are not a fixed menu.
+1. What do they do well, and how can we take that away?
+2. What tendencies are they giving away, and how can we take advantage of them?
+3. Based on their tendencies and what they know about us, what do you think their game plan will be against our defense? What will they try to establish early, where will they attack, which matchups will they target, what concepts will they lean on, and what 1–2 new wrinkles might they add specifically for us?
+4. Which version of our defense gives us the best matchup against this offense? Compare our coverages, fronts, and pressures and explain why each fits the opponent.
+5. What are their best plays, and what formations/personnel do they run them from?
+6. What gives us the best indication of what play is coming—formation, personnel, RB alignment, motion, down and distance, hash, field position, or combinations of those?
+7. What drives their play-calling the most—personnel, formation, down and distance, field position, motion, backfield alignment, or something else?
+8. Where are we most vulnerable against what they do, and which of our calls give us the best answers?
+9. Who are their most important players, how are they using them, and how should we limit them?
+10. If you were building the defensive game plan with me, what would you emphasize this week and why?
+42. Current Game Plan
+Pending. A real defensive game plan is opponent-specific, so I want to provide an authentic example rather than create a generic plan that does not reflect how I actually work. I will select a real opponent/game plan to use as the reference example.
+43. Scouting Report vs. Game Plan
+CounterScheme should separate the scouting report (input) from the defensive game plan (output).
+Scouting Report — Input
+• Personnel
+• Top Formations
+• Top Plays
+• Best Players
+• Key Tendencies / Tells
+These five areas tell us who the opponent is, what they do, and what gives them away.
+Game Plan — Output
+CounterScheme takes the scouting report, combines it with our personnel, scheme, fronts, coverages, pressures, rules, and philosophy, and helps the coach develop the defensive answer to what the opponent does.
+The engineer’s original categories—Best Answers We Already Have, Concerns, Small Adjustments, and Practice/Call Emphasis—can be part of that output, but the core idea is simple:
+Scouting Report = What they do.    Game Plan = What we’re going to do about it.
+44. Game Plan Length
+There should not be a predetermined number of answers. CounterScheme should provide whatever important information we need to help us win while keeping the game plan efficient, focused, and easy to use.
+Do not force a certain number of recommendations just to fill categories. Prioritize what actually matters for that opponent.
+Enough information to be prepared, but not so much that the important information gets lost.
+The game plan should be clean and printable/exportable as a PDF.
+45. Actual Calls / Call Sheet
+CounterScheme should not tell the coach exactly what to call. It should provide tendencies, options, evidence, and reasoning to help the coach build the game plan and decide what to call. The coach ultimately makes the choice.
+Only when there is an extremely strong and reliable tendency should CounterScheme strongly suggest that a particular call may be something to lock into.
+The call sheet is a concise game-day reference sheet for the entire defense. It should include:
+• All defensive calls available that week, so the coach has the full menu if adjustments are needed.
+• Game-plan calls and emphasis identified during preparation.
+• Key opponent tendencies and tells worth remembering during the game.
+• Important situational notes, reminders, and adjustments.
+The call sheet needs to stay very concise and easy to scan because its purpose is to help the coach remember everything when the game gets hectic. Every coach organizes a call sheet differently, so CounterScheme should allow flexibility in how it is laid out.
+The game plan determines what we want to emphasize. The call sheet gives us quick access to the entire plan and defense on game day.
+46. Practice Plan / Drills / Scripts
+Practice plans and drill recommendations are not necessary for V1. They can be added later as CounterScheme develops.
+Long term, CounterScheme should collaborate with the coach to build practice rather than dictate it. Based on the scouting report and game plan, it can recommend practice emphasis, drills, periods, templates, opponent looks, and scout-team scripts/cards for the coach to choose from.
+The coach controls the final practice plan. Over time, the system should learn how each coach prefers to organize practice—their normal periods, order, terminology, timing, drill preferences, and weekly routine—and increasingly match that structure.
+V1 priority: Get the scouting report → game-plan process working extremely well first.
+47. Game Plan Generation &amp; Updates
+The coach should choose when they are ready and press Generate Game Plan for the initial creation. CounterScheme should not generate the plan before the coach feels enough scouting information has been provided.
+Once generated, the game plan becomes a living plan throughout the week. Smaller changes—new tendencies, coach notes, minor adjustments, or updated information—should automatically update the relevant parts of the plan instead of requiring a full regeneration.
+CounterScheme should not overwrite or erase decisions the coach has already made. Major changes should be discussed with the coach before changing established parts of the plan.
+Initial plan = coach chooses when to generate. After that = automatically stays updated as the week develops.
+48. No Question Provided
+The engineer’s current questionnaire skips Question 48.
+49. AI Verbosity / Tone
+CounterScheme should communicate like a great head coach or coordinator who is also an elite teacher.
+It should be direct, efficient, and straight to the point. Do not talk around problems. If something is unsound, say it. If there is a bad matchup, identify it. If the data points toward something important, make it clear.
+Being direct does not mean simply giving the coach the answer. CounterScheme should also make coaches think. Ask good questions when appropriate, challenge their reasoning, explain the why, and help them work through football problems instead of becoming dependent on the AI.
+The default response should give the essential information and reasoning without unnecessary filler. If the coach wants to go deeper, the system should be capable of going as detailed as they want.
+Be direct. Teach the why. Challenge the coach to think. Help them arrive at better answers.
+CounterScheme should not just make game planning easier. It should help coaches become better coaches.
+50. CounterScheme Should Never
+CounterScheme should never choose quantity over quality or encourage coaches to add more before they have mastered the basics.
+The system should reinforce the mindset of perfecting the fundamentals of football and the core of your scheme before expanding it. Do a few things at an elite level before trying to do everything at an average level.
+At the foundation, CounterScheme should teach that running the football and stopping the run are critical to building an elite program. Every player who steps on the field should contribute to that foundation.
+Physicality cannot be limited to certain positions. Receivers have to block. Corners have to tackle and defeat blocks. Every player has a responsibility in the run game or in stopping the run.
+Coverage, pressures, route concepts, formations, adjustments, and everything else matter—but they are built on top of the fundamentals. CounterScheme should never encourage complexity at the expense of execution, fundamentals, or physicality.
+Master the basics. Master your scheme. Then add to it.
+Do what you do, but do it really well.
