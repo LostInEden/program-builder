@@ -142,6 +142,8 @@ export type ChatMessage = {
   /** Where it was said and what it was about — the thread stays grounded. */
   context?: { page?: string; opponentId?: string; conceptIds?: string[]; playIds?: string[] };
   actions?: ChatAction[];
+  /** The breakdown behind the answer — shown only when he taps "Go deeper" (Q49). */
+  deeper?: string;
 };
 /** The thread is a running week, not an archive. */
 export const CHAT_CAP = 300;
@@ -1374,7 +1376,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 13,
+      version: 14,
       migrate: (persisted, version) => {
         const state = persisted as {
           program?: Program;
@@ -1635,6 +1637,12 @@ export const useStore = create<Store>()(
           // default four sections until the coach lays his own sheet out, and
           // the menu / plan / tells content is always computed, never stored.
           state.callSheet = state.callSheet && typeof state.callSheet === "object" ? state.callSheet : {};
+        }
+        if (version < 14) {
+          // v14: replies can carry a "Go deeper" breakdown (Q49). Older messages
+          // simply don't have one — nothing to convert, and the button only
+          // shows on the replies that do.
+          state.chat = Array.isArray(state.chat) ? state.chat : [];
         }
         return state;
       },

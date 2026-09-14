@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useStore, useHydrated, type Opponent, type Play } from "@/lib/store";
 import { PRACTICE_DAYS, type PracticeDay, type PracticeRep } from "@/lib/practice";
+import { principle } from "@/lib/principles";
 import { usePractice, type PracticeWeek } from "@/lib/usePractice";
 import { PlayTable } from "@/components/TendencyReport";
 import { AI_LABEL } from "@/lib/ai";
@@ -268,9 +269,12 @@ function PracticeInner() {
         </Link>
         <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Practice Script</h1>
-            <p className="text-dim mt-0.5">
-              The reps that actually matter this week — ranked, narrowed by you, and turned into scout cards.
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              Practice Script <span className="align-middle ml-1 rounded-full border border-line bg-pitch px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest text-dim">Optional</span>
+            </h1>
+            <p className="text-dim mt-0.5 max-w-2xl">
+              The scouting report and the game plan come first. Practice plans, periods and drills come later —
+              this is just the scout-team look list when you want it: ranked reps, narrowed by you, printed as cards.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -330,7 +334,7 @@ function PracticeInner() {
             {over && (
               <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 max-w-md">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                <span>Practice time is limited — this is more than the kids can master. Take out the reps you can live without.</span>
+                <span>More reps than the kids can master. {principle("quality")} Take out the ones you can live without.</span>
               </div>
             )}
           </div>

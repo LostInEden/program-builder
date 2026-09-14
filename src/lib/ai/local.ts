@@ -7,8 +7,10 @@ import { computeFindings, SITUATIONS, type Finding } from "@/lib/analyze";
 import { DOWNS, DISTANCES, type Concept, type Opponent, type GamePlan, type PlanItem, type Play } from "@/lib/store";
 import { matchTerm, parseTermAnswer, resolveTag, normalizeTerm, type TermKind } from "@/lib/knowledge";
 import {
-  tendencyReport, tellSentence, makeResolver, summarize, tag as normTag, type PlayerUsage, type Tell,
+  bestCombo, tagFamilyPower, tendencyReport, tellSentence, makeResolver, summarize, tag as normTag,
+  type PlayerUsage, type Tell,
 } from "@/lib/tendencies";
+import { addAdvice, callLoad, masteryNote, principle, PRINCIPLES } from "@/lib/principles";
 import {
   answerFor, callName, genItem, lockable, makeKit, readConcept, tellEvidence,
   type PlanAnswer, type PlanKit, type PlanSections,
@@ -602,6 +604,330 @@ const NOT_A_TERM = /^(?:the|their|they|he|she|it|we|our|this|that|there|what|who
 // has to read like a definition question so real football questions fall through.
 const ASK_TERM = /^\s*what(?:'s| is| does|'re| are)?\s+(?:the\s+)?(?:term\s+)?["“]?([A-Za-z][\w'-]*(?:\s+[A-Za-z][\w'-]*)?)["”]?\s+(?:mean|means|stands? for)\s*\??\s*$/i;
 
+
+// ---- the coach's ten questions (Q41) ---------------------------------------
+//
+// Ten things a coordinator actually asks on a Tuesday. Each one is answered off
+// counted snaps, his saved defense and the plan on file — direct, the why in one
+// clause, and a "go deeper" body underneath when he wants the numbers. Where the
+// local engine genuinely can't know something (what THEY know about US), it says
+// so in one line and answers the part it can.
+
+export const COACH_QUESTIONS: string[] = [
+  "What do they do well, and how can we take that away?",
+  "What tendencies are they giving away, and how do we take advantage?",
+  "What will their game plan be against our defense?",
+  "Which version of our defense gives us the best matchup?",
+  "What are their best plays, and what formations do they run them from?",
+  "What gives us the best indication of what play is coming?",
+  "What drives their play-calling the most?",
+  "Where are we most vulnerable, and which of our calls answer it?",
+  "Who are their most important players, and how do we limit them?",
+  "What would you emphasize this week, and why?",
+];
+
+type Deep = { answer: string; deeper?: string };
+
+/** The commonest tag among a set of snaps. */
+const commonest = (rows: Play[], pick: (p: Play) => string): { name: string; n: number } | null => {
+  const m = new Map<string, number>();
+  for (const p of rows) {
+    const v = normTag(pick(p));
+    if (v) m.set(v, (m.get(v) ?? 0) + 1);
+  }
+  const best = [...m.entries()].sort((a, b) => b[1] - a[1])[0];
+  return best ? { name: best[0], n: best[1] } : null;
+};
+
+const evidenceLine = (t: Tell) =>
+  `${t.condition} → ${t.outcome}: ${t.hits} of ${t.n}, ${pctOf(t.rate)} vs ${pctOf(t.baseline)} normal (${Math.round(t.lift * 100)} pts).`;
+
+const ROUTES: { id: string; re: RegExp }[] = [
+  { id: "plays", re: /\bbest plays?\b|\btop plays?\b|favorite plays?|go-?to plays?/ },
+  { id: "indicator", re: /best indication|indicat(?:e|es|or|ion)|what (?:tips|gives) (?:it|them)|tip (?:us )?off|predict|pre-?snap key/ },
+  { id: "drivers", re: /drives? (?:their|the) play.?call|play.?call(?:ing)?\b|what drives them/ },
+  { id: "theirplan", re: /(?:their|they) (?:game ?plan|plan)\b|plan (?:will be )?(?:against|vs\.?) (?:us|our)|wrinkle/ },
+  { id: "ourdefense", re: /which version|best matchup|version of our defense|compare our|our (?:coverages?|fronts?|pressures?)/ },
+  { id: "vulnerable", re: /vulnerab|where (?:are|do) we (?:weak|hurt|struggle)|hurt us|attack us|stress(?:es)? us/ },
+  { id: "players", re: /(?:most )?important players?|key players?|best players?|who (?:are|is) their|limit (?:him|them)|playmaker/ },
+  { id: "emphasis", re: /emphasi[sz]e|focus on this week|priorit(?:y|ies) this week|building the (?:defensive )?game plan with me/ },
+  { id: "welldo", re: /(?:do|does) (?:they|them) (?:do )?(?:well|good)|what are they good at|their strength|take (?:that|it|them) away|what do they do best/ },
+  { id: "giveaway", re: /giv(?:e|es|ing) (?:us )?away|giveaways?|tendenc(?:y|ies).{0,20}(?:giv|advantage)|\btells?\b|take advantage/ },
+];
+
+const routeOf = (q: string): string | null => ROUTES.find((r) => r.re.test(q))?.id ?? null;
+
+/**
+ * One question in, one coach's answer out. Returns null when the question isn't
+ * one of these — the older keyword routes still own those.
+ */
+async function coachAsk(question: string, o: Opponent, ctx: ChatContext | SchemeContext): Promise<Deep | null> {
+  const id = routeOf(lc(question));
+  if (!id) return null;
+  const plays = o.plays ?? [];
+  const thin = plays.length < 5;
+  const termMap = ctx.termMap ?? [];
+  const kit = makeKit(ctx.concepts);
+  const r = tendencyReport(plays);
+  const resolve = makeResolver(termMap);
+  const s = r.summary;
+  const runRate = s.plays ? s.runs / s.plays : null;
+  const noSnaps = `${o.name} has ${plays.length} tagged snap${plays.length === 1 ? "" : "s"} on file — upload the Hudl play-by-play on Opponent Matchup and I'll answer this off the film.`;
+  const tells = r.actionable.length ? r.actionable : r.tells;
+  const answerText = (t: Tell) =>
+    answerFor({ condition: t.condition, outcome: t.outcome, outcomeKind: t.outcomeKind, tags: t.tags, termMap }, kit).text;
+  const savedPlan = (ctx as ChatContext).plan;
+
+  // 1. What do they do well, and how do we take it away?
+  if (id === "welldo") {
+    if (thin) return { answer: noSnaps };
+    const best = r.best.bySuccess.filter((p) => p.n >= 3).slice(0, 2);
+    const forms = r.personnel.flatMap((g) => g.formations).sort((a, b) => b.n - a.n);
+    const topForm = forms[0];
+    const bits: string[] = [];
+    if (runRate != null)
+      bits.push(`They're a ${pctOf(runRate)} run team${runRate >= 0.55 ? " and they want to stay that way" : runRate <= 0.45 ? " — they throw to stay ahead of the sticks" : ""}.`);
+    if (best.length) {
+      const p = best[0];
+      const ans = answerFor({ condition: topForm?.name ?? "", outcome: p.name, outcomeKind: "play", termMap }, kit);
+      bits.push(`What actually works is ${p.name}: ${p.n} snaps, ${one(p.avgGain)} a pop${p.explosive ? `, ${p.explosive} explosive` : ""}. ${ans.text}`);
+    } else if (topForm) {
+      bits.push(`No play tags to rank, so the read is the look: ${topForm.name} on ${topForm.n} snaps, ${pctOf(topForm.runRate ?? 0)} run.`);
+    }
+    if (topForm) bits.push(`It comes out of ${topForm.name} more than anything else — set the front to it before they're set instead of checking late.`);
+    return {
+      answer: bits.join(" "),
+      deeper: [
+        `Whole sample: ${s.plays} counted snaps, ${s.runs} run / ${s.passes} pass, ${one(s.avgGain)} yds a snap, ${s.explosive} explosive, ${pctOf(s.successRate ?? 0)} success.`,
+        ...best.map((p) => `${p.name} — ${p.n} snaps, ${one(p.avgGain)} avg, ${p.explosive} explosive, ${pctOf(p.successRate ?? 0)} success${p.topDirection ? `, mostly ${p.topDirection.toLowerCase()}` : ""}.`),
+        ...forms.slice(0, 4).map((f) => `${f.name} — ${f.n} snaps, ${pctOf(f.runRate ?? 0)} run${f.topPlay ? `, top play ${f.topPlay.name}` : ""}.`),
+      ].join("\n"),
+    };
+  }
+
+  // 2. What are they giving away, and how do we use it?
+  if (id === "giveaway") {
+    if (thin) return { answer: noSnaps };
+    const top = tells.slice(0, 3);
+    if (!top.length)
+      return { answer: `Nothing on this film clears the bar — no look repeats often enough with a big enough swing to key on. ${plays.length} snaps is a thin sample for tells; more film or more tagging fixes that, not a guess.` };
+    const lines = top.map(
+      (t) => `${tellSentence(t, resolve)} — ${answerText(t)} ${lockable(t.n, t.lift) ? "Strong enough to lock in." : "An option with evidence, not strong enough to lock in."}`,
+    );
+    const combo = bestCombo(r.tells);
+    return {
+      answer: `${top.length} worth using. ${lines.join(" ")}`,
+      deeper: [...top.map(evidenceLine), combo ? `Best combination — ${evidenceLine(combo)}` : ""].filter(Boolean).join("\n"),
+    };
+  }
+
+  // 3. What will their plan against us be? — an inference, said out loud.
+  if (id === "theirplan") {
+    const findings = computeFindings(ctx).findings;
+    const soft = findings.filter((f) => f.status === "Potential Conflict" || f.status === "Needs Review").slice(0, 3);
+    const lead = r.best.byFrequency.filter((p) => p.n >= 3).slice(0, 2);
+    const bits = ["This is an inference, not counted data — I can read their film, I can't read what they know about us."];
+    if (thin) bits.push(noSnaps);
+    else {
+      if (runRate != null)
+        bits.push(`They'll try to establish what they always establish: ${runRate >= 0.5 ? "the run" : "the quick game"} at ${pctOf(runRate)}${lead[0] ? `, starting with ${lead[0].name} (${lead[0].n} snaps)` : ""}.`);
+      if (tells[0]) bits.push(`They attack where they've made money — ${tellSentence(tells[0], resolve)}.`);
+    }
+    if (soft.length) bits.push(`What they'd find on us: ${soft.map((f) => f.check).join("; ")} — that's where a coordinator aims.`);
+    bits.push("New wrinkles I can't predict; nobody can off old film.");
+    return {
+      answer: `${bits.join(" ")} What have you put on tape that a coordinator would copy?`,
+      deeper: [
+        ...lead.map((p) => `${p.name} — ${p.n} snaps, ${one(p.avgGain)} avg.`),
+        ...tells.slice(0, 3).map(evidenceLine),
+        ...soft.map((f) => `${f.check}: ${f.detail}`),
+      ].join("\n"),
+    };
+  }
+
+  // 4. Which version of our defense fits this offense?
+  if (id === "ourdefense") {
+    if (!kit.all.length)
+      return { answer: "Nothing is saved and confirmed in My Scheme yet, so there's no version of our defense to compare. Teach me the base front and coverage and this answer writes itself." };
+    const families = new Map<string, number>();
+    for (const p of plays) {
+      const read = readConcept(p.play, termMap);
+      if (read.family) families.set(read.family, (families.get(read.family) ?? 0) + 1);
+    }
+    const ranked = [...families.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+    const bits: string[] = [];
+    if (runRate != null)
+      bits.push(`${pctOf(runRate)} run / ${pctOf(1 - runRate)} pass, so the version that fits starts with ${runRate >= 0.55 ? "the front" : "the coverage"}.`);
+    for (const [family, n] of ranked) {
+      const sample = plays.find((p) => readConcept(p.play, termMap).family === family);
+      const ans = answerFor({ condition: family, outcome: normTag(sample?.play ?? family), outcomeKind: "play", termMap }, kit);
+      bits.push(`vs their ${family.toLowerCase()} game (${n} snaps): ${ans.text}${ans.educational ? " Not in your system — educational only." : ""}`);
+    }
+    if (!ranked.length && kit.baseFront)
+      bits.push(`Play tags are too thin to split their concepts, so the honest answer is your base: ${callName(kit.baseFront)}${kit.baseCoverage ? ` with ${callName(kit.baseCoverage)}` : ""} — align right and tackle.`);
+    const prs = kit.pressures.find((p) => p.group === "3rd Down Calls") ?? kit.pressures[0];
+    const thirdPass = r.situations.find((x) => x.situation.group === "3rd/4th" && x.n >= 5 && (x.runRate ?? 1) < 0.4);
+    if (prs && thirdPass)
+      bits.push(`On the money down (${thirdPass.situation.group} & ${thirdPass.situation.range}, ${pctOf(1 - (thirdPass.runRate ?? 0))} pass) ${callName(prs)} is the pressure that fits — the protection has to find the fifth rusher.`);
+    return {
+      answer: `${bits.join(" ")} Which of those can your eleven execute at full speed Friday?`,
+      deeper: [
+        `Your menu: ${kit.fronts.length} fronts, ${kit.coverages.length} coverages, ${kit.pressures.length} pressures, ${kit.adjustments.length} checks.`,
+        ...ranked.map(([f, n]) => `${f}: ${n} snaps.`),
+        ...r.situations.filter((x) => x.n >= 5).map((x) => `${x.situation.group} & ${x.situation.range}: ${x.n} snaps, ${pctOf(x.runRate ?? 0)} run.`),
+      ].join("\n"),
+    };
+  }
+
+  // 5. Best plays + where they come from.
+  if (id === "plays") {
+    if (thin) return { answer: noSnaps };
+    const rows = r.best.byFrequency.filter((p) => p.n >= 2).slice(0, 4);
+    const forms = r.personnel.flatMap((g) => g.formations).sort((a, b) => b.n - a.n);
+    if (!rows.length)
+      return {
+        answer: `Offensive Play is tagged on ${plays.filter((p) => p.play.trim()).length} of ${plays.length} snaps, so I can't rank their plays honestly. Tag Offensive Play in Hudl and this gets sharp. What I can say: they live in ${forms.slice(0, 3).map((f) => `${f.name} (${f.n})`).join(", ")}.`,
+      };
+    const lines = rows.map((p) => {
+      const rowsFor = plays.filter((x) => p.playIds.includes(x.id));
+      const form = commonest(rowsFor, (x) => x.formation);
+      const pers = commonest(rowsFor, (x) => x.personnel);
+      const back = commonest(rowsFor, (x) => x.backfield);
+      const where = [pers ? `${pers.name} personnel` : null, form ? `${form.name} (${form.n} of ${p.n})` : null, back ? `${back.name} backfield` : null]
+        .filter(Boolean)
+        .join(", ");
+      return `${p.name} — ${p.n} snaps, ${one(p.avgGain)} a pop${p.explosive ? `, ${p.explosive} explosive` : ""}${where ? `, out of ${where}` : ", nothing tagged on where it comes from"}.`;
+    });
+    const dangerous = r.best.bySuccess[0];
+    return {
+      answer: `${lines.join(" ")}${dangerous && dangerous.name !== rows[0].name ? ` Their most dangerous isn't their most-called: ${dangerous.name}, ${one(dangerous.avgGain)} a snap on ${dangerous.n}.` : ""}`,
+      deeper: r.best.byFrequency
+        .slice(0, 8)
+        .map((p) => `${p.name} (${p.type}) — ${p.n} snaps, ${one(p.avgGain)} avg, ${p.explosive} explosive, ${pctOf(p.successRate ?? 0)} success${p.topDirection ? `, ${p.topDirection.toLowerCase()}` : ""}.`)
+        .join("\n"),
+    };
+  }
+
+  // 6 + 7. What indicates the play / what drives their calls — rank the families.
+  if (id === "indicator" || id === "drivers") {
+    if (thin) return { answer: noSnaps };
+    const power = tagFamilyPower(plays, r.tells);
+    const untagged = power.filter((f) => f.tagged === 0);
+    const useful = power.filter((f) => f.tagged > 0 && f.best);
+    const combo = bestCombo(r.tells);
+    if (!useful.length)
+      return {
+        answer: `Nothing separates itself — no single tag moves their run/pass or their play call far enough off normal to key on.${untagged.length ? ` ${untagged.map((f) => f.label).join(", ")} aren't tagged at all.` : ""} Tag more film and ask me again.`,
+        deeper: power.map((f) => `${f.label}: ${f.tagged} snaps tagged, best lift ${f.best ? `${Math.round(f.best.lift * 100)} pts` : "none"}.`).join("\n"),
+      };
+    const ranked = useful.slice(0, 3).map((f, i) => {
+      const t = f.best!;
+      const why = id === "drivers"
+        ? `drives ${t.outcomeKind === "runpass" ? "run or pass" : t.outcomeKind === "direction" ? "which way it goes" : "which play"}`
+        : `points at ${t.outcome}`;
+      return `${i + 1}. ${f.label} (${f.tagged} snaps tagged) — ${why}: ${tellSentence(t, resolve)}.`;
+    });
+    const head = id === "drivers"
+      ? `${useful[0].label} drives it more than anything else.`
+      : `${useful[0].label} is your best pre-snap key.`;
+    const parentLift = combo
+      ? Math.max(...combo.tags.map((tg) => power.find((f) => f.field === tg.field)?.best?.lift ?? 0))
+      : 0;
+    const comboLine = combo
+      ? `Combinations beat single tags: ${tellSentence(combo, resolve)} — ${Math.round((combo.lift - parentLift) * 100)} points better than the best tag in it on its own.`
+      : "No two-tag combination beat its own single tags here, so keep the key simple.";
+    const missing = untagged.length
+      ? ` ${untagged.map((f) => f.label).join(" and ")} ${untagged.length === 1 ? "isn't" : "aren't"} tagged on this export, so ${untagged.length === 1 ? "it's" : "they're"} not in the ranking.`
+      : "";
+    return {
+      answer: `${head} ${ranked.join(" ")} ${comboLine}${missing}`,
+      deeper: [
+        ...power.map((f) => `${f.label}: ${f.tagged} snaps tagged${f.best ? `, best ${evidenceLine(f.best)}` : ", no tell clears the bar"}`),
+        combo ? `Best combination — ${evidenceLine(combo)}` : "",
+      ].filter(Boolean).join("\n"),
+    };
+  }
+
+  // 8. Where are we vulnerable, and what answers it?
+  if (id === "vulnerable") {
+    const findings = computeFindings(ctx).findings;
+    const plan = savedPlan?.generatedAt ? savedPlan : { ...(await gamePlan(o, ctx, findings)), opponentId: o.id };
+    const concerns = (plan.concerns ?? []).slice(0, 3);
+    const conflicts = findings.filter((f) => f.status === "Potential Conflict").slice(0, 2);
+    const bits: string[] = [];
+    if (concerns.length) bits.push(concerns.map((c) => `${c.text}${c.sub ? ` — ${c.sub}` : ""}`).join(" "));
+    if (conflicts.length) bits.push(`In our own defense: ${conflicts.map((f) => `${f.check} — ${f.detail}`).join(" ")}`);
+    if (!bits.length)
+      bits.push(`Nothing in their film beats a rule you've already written and the analysis has no open conflicts${thin ? `, though ${plays.length} snaps is a thin file to say that off` : ""}.`);
+    const covered = tells
+      .filter((t) => !answerFor({ condition: t.condition, outcome: t.outcome, outcomeKind: t.outcomeKind, tags: t.tags, termMap }, kit).practice)
+      .slice(0, 2);
+    if (covered.length) bits.push(`What we already answer: ${covered.map((t) => `${t.condition} → ${answerText(t)}`).join(" ")}`);
+    return {
+      answer: bits.join(" "),
+      deeper: [
+        ...concerns.map((c) => `${c.text}${c.evidence ? ` (${c.evidence.n} snaps at ${pctOf(c.evidence.rate)})` : ""}`),
+        ...findings.filter((f) => f.status !== "Sound").map((f) => `${f.check}: ${f.detail}`),
+      ].join("\n"),
+    };
+  }
+
+  // 9. Their most important players.
+  if (id === "players") {
+    const usage = r.players;
+    const named = o.keyPlayers.filter((k) => k.name.trim());
+    if (!usage.length && !named.length)
+      return {
+        answer: `Nobody is tagged by jersey on these ${plays.length} snaps and there are no key players on file, so I can't name them — tag the ball carrier in Hudl, or just tell me here ("#22 Johnson is their back, one-cut zone runner"). What I can say is where the ball goes: ${r.best.byFrequency.slice(0, 2).map((p) => `${p.name} (${p.n} snaps)`).join(", ") || "no play tags either, so nothing"}.`,
+      };
+    const lines: string[] = [];
+    for (const p of usage.slice(0, 3)) {
+      const match = named.find((k) => k.jersey && normTag(k.jersey) === normTag(p.player));
+      const who = match ? `#${match.jersey} ${match.name}${match.pos ? ` (${match.pos})` : ""}` : `#${p.player}`;
+      const ans = answerFor({ condition: p.topFormation?.name ?? "", outcome: p.runs >= p.passes ? "Run" : "Pass", outcomeKind: "runpass", termMap }, kit);
+      lines.push(
+        `${who} — ${p.touches} touches, ${pctOf(p.share)} of the ball, ${one(p.avgGain)} a touch${p.tds ? `, ${p.tds} TD` : ""}; most of it from ${p.topFormation?.name ?? "their base look"}${p.topSituation ? ` on ${p.topSituation.name}` : ""}. ${ans.text}`,
+      );
+    }
+    for (const k of named.slice(0, 3)) {
+      if (usage.some((u) => k.jersey && normTag(k.jersey) === normTag(u.player))) continue;
+      lines.push(`${k.jersey ? `#${k.jersey} ` : ""}${k.name}${k.pos ? ` (${k.pos})` : ""} — ${k.notes?.trim() || "your note, no snap tags behind it"}. ${bracketLine(kit)}`);
+    }
+    if (!usage.length)
+      lines.push(`That's your film, not the tagging — nobody is tagged by jersey on these ${plays.length} snaps, so I can't say how many touches he actually gets. Tag the ball carrier in Hudl and I'll count it.`);
+    return {
+      answer: lines.join(" "),
+      deeper: usage
+        .slice(0, 5)
+        .map((p) => `#${p.player}: ${p.touches} touches, ${p.runs} run / ${p.passes} pass, ${one(p.avgGain)} avg, ${p.explosive} explosive, ${pctOf(p.successRate ?? 0)} success.`)
+        .join("\n"),
+    };
+  }
+
+  // 10. What to emphasize this week.
+  if (id === "emphasis") {
+    const findings = computeFindings(ctx).findings;
+    const plan = savedPlan?.generatedAt ? savedPlan : { ...(await gamePlan(o, ctx, findings)), opponentId: o.id };
+    const pri = (plan.priorities ?? []).slice(0, 3);
+    const emp = (plan.emphasis ?? []).slice(0, 3);
+    const load = callLoad(ctx.concepts);
+    const bits: string[] = [];
+    if (pri.length) bits.push(`Priorities: ${pri.map((p) => p.text).join("; ")}.`);
+    if (emp.length) bits.push(`On the grass: ${emp.map((e) => e.text).join("; ")}.`);
+    if (!bits.length) bits.push(thin ? noSnaps : "Nothing counted is worth prioritizing yet — generate the game plan and I'll have something to stand on.");
+    if (load.over) bits.push(masteryNote(load));
+    return {
+      answer: `${bits.join(" ")} Which of those can your kids not do right now?`,
+      deeper: [
+        ...(plan.priorities ?? []).map((p) => `${p.text}${p.sub ? ` — ${p.sub}` : ""}`),
+        ...(plan.emphasis ?? []).map((e) => `${e.text}${e.sub ? ` — ${e.sub}` : ""}`),
+      ].join("\n"),
+    };
+  }
+
+  return null;
+}
+
 // ---- Ask CounterScheme -----------------------------------------------------
 async function ask(question: string, o: Opponent, ctx: SchemeContext): Promise<MatchupAnswer> {
   const q = lc(question);
@@ -644,6 +970,11 @@ async function ask(question: string, o: Opponent, ctx: SchemeContext): Promise<M
       return { answer: res.reply, grounded: true, termMapping: res };
     }
   }
+  // The coach's ten questions (Q41) own their phrasing before the older
+  // keyword routes get a look.
+  const routed = await coachAsk(question, o, ctx);
+  if (routed) return { answer: routed.answer, deeper: routed.deeper, grounded: true };
+
   const none = (where: string): MatchupAnswer => ({
     answer: `I don't have that in the scouting data for ${o.name} yet. Add it under ${where} and ask again.`,
     grounded: false,
@@ -733,6 +1064,9 @@ async function practicePool(o: Opponent, ctx: SchemeContext, plan?: GamePlan): P
 
 type Action = NonNullable<ChatReply["reply"]["actions"]>[number];
 
+/** Q50, in his words — only ever shown under "Go deeper". */
+const PRINCIPLE_LIST = PRINCIPLES.map((p) => `${p.short}: ${p.line}`).join("\n");
+
 const planLink = (ctx: ChatContext): Action | null =>
   ctx.opponent ? { label: "Open Game Plan", href: `/gameplan?id=${ctx.opponent.id}` } : null;
 const matchupLink = (ctx: ChatContext): Action | null =>
@@ -745,11 +1079,12 @@ const acts = (...list: (Action | null | undefined)[]) => {
 const reply = (
   text: string,
   ctx: ChatContext,
-  extra: { actions?: Action[]; conceptIds?: string[]; playIds?: string[] } = {},
+  extra: { actions?: Action[]; conceptIds?: string[]; playIds?: string[]; deeper?: string } = {},
 ): ChatReply["reply"] => ({
   role: "counterscheme",
   text,
   actions: extra.actions,
+  deeper: extra.deeper,
   context: {
     page: ctx.page,
     opponentId: ctx.opponent?.id,
@@ -763,6 +1098,8 @@ const QUESTION_START = /^(?:what|who|when|where|why|which|how|do|does|did|is|are
 const WHY = /\b(?:why|evidence|how do (?:you|we) know|what'?s the proof|prove it|says who|back that up|sample size)\b/i;
 const PRACTICE_Q = /\b(?:rep|reps|repping|practice|script|scout (?:card|team|period)|walk ?through|monday|tuesday|wednesday|thursday)\b/i;
 const TEACH_ME = /^(?:teach|add|save|file|remember)\b.*\b(?:rule|front|coverage|pressure|blitz|check|adjustment)\b/i;
+// "Should we add another coverage?" — the question Q50 answers before the data does.
+const ADD_Q = /\b(?:should|can|could|do) (?:we|i)\b[^?]{0,60}?\b(?:add|install|put in|carry|pick up|learn|bring in)\b|\bis it worth (?:adding|installing|carrying)\b|\badd (?:another|a new|more)\b/i;
 // An idea he wants evaluated, not a fact he wants looked up (Q28).
 const ADVICE = /\b(?:should we|should i|what should|how should|how do we|what do we do|would you|do you think|is it worth|any reason)\b/i;
 
@@ -820,6 +1157,13 @@ function explainItem(found: { section: string; item: PlanItem }, ctx: ChatContex
     reply: reply(bits.join(" "), ctx, {
       conceptIds: item.conceptIds,
       playIds: e?.playIds,
+      deeper: e
+        ? [
+            e.summary,
+            `${e.n} snaps at ${pctOf(e.rate)}${e.baseline != null ? ` against a ${pctOf(e.baseline)} baseline` : ""}.`,
+            `${e.playIds.length} play${e.playIds.length === 1 ? "" : "s"} behind it — open the plan to see the rows.`,
+          ].join("\n")
+        : undefined,
       actions: acts(planLink(ctx), e ? { label: "See evidence", href: ctx.opponent ? `/gameplan?id=${ctx.opponent.id}` : "/gameplan" } : null),
     }),
     sideEffects: {},
@@ -918,16 +1262,56 @@ async function chat(input: string, ctx: ChatContext): Promise<ChatReply> {
     }
   }
 
-  // 3. "Why is that the answer?" about something in the plan (Q29).
+  // 3. "Should we add / install X?" — more football is the wrong default
+  // (Q50). Answer with what we already carry and can't execute yet.
+  if (ADD_Q.test(text)) {
+    const load = callLoad(ctx.concepts);
+    const what = text
+      .replace(/^.*?\b(?:add|install|put in|carry|pick up|learn|bring in)\b\s*/i, "")
+      .replace(/[?.!]+\s*$/, "")
+      .trim();
+    const top = (ctx.plan?.priorities ?? []).slice(0, 2).map((p) => p.text);
+    const bits = [addAdvice(load, what.length > 2 && what.length < 60 ? what : undefined)];
+    if (top.length) bits.push(`This week's plan says what matters is ${top.join("; ")} — if it doesn't serve one of those it costs reps.`);
+    bits.push(principle("run"));
+    return {
+      reply: reply(`${bits.join(" ")} What are you willing to take off the menu to pay for it?`, ctx, {
+        actions: acts({ label: "Open My Scheme", href: "/scheme" }, planLink(ctx)),
+        deeper: [
+          masteryNote(load),
+          `On the menu now: ${load.active} live${load.backPocket ? `, ${load.backPocket} back pocket` : ""} out of a ${load.budget}-call in-season budget.`,
+          PRINCIPLE_LIST,
+        ].join("\n"),
+      }),
+      sideEffects: {},
+    };
+  }
+
+  // 4. The coach's ten questions (Q41). They own their phrasing before the
+  // "should we" route or the plan-item lookup gets a turn.
+  if (ctx.opponent && isQuestion) {
+    const routed = await coachAsk(text, ctx.opponent, ctx);
+    if (routed) {
+      return {
+        reply: reply(routed.answer, ctx, {
+          actions: acts(matchupLink(ctx), planLink(ctx)),
+          deeper: routed.deeper,
+        }),
+        sideEffects: { question: { q: text, a: routed.answer, opponentId: ctx.opponent.id } },
+      };
+    }
+  }
+
+  // 5. "Why is that the answer?" about something in the plan (Q29).
   if (WHY.test(text)) {
     const found = findPlanItem(text, ctx.plan);
     if (found) return explainItem(found, ctx);
   }
 
-  // 4. "What are we repping this week?"
+  // 6. "What are we repping this week?"
   if (PRACTICE_Q.test(text) && isQuestion) return practiceAnswer(ctx);
 
-  // 5. "Should we …?" — an idea he wants evaluated (Q28: collaborative). If the
+  // 7. "Should we …?" — an idea he wants evaluated (Q28: collaborative). If the
   // plan already says something about it, say that; otherwise give him the
   // three things the plan says matter and let him push back.
   if (ADVICE.test(text) && ctx.plan) {
@@ -946,7 +1330,7 @@ async function chat(input: string, ctx: ChatContext): Promise<ChatReply> {
     }
   }
 
-  // 6. A scheme sentence — the Teach parser owns it. Questions never come here.
+  // 8. A scheme sentence — the Teach parser owns it. Questions never come here.
   if (!isQuestion) {
     const res = await teach(text, ctx);
     if (res.concepts.length) {
@@ -964,12 +1348,12 @@ async function chat(input: string, ctx: ChatContext): Promise<ChatReply> {
     if (!ctx.opponent) return capabilities(ctx, res.question ?? "I couldn't file that as a rule.");
   }
 
-  // 7. Opponent questions.
+  // 9. Opponent questions.
   if (ctx.opponent) {
     const a = await ask(text, ctx.opponent, ctx);
     if (a.grounded || !ctx.plan) {
       return {
-        reply: reply(a.answer, ctx, { actions: acts(matchupLink(ctx), planLink(ctx)) }),
+        reply: reply(a.answer, ctx, { actions: acts(matchupLink(ctx), planLink(ctx)), deeper: a.deeper }),
         sideEffects: a.termMapping
           ? { termMapping: a.termMapping }
           : a.grounded
@@ -980,7 +1364,7 @@ async function chat(input: string, ctx: ChatContext): Promise<ChatReply> {
     // Not in the scouting data — try the plan before giving up.
     const found = findPlanItem(text, ctx.plan);
     if (found) return explainItem(found, ctx);
-    return { reply: reply(a.answer, ctx, { actions: acts(matchupLink(ctx), planLink(ctx)) }), sideEffects: {} };
+    return { reply: reply(a.answer, ctx, { actions: acts(matchupLink(ctx), planLink(ctx)), deeper: a.deeper }), sideEffects: {} };
   }
 
   return capabilities(ctx, "I don't have an opponent on file to answer that against.");

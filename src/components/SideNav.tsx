@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {
-  Home, Users, Shield, Binoculars, ClipboardList, Dumbbell, ShieldCheck, BarChart3, Settings,
+  Home, Users, Shield, Binoculars, ClipboardList, ShieldCheck, BarChart3, Settings,
 } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
 
@@ -69,11 +69,14 @@ const SECTIONS: Section[] = [
     href: "/gameplan",
     label: "Game Plans",
     icon: ClipboardList,
-    match: ["/gameplan", "/callsheet"],
-    // Q45: the game-day sheet is the plan you can hold in your hand.
-    children: [{ href: "/callsheet", label: "Call Sheet" }],
+    match: ["/gameplan", "/callsheet", "/practice"],
+    // Q45: the game-day sheet is the plan you can hold in your hand. Q46: the
+    // practice script is optional, so it lives under the plan, not beside it.
+    children: [
+      { href: "/callsheet", label: "Call Sheet" },
+      { href: "/practice", label: "Practice Script" },
+    ],
   },
-  { href: "/practice", label: "Practice Script", icon: Dumbbell, match: ["/practice"] },
   { href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck, match: ["/analysis"] },
   { href: "/reports", label: "Reports", icon: BarChart3, match: ["/reports"] },
 ];

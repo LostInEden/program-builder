@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Users, Shield, ShieldCheck, Binoculars, ClipboardList, ChevronRight, Check, Circle } from "lucide-react";
+import { Users, Shield, ShieldCheck, Binoculars, ClipboardList, ListChecks, ChevronRight, Check, Circle } from "lucide-react";
 import { useStore, useHydrated, baseGroupFor, effectiveSlots } from "@/lib/store";
 import { computeFindings } from "@/lib/analyze";
 import { getStructure } from "@/lib/football";
@@ -58,10 +58,11 @@ export default function Home() {
     {
       href: "/matchup", icon: Binoculars, title: "Opponent Matchup", n: 4,
       stat: nextOpp ? `${nextOpp.name}${nextOpp.isDemo ? " (demo)" : ""}` : "No opponent yet",
+      // Q46: the week is scouting report → game plan → call sheet. Nothing else.
       steps: [
-        { label: "Opponent scouted", done: real.length > 0 },
-        { label: "Tendencies entered", done: !!nextOpp && nextOpp.runRate != null && !nextOpp.isDemo },
-        { label: "Game plan generated", done: !!plan?.generatedAt },
+        { label: "Scouting report", done: !!nextOpp && !nextOpp.isDemo && nextOpp.plays.length > 0 },
+        { label: "Game plan", done: !!plan?.generatedAt },
+        { label: "Call sheet", done: !!plan?.generatedAt && confirmed.some((c) => c.kind === "front") },
       ],
     },
   ];
@@ -74,8 +75,22 @@ export default function Home() {
             You call the shots. <span className="text-grass">AI does the homework.</span>
           </h1>
           <p className="text-dim mt-2 max-w-2xl">
-            Four systems that feed each other: who we are, how we play, who they are, what we should do. Work in any of them — the others update.
+            The week is <span className="font-semibold text-ink">Scouting Report → Game Plan</span>: what they do,
+            then what we&apos;re going to do about it. Everything else — your team, your scheme, the call sheet — feeds those two.
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+            <Link href={nextOpp ? `/scouting?id=${nextOpp.id}` : "/scouting"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-grass hover:text-grass">
+              <Binoculars size={15} /> Scouting report
+            </Link>
+            <ChevronRight size={14} className="text-dim" />
+            <Link href={nextOpp ? `/gameplan?id=${nextOpp.id}` : "/gameplan"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-grass hover:text-grass">
+              <ClipboardList size={15} /> Game plan
+            </Link>
+            <ChevronRight size={14} className="text-dim" />
+            <Link href={nextOpp ? `/callsheet?id=${nextOpp.id}` : "/callsheet"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-grass hover:text-grass">
+              <ListChecks size={15} /> Call sheet
+            </Link>
+          </div>
         </div>
         {nextWeek && (
           <Link href={nextOpp ? `/matchup?id=${nextOpp.id}` : "/matchup"} className={`${card} px-5 py-3 flex items-center gap-4 hover:border-grass`}>

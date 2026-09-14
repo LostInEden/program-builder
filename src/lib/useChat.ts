@@ -8,7 +8,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useStore, type ChatMessage, type Opponent } from "@/lib/store";
 import { usePractice } from "@/lib/usePractice";
-import { ai, AI_LABEL } from "@/lib/ai";
+import { ai, AI_LABEL, COACH_QUESTIONS } from "@/lib/ai";
 
 /** Who we're talking about: the last opponent he opened, else the next game. */
 export function useCurrentOpponent(): Opponent | null {
@@ -42,13 +42,17 @@ export type ChatSession = {
   clear: () => void;
 };
 
-const QUICK_CHIPS = [
-  "What do they run on 3rd down?",
-  "Teach a rule",
-  "What are we repping?",
-  "What's their best player?",
-];
-export { QUICK_CHIPS };
+/**
+ * The chips over the box rotate through the coach's own ten questions (Q41) so
+ * the same four aren't staring at him all week. "Teach a rule" always stays.
+ */
+export function quickChips(page = 0, n = 3): string[] {
+  const start = ((page * n) % COACH_QUESTIONS.length + COACH_QUESTIONS.length) % COACH_QUESTIONS.length;
+  const picks = Array.from({ length: Math.min(n, COACH_QUESTIONS.length) }, (_, i) => COACH_QUESTIONS[(start + i) % COACH_QUESTIONS.length]);
+  return [...picks, "Teach a rule"];
+}
+
+export const QUICK_CHIPS = quickChips(0);
 
 export function useChat(page?: string): ChatSession {
   const store = useStore();

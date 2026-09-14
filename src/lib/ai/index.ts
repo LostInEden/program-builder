@@ -10,6 +10,9 @@ export type {
   AiProvider, TeachResult, SchemeContext, MatchupAnswer, ChatContext, ChatReply, ChatSideEffects,
 } from "./types";
 
+/** The coach's ten example questions (Q41) — the rotating chips on every Ask box. */
+export { COACH_QUESTIONS } from "./local";
+
 const providers: Record<string, AiProvider> = {
   local: localProvider,
 };

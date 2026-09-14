@@ -45,6 +45,8 @@ export type TermResolution = {
 export type MatchupAnswer = {
   answer: string;
   grounded: boolean;
+  /** The breakdown behind the answer, shown only when he asks to go deeper (Q49). */
+  deeper?: string;
   /** Set when the question was really the coach teaching us a word ("Dallas is Snag"). */
   termMapping?: TermResolution;
 };

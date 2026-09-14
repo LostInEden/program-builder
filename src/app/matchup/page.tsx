@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
-  Upload, Send, Plus, X, ChevronRight, Target, Flag, Users2, HelpCircle, CalendarDays, Check, Pencil, Mic, Binoculars,
+  Upload, Send, Plus, X, ChevronRight, ChevronDown, Target, Flag, Users2, HelpCircle, CalendarDays, Check, Pencil, Mic,
+  Binoculars, RefreshCw,
 } from "lucide-react";
 import {
   useStore, useHydrated, initialsOf, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
@@ -17,7 +18,7 @@ import UnknownTerms from "@/components/UnknownTerms";
 import PlanStatus from "@/components/PlanStatus";
 import { headlineFromPlays } from "@/lib/tendencies";
 import { useGamePlan } from "@/lib/useGamePlan";
-import { useChat, startDictation } from "@/lib/useChat";
+import { useChat, startDictation, quickChips } from "@/lib/useChat";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink px-5 py-3.5 border-b border-line flex items-center gap-3";
@@ -74,7 +75,10 @@ function MatchupInner() {
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [lastReply, setLastReply] = useState<{ q: string; a: string; actions?: { label: string; href: string }[] } | null>(null);
+  const [lastReply, setLastReply] = useState<{ q: string; a: string; deeper?: string; actions?: { label: string; href: string }[] } | null>(null);
+  // The coach's ten questions (Q41), three at a time, rotating.
+  const [chipPage, setChipPage] = useState(0);
+  const [deep, setDeep] = useState(false);
   const [listening, setListening] = useState(false);
   // The Ask box keeps its place on the page but posts into the ONE
   // CounterScheme conversation (Q26) — same thread as the drawer and /chat.
@@ -118,13 +122,15 @@ function MatchupInner() {
   const week = o?.week ? seasonSchedule.find((w) => w.week === o.week) : undefined;
   const nextWeek = seasonSchedule.find((w) => w.opponent && !w.result);
 
-  const askIt = async () => {
-    const text = q.trim();
+  const askIt = async (value?: string) => {
+    const text = (value ?? q).trim();
     if (!o || !text || busy) return;
     setBusy(true);
+    setDeep(false);
+    setChipPage((n) => n + 1);
     try {
       const msg = await chat.send(text, "/matchup");
-      if (msg) setLastReply({ q: text, a: msg.text, actions: msg.actions });
+      if (msg) setLastReply({ q: text, a: msg.text, deeper: msg.deeper, actions: msg.actions });
       setQ("");
     } finally {
       setBusy(false);
@@ -507,12 +513,37 @@ function MatchupInner() {
                   className="flex-1 bg-transparent px-2 text-sm focus:outline-none"
                 />
                 <button onClick={dictate} aria-label="Dictate" className={`grid size-8 place-items-center rounded-lg ${listening ? "text-red-500" : "text-dim hover:text-ink"}`}><Mic size={16} /></button>
-                <button onClick={askIt} disabled={!q.trim() || busy} className="inline-flex items-center gap-1.5 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep disabled:opacity-50"><Send size={14} /> Ask</button>
+                <button onClick={() => askIt()} disabled={!q.trim() || busy} className="inline-flex items-center gap-1.5 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep disabled:opacity-50"><Send size={14} /> Ask</button>
+              </div>
+              {/* The questions he actually asks (Q41) — rotating, never a fixed menu. */}
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {quickChips(chipPage).filter((c) => c !== "Teach a rule").map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => { setQ(""); void askIt(c); }}
+                    disabled={busy}
+                    className="rounded-full border border-line bg-pitch px-3 py-1 text-[12px] font-semibold text-dim hover:border-grass hover:text-grass disabled:opacity-50"
+                  >
+                    {c}
+                  </button>
+                ))}
+                <button onClick={() => setChipPage((n) => n + 1)} title="Other questions" aria-label="Other questions" className="rounded-full border border-line bg-pitch px-2 py-1 text-dim hover:border-grass hover:text-grass">
+                  <RefreshCw size={12} />
+                </button>
               </div>
               {(lastReply ?? (o.questions[0] ? { q: o.questions[0].q, a: o.questions[0].a, actions: undefined } : null)) && (
                 <div className="mt-3 rounded-lg border border-line bg-slate-50 px-4 py-3 text-sm">
                   <div className="text-xs font-semibold text-dim mb-1">Q: {(lastReply ?? o.questions[0]).q}</div>
-                  <div className="leading-relaxed">{(lastReply ?? o.questions[0]).a}</div>
+                  <div className="leading-relaxed whitespace-pre-wrap">{(lastReply ?? o.questions[0]).a}</div>
+                  {lastReply?.deeper && (
+                    <div className="mt-2">
+                      <button onClick={() => setDeep((v) => !v)} className="inline-flex items-center gap-1 text-[12px] font-bold text-grass hover:underline">
+                        <ChevronDown size={12} className={deep ? "rotate-180 transition" : "transition"} />
+                        {deep ? "Hide the breakdown" : "Go deeper"}
+                      </button>
+                      {deep && <div className="mt-1 rounded-lg border border-line bg-white px-3 py-2 text-[13px] leading-relaxed text-dim whitespace-pre-wrap">{lastReply.deeper}</div>}
+                    </div>
+                  )}
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {(lastReply?.actions ?? []).map((a) => (
                       <Link key={a.label + a.href} href={a.href} className="rounded-lg border border-line bg-white px-2.5 py-1 text-[12px] font-semibold text-grass hover:border-grass">{a.label}</Link>

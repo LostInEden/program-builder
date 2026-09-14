@@ -771,6 +771,54 @@ export function headlineFromPlays(plays: Play[]): Partial<Opponent> {
   };
 }
 
+// ---- which KIND of tag gives them away (Q41 #6, #7) ------------------------
+
+export type FamilyPower = {
+  field: TellField;
+  /** "Formation", "Down & distance" — how the coach says it. */
+  label: string;
+  /** Snaps where this tag is actually filled in. */
+  tagged: number;
+  /** Best tell that rides on this family alone, if any. */
+  best: Tell | null;
+  /** lift × support of that best tell. 0 when the family says nothing. */
+  score: number;
+};
+
+export const FAMILY_LABEL: Record<TellField, string> = {
+  formation: "Formation",
+  personnel: "Personnel",
+  backfield: "Backfield alignment",
+  hash: "Hash",
+  strength: "Formation strength",
+  situation: "Down & distance",
+  down: "Down",
+  motion: "Motion",
+};
+
+const FAMILY_ORDER: TellField[] = ["formation", "personnel", "backfield", "situation", "down", "hash", "strength", "motion"];
+
+/**
+ * Rank the tag FAMILIES, not the tags: for each one, the strongest single-tag
+ * tell it produces (lift × support). That is the honest answer to "what gives
+ * us the best indication" — and the families with nothing tagged say so instead
+ * of scoring zero and looking useless.
+ */
+export function tagFamilyPower(plays: Play[], tells: Tell[]): FamilyPower[] {
+  const taggerOf = new Map(TAGGERS.map((t) => [t.field, t.of]));
+  return FAMILY_ORDER.map((field) => {
+    const of = taggerOf.get(field)!;
+    const tagged = plays.filter((p) => of(p)).length;
+    const mine = tells.filter((t) => t.tags.length === 1 && t.tags[0].field === field);
+    const best = mine.sort((a, b) => b.score - a.score)[0] ?? null;
+    return { field, label: FAMILY_LABEL[field], tagged, best, score: best?.score ?? 0 };
+  }).sort((a, b) => b.score - a.score || b.tagged - a.tagged);
+}
+
+/** The best pair of tags — the "combination" that beats either tag alone. */
+export const bestCombo = (tells: Tell[]): Tell | null =>
+  tells.filter((t) => t.tags.length > 1).sort((a, b) => b.score - a.score)[0] ?? null;
+
 /** One object with everything the Tendency Report renders. */
 export function tendencyReport(plays: Play[], opts?: TellOptions) {
   const tells = computeTells(plays, opts);

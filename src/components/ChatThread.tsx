@@ -7,9 +7,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Send, Mic, Trash2 } from "lucide-react";
+import { Send, Mic, Trash2, RefreshCw, ChevronDown } from "lucide-react";
 import { useHydrated } from "@/lib/store";
-import { useChat, startDictation, QUICK_CHIPS } from "@/lib/useChat";
+import { useChat, startDictation, quickChips } from "@/lib/useChat";
 
 export default function ChatThread({
   page,
@@ -25,6 +25,10 @@ export default function ChatThread({
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // The coach's ten questions rotate over the box (Q41) — a new set every time
+  // he sends something, and the arrows cycle them on demand.
+  const [chipPage, setChipPage] = useState(0);
+  const [deepOpen, setDeepOpen] = useState<Record<string, boolean>>({});
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,6 +40,7 @@ export default function ChatThread({
     const v = (value ?? text).trim();
     if (!v || busy) return;
     setText("");
+    setChipPage((n) => n + 1);
     await send(v, page);
   };
 
@@ -87,6 +92,22 @@ export default function ChatThread({
                 >
                   {m.text}
                 </div>
+                {m.role === "counterscheme" && m.deeper && (
+                  <div className="mt-1.5">
+                    <button
+                      onClick={() => setDeepOpen((o) => ({ ...o, [m.id]: !o[m.id] }))}
+                      className="inline-flex items-center gap-1 text-[12px] font-bold text-grass hover:underline"
+                    >
+                      <ChevronDown size={12} className={deepOpen[m.id] ? "rotate-180 transition" : "transition"} />
+                      {deepOpen[m.id] ? "Hide the breakdown" : "Go deeper"}
+                    </button>
+                    {deepOpen[m.id] && (
+                      <div className="mt-1 rounded-lg border border-line bg-pitch px-3 py-2 text-[13px] leading-relaxed text-dim whitespace-pre-wrap">
+                        {m.deeper}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {m.actions && m.actions.length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {m.actions.map((a) => (
@@ -118,7 +139,7 @@ export default function ChatThread({
 
       <div className="shrink-0 border-t border-line bg-white px-3 pt-2.5 pb-3">
         <div className="mb-2 flex flex-wrap gap-1.5">
-          {QUICK_CHIPS.map((c) => (
+          {quickChips(chipPage).map((c) => (
             <button
               key={c}
               onClick={() => (c === "Teach a rule" ? (setText("Against 12 personnel we check to "), inputRef.current?.focus()) : submit(c))}
@@ -127,6 +148,14 @@ export default function ChatThread({
               {c}
             </button>
           ))}
+          <button
+            onClick={() => setChipPage((n) => n + 1)}
+            aria-label="Other questions"
+            title="Other questions"
+            className="rounded-full border border-line bg-pitch px-2 py-1 text-dim hover:border-grass hover:text-grass"
+          >
+            <RefreshCw size={12} />
+          </button>
           {hydrated && thread.length > 0 && (
             <button
               onClick={clear}
