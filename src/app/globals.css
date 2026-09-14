@@ -140,4 +140,45 @@ select optgroup {
   * {
     box-shadow: none !important;
   }
+
+  /* ---- The call sheet (Q45) --------------------------------------------
+     One landscape page, two or three dense columns, small type, tight
+     leading — it has to be scannable when the game gets hectic. Scoped to
+     the call sheet by `sheet-root` on its print root (a named page, so the
+     Game Plan and Scouting Report keep printing portrait). */
+  @page sheet {
+    size: landscape;
+    margin: 0.35in;
+  }
+  .sheet-root {
+    page: sheet;
+    font-size: 8pt;
+    line-height: 1.2;
+  }
+  .sheet-root .sheet-cols {
+    column-count: var(--sheet-cols, 2);
+    column-gap: 16px;
+  }
+  .sheet-root .sheet-section {
+    break-inside: avoid;
+    break-before: auto;
+    margin: 0 0 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+  }
+  .sheet-root .sheet-section-head {
+    font-size: 8pt;
+    padding: 2px 6px;
+    border-bottom: 1px solid #cbd5e1;
+  }
+  .sheet-root .sheet-body {
+    padding: 3px 6px;
+  }
+  .sheet-root .sheet-line {
+    break-inside: avoid;
+    padding: 0.5px 0;
+  }
+  .sheet-root .sheet-head-note {
+    font-size: 7.5pt;
+  }
 }

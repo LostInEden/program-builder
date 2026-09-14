@@ -65,7 +65,14 @@ const SECTIONS: Section[] = [
     // Q43: the scouting report is the long half of the matchup — what they do.
     children: [{ href: "/scouting", label: "Scouting Report" }],
   },
-  { href: "/gameplan", label: "Game Plans", icon: ClipboardList, match: ["/gameplan"] },
+  {
+    href: "/gameplan",
+    label: "Game Plans",
+    icon: ClipboardList,
+    match: ["/gameplan", "/callsheet"],
+    // Q45: the game-day sheet is the plan you can hold in your hand.
+    children: [{ href: "/callsheet", label: "Call Sheet" }],
+  },
   { href: "/practice", label: "Practice Script", icon: Dumbbell, match: ["/practice"] },
   { href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck, match: ["/analysis"] },
   { href: "/reports", label: "Reports", icon: BarChart3, match: ["/reports"] },

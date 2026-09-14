@@ -13,7 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
   Plus, X, Target, AlertTriangle, Wrench, ClipboardList, Sparkles, RefreshCw, Printer,
-  ChevronDown, ChevronRight, Users2, MessageSquare, CalendarDays, Binoculars, Bell, Check,
+  ChevronDown, ChevronRight, Users2, MessageSquare, CalendarDays, Binoculars, Bell, Check, LayoutList,
 } from "lucide-react";
 import { useStore, useHydrated, type PlanItem, type GamePlan, type Play, type PlanChange, type PlanSectionKey } from "@/lib/store";
 import { askPrompt, coachItem, SECTION_TITLES } from "@/lib/plan";
@@ -201,6 +201,7 @@ function GamePlanInner() {
           {opponent && (
             <>
               <Link href={`/scouting?id=${opponent.id}`} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim"><Binoculars size={15} /> Scouting Report</Link>
+              <Link href={`/callsheet?id=${opponent.id}`} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim"><LayoutList size={15} /> Call Sheet</Link>
               <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim"><Printer size={15} /> Print / Save as PDF</button>
               <button onClick={regenerate} disabled={busy} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep disabled:opacity-50">
                 <RefreshCw size={15} className={busy ? "animate-spin" : ""} /> {plan?.generatedAt ? "Regenerate" : "Generate Plan"}

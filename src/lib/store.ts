@@ -310,6 +310,26 @@ export type PracticeSelection = {
   generatedAt: number;
 };
 
+// The game-day call sheet (Q45). Only the LAYOUT is saved — which sections are
+// on the sheet, what he calls them, what order they're in, what's hidden, plus
+// the lines of his own sections. The menu / plan / tells sections recompute
+// their content live, so nothing the coach wrote here is ever overwritten by a
+// regenerated game plan.
+export type CallSheetSectionKey = "menu" | "plan" | "tells" | "notes" | "custom";
+export type CallSheetSection = {
+  id: string;
+  key: CallSheetSectionKey;
+  title: string; // his name for it
+  lines: string[]; // his lines (notes / custom); generated sections ignore this
+  enabled: boolean;
+  order: number;
+};
+export type CallSheet = {
+  sections: CallSheetSection[];
+  /** How dense the sheet prints. Every coach organizes his differently. */
+  columns: 2 | 3;
+};
+
 // One depth chart per level, plus packages that BRANCH from it (Q9, Q22).
 // The Base package owns `slots` (structure slot index -> ordered player ids,
 // index 0 = starter). A package owns only `overrides`: the spots where it
@@ -817,6 +837,8 @@ type Store = {
   gamePlans: GamePlan[];
   /** The week's rep choices, per opponent (Q5). Keyed by opponent id. */
   practice: Record<string, PracticeSelection>;
+  /** The game-day call sheet layout, per opponent (Q45). Keyed by opponent id. */
+  callSheet: Record<string, CallSheet>;
   /** The one CounterScheme conversation (Q26). Every box on every page feeds it. */
   chat: ChatMessage[];
   /** The opponent the coach looked at last — the chat talks about him by default. */
@@ -842,6 +864,8 @@ type Store = {
   updateGamePlan: (opponentId: string, patch: Partial<GamePlan>) => void;
   updatePractice: (opponentId: string, patch: Partial<PracticeSelection>) => void;
   resetPractice: (opponentId: string) => void;
+  updateCallSheet: (opponentId: string, patch: Partial<CallSheet>) => void;
+  resetCallSheet: (opponentId: string) => void;
   appendChat: (m: Omit<ChatMessage, "id" | "ts"> & { id?: string; ts?: number }) => string;
   clearChat: () => void;
   setLastOpponent: (id: string | null) => void;
@@ -917,6 +941,7 @@ export const useStore = create<Store>()(
       opponents: [seedOpponent],
       gamePlans: [],
       practice: {},
+      callSheet: {},
       chat: [],
       lastOpponentId: null,
       termMap: [],
@@ -1005,10 +1030,13 @@ export const useStore = create<Store>()(
         set((s) => {
           const practice = { ...s.practice };
           delete practice[id];
+          const callSheet = { ...s.callSheet };
+          delete callSheet[id];
           return {
             opponents: s.opponents.filter((o) => o.id !== id),
             gamePlans: s.gamePlans.filter((g) => g.opponentId !== id),
             practice,
+            callSheet,
           };
         }),
       updateGamePlan: (opponentId, patch) =>
@@ -1039,6 +1067,19 @@ export const useStore = create<Store>()(
             [opponentId]: { included: [], excluded: [], order: [], notes: s.practice[opponentId]?.notes ?? "", generatedAt: Date.now() },
           },
         })),
+
+      // The call sheet only ever stores his layout — see lib/callsheet.ts.
+      updateCallSheet: (opponentId, patch) =>
+        set((s) => {
+          const base: CallSheet = s.callSheet[opponentId] ?? { sections: [], columns: 2 };
+          return { callSheet: { ...s.callSheet, [opponentId]: { ...base, ...patch } } };
+        }),
+      resetCallSheet: (opponentId) =>
+        set((s) => {
+          const callSheet = { ...s.callSheet };
+          delete callSheet[opponentId];
+          return { callSheet };
+        }),
 
       addPlayer: (pl = {}) => {
         const id = uid();
@@ -1333,7 +1374,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
-      version: 12,
+      version: 13,
       migrate: (persisted, version) => {
         const state = persisted as {
           program?: Program;
@@ -1349,6 +1390,7 @@ export const useStore = create<Store>()(
           opponents?: Partial<Opponent>[];
           gamePlans?: LegacyGamePlan[];
           practice?: Record<string, PracticeSelection>;
+          callSheet?: Record<string, CallSheet>;
           chat?: ChatMessage[];
           lastOpponentId?: string | null;
           scheme?: { structureName: string; philosophyTitle?: string; philosophy: string };
@@ -1587,6 +1629,12 @@ export const useStore = create<Store>()(
             void pendingUpdate; void majorHash; void declined;
             return rest;
           });
+        }
+        if (version < 13) {
+          // v13: the call sheet (Q45). Starts empty — every opponent gets the
+          // default four sections until the coach lays his own sheet out, and
+          // the menu / plan / tells content is always computed, never stored.
+          state.callSheet = state.callSheet && typeof state.callSheet === "object" ? state.callSheet : {};
         }
         return state;
       },

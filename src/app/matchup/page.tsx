@@ -398,6 +398,7 @@ function MatchupInner() {
                 </div>
                 <div className="mt-3 flex flex-wrap justify-center gap-2 text-xs font-semibold">
                   <Link href={`/gameplan?id=${o.id}`} className="rounded-lg border border-line px-3 py-1.5 hover:border-dim">Game Plan</Link>
+                  <Link href={`/callsheet?id=${o.id}`} className="rounded-lg border border-line px-3 py-1.5 hover:border-dim">Call Sheet</Link>
                   <Link href={`/practice?id=${o.id}`} className="rounded-lg border border-line px-3 py-1.5 hover:border-dim">Practice Script</Link>
                 </div>
               </div>
