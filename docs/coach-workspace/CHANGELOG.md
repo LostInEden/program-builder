@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-17 — Auto-merge turned on for the coach branch
+- **Asked for:** the coach's work should land and show on his link without anyone touching GitHub
+- **Changed:** added `.github/workflows/coach-automerge.yml` — pull requests into `coach` from the coach or Matt merge themselves. No app changes.
+- **Commit:** (this one — opened as a test pull request to prove the automation)
+- **Status:** On coach
+- **Notes:** `master` is never auto-merged; shipping is still a manual pull request from `coach`.
+
 ## 2026-09-17 — Coach branch created
 - **Asked for:** a place where all of the coach's work is recorded in GitHub, with a live link he can look at
 - **Changed:** created the `coach` branch from `master`. No app changes. Live link: https://program-builder-git-coach-lostinedens-projects.vercel.app
