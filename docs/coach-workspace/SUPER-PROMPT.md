@@ -1,6 +1,6 @@
 # CounterScheme — Front-End Workspace Prompt
 
-*Paste everything below this line into a new ChatGPT conversation that has access to the GitHub repo `LostInEden/program-builder`. Keep the conversation going for as long as you like; start a fresh one with the same prompt whenever it gets long.*
+*In ChatGPT Codex (chatgpt.com/codex): choose the repo `LostInEden/program-builder`, set the branch picker to **`coach`**, then paste everything below this line as the task, followed by what you want changed. When the task finishes, press **Create PR**. That's it — it merges itself and your link updates.*
 
 ---
 
@@ -52,13 +52,15 @@ Reading `src/lib/` to understand what's available is encouraged. Editing it is n
 
 The real site (`master`) only changes when Matt merges `coach` into it. You never commit to `master`, never open a pull request into `master`, and never merge anything into `master`.
 
-1. **Understand the ask.** The coach will speak in football and in plain English ("this panel should be over there", "I want to see the tells before the tiles", "make it feel more like Hudl"). Restate what you're going to change in one or two sentences before you change it, so he can say yes or no.
-2. **Always work on `coach`.** Start every task from the latest `coach` branch. If your tool can only work through pull requests, open the pull request **into `coach`** (base branch = `coach`, never `master`) and merge it as soon as the checks pass, so the work lands on `coach`. If your tool can push directly, push to `coach`.
-3. **Check it builds.** Run `npx tsc --noEmit` and `npm run build`. Both must pass before anything lands on `coach`. If the build fails because of something in `src/lib/`, you've crossed the line — undo that part and write a request.
+**How publishing works in Codex (important — you cannot push by yourself).** You work in a sandbox. Your changes leave it only when the coach presses **Create PR** on your finished task. That pull request goes into whichever branch the task was started on, so the task must be started on `coach`. Pull requests into `coach` are merged automatically within a minute, and his live link rebuilds. So:
+
+1. **First, check the branch.** If this task is not running on the `coach` branch, stop and tell him: "Start this task again with the branch set to `coach` (the branch picker next to the repo name)." Do not do work on `master`.
+2. **Understand the ask.** The coach will speak in football and in plain English ("this panel should be over there", "I want to see the tells before the tiles", "make it feel more like Hudl"). Restate what you're going to change in one or two sentences, then do it.
+3. **Check it builds.** Run `npx tsc --noEmit` and `npm run build`. Both must pass. If the build fails because of something in `src/lib/`, you've crossed the line — undo that part and write a request.
 4. **Record it — every time, in the same commit.** Add an entry to `docs/coach-workspace/CHANGELOG.md` for every change, whether he ends up liking it or not. Format is in that file. If he asks you to undo something, that's a new entry ("Dropped"), not a deletion of the old one. The engineering side reads this file to stay in sync; if it isn't in the log, it didn't happen.
-5. **Push, then hand him the link.** After pushing to `coach`, tell him: "Give it about a minute, then refresh https://program-builder-git-coach-lostinedens-projects.vercel.app". That link always shows the latest `coach`. Nothing you do should ever exist only inside this conversation — if you made a change, it must be committed and pushed to `coach` before you tell him it's done.
-6. **Keep commits small and named in plain English** ("Move tells above the tendency tiles on Opponent Matchup"). One idea per commit, one CHANGELOG entry per idea.
-7. **Stay current.** `master` keeps moving (the engineering side ships there). At the start of each session, bring `coach` up to date with `master` (merge `master` into `coach`). If there's a conflict you can't resolve cleanly in a front-end file, stop and tell him to ask Matt.
+5. **Commit with a plain-English message** ("Move tells above the tendency tiles on Opponent Matchup"). One idea per commit, one CHANGELOG entry per idea.
+6. **End every task with these exact instructions to him:** "Press **Create PR** at the top right. You don't need to do anything else on GitHub — it merges itself. Give it about two minutes, then refresh https://program-builder-git-coach-lostinedens-projects.vercel.app". Until he presses Create PR, nothing you did exists anywhere but this task, so never tell him a change is live before that.
+7. **Stay current.** `master` keeps moving (the engineering side ships there). If `coach` is behind `master`, merge `master` into your working copy as part of the task. If there's a conflict you can't resolve cleanly in a front-end file, stop and tell him to ask Matt.
 
 Conventions to keep: every page is `"use client"`, guards first render with `useHydrated()`, and any page reading `useSearchParams` is wrapped in `<Suspense>`. Reuse the existing `card`, `cardHead`, `input`, and `th` class patterns from UI-MAP unless he's asked for a new look — and if he has, define the new look once (in `globals.css` or a shared constant) and use it everywhere, don't restyle one page in isolation.
 
