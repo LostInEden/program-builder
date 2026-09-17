@@ -46,19 +46,25 @@ Reading `src/lib/` to understand what's available is encouraged. Editing it is n
 
 ## 4. How to work
 
+**There is one branch for all of the coach's work: `coach`.** It is his copy of the app. It has its own permanent live link that rebuilds every time something is pushed to it:
+
+**https://program-builder-git-coach-lostinedens-projects.vercel.app**
+
+The real site (`master`) only changes when Matt merges `coach` into it. You never commit to `master`, never open a pull request into `master`, and never merge anything into `master`.
+
 1. **Understand the ask.** The coach will speak in football and in plain English ("this panel should be over there", "I want to see the tells before the tiles", "make it feel more like Hudl"). Restate what you're going to change in one or two sentences before you change it, so he can say yes or no.
-2. **Make the change on a branch.** Create a branch named `coach/<short-name>` from `master`. Never commit directly to `master`.
-3. **Check it builds.** Run `npx tsc --noEmit` and `npm run build`. Both must pass before you open a pull request. If the build fails because of something in `src/lib/`, you've crossed the line — undo that part and write a request.
-4. **Record it.** Add an entry to `docs/coach-workspace/CHANGELOG.md` for every change, in the same commit, whether or not it ends up shipping. Format is in that file. This is not optional; the engineering side reads this file to stay in sync.
-5. **Open a pull request** to `master` with a plain-English title and description the coach could have written. Vercel will build a preview link on the PR automatically — give him that link to look at.
-6. **He decides.** If he likes it, he merges it (or asks you to). If not, keep iterating on the same branch. Either way the CHANGELOG already records it.
-7. Keep changes small and separate. One idea per branch. If he asks for five things, that's five branches, or one branch with five clearly separate commits and a CHANGELOG entry for each.
+2. **Always work on `coach`.** Start every task from the latest `coach` branch. If your tool can only work through pull requests, open the pull request **into `coach`** (base branch = `coach`, never `master`) and merge it as soon as the checks pass, so the work lands on `coach`. If your tool can push directly, push to `coach`.
+3. **Check it builds.** Run `npx tsc --noEmit` and `npm run build`. Both must pass before anything lands on `coach`. If the build fails because of something in `src/lib/`, you've crossed the line — undo that part and write a request.
+4. **Record it — every time, in the same commit.** Add an entry to `docs/coach-workspace/CHANGELOG.md` for every change, whether he ends up liking it or not. Format is in that file. If he asks you to undo something, that's a new entry ("Dropped"), not a deletion of the old one. The engineering side reads this file to stay in sync; if it isn't in the log, it didn't happen.
+5. **Push, then hand him the link.** After pushing to `coach`, tell him: "Give it about a minute, then refresh https://program-builder-git-coach-lostinedens-projects.vercel.app". That link always shows the latest `coach`. Nothing you do should ever exist only inside this conversation — if you made a change, it must be committed and pushed to `coach` before you tell him it's done.
+6. **Keep commits small and named in plain English** ("Move tells above the tendency tiles on Opponent Matchup"). One idea per commit, one CHANGELOG entry per idea.
+7. **Stay current.** `master` keeps moving (the engineering side ships there). At the start of each session, bring `coach` up to date with `master` (merge `master` into `coach`). If there's a conflict you can't resolve cleanly in a front-end file, stop and tell him to ask Matt.
 
 Conventions to keep: every page is `"use client"`, guards first render with `useHydrated()`, and any page reading `useSearchParams` is wrapped in `<Suspense>`. Reuse the existing `card`, `cardHead`, `input`, and `th` class patterns from UI-MAP unless he's asked for a new look — and if he has, define the new look once (in `globals.css` or a shared constant) and use it everywhere, don't restyle one page in isolation.
 
 ## 5. When it isn't front-end: write a request
 
-Anything on the "may not" list becomes an entry in `docs/coach-workspace/REQUESTS.md` (format is in the file). Write it the way the coach said it, add what you found in the code (which page, which field or function it would touch), and stop there. Tell the coach: "That one changes what the app knows, so I've written it up for Matt." Commit the request on your branch like any other change.
+Anything on the "may not" list becomes an entry in `docs/coach-workspace/REQUESTS.md` (format is in the file). Write it the way the coach said it, add what you found in the code (which page, which field or function it would touch), and stop there. Tell the coach: "That one changes what the app knows, so I've written it up for Matt." Commit and push the request to `coach` like any other change.
 
 Examples of requests, not changes: a new stat that isn't computed yet; a new column in an import; changing how tells are ranked; changing what the game plan recommends; new opponent fields; saving something new about a player; anything about the AI's answers; anything about accounts, sharing, or devices.
 

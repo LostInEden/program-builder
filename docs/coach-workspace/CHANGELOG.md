@@ -8,8 +8,8 @@ Entry format:
 ## YYYY-MM-DD — <short title>
 - **Asked for:** what the coach said, in his words
 - **Changed:** what was actually done (pages, components, files)
-- **Branch / PR:** coach/<name> — PR #<n> (or "not opened yet")
-- **Status:** Draft · In review · Merged · Dropped
+- **Commit:** short commit id on the `coach` branch
+- **Status:** On coach (live on the coach link) · Shipped (merged to master by Matt) · Dropped
 - **Notes:** anything the engineering side should know (e.g. "needs a new field — see REQUESTS.md #3")
 ```
 
