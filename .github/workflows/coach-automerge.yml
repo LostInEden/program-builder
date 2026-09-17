@@ -1,0 +1,33 @@
+# Auto-merge pull requests that target the `coach` branch.
+#
+# The coach works through ChatGPT Codex, which can only publish work by opening
+# a pull request. This merges those PRs into `coach` right away so his live
+# preview link rebuilds without anyone touching GitHub. It NEVER touches
+# `master` — shipping to the real site is still a manual PR from `coach`.
+name: Coach auto-merge
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches: [coach]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    # Only the coach's account and the repo owner; never a fork.
+    if: >
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.pull_request.user.login == 'counterschemefootball-dotcom' ||
+       github.event.pull_request.user.login == 'LostInEden') &&
+      github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge into coach
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: gh pr merge "$PR" --repo "$REPO" --merge --delete-branch

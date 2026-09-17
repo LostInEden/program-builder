@@ -4,9 +4,11 @@ This folder is the coach's sandbox for how CounterScheme looks and how things ar
 
 **For the coach (three steps):**
 
-1. Open ChatGPT with the GitHub repo connected (`LostInEden/program-builder`).
-2. Paste the whole of `SUPER-PROMPT.md` as your first message.
-3. Talk to it in football and plain English: "move the tells above the tiles," "I want the depth chart to feel more like Hudl," "show me the best players before anything else on the game plan," "new coat of paint — dark navy, gold accent." It will restate what it's about to do, make the change on its own branch, and give you a preview link to look at. If it says "that one goes to Matt," it means the change would alter what the app knows or computes — it's written up in `REQUESTS.md` and Matt will handle it.
+1. Go to chatgpt.com/codex, pick the repo `LostInEden/program-builder`, and set the branch picker to **`coach`** (not `master`).
+2. Paste the whole of `SUPER-PROMPT.md`, then say what you want changed, and send.
+3. When the task finishes, press **Create PR** (top right). You don't have to do anything on GitHub — it merges itself. Wait about two minutes and refresh your link.
+
+What to say — talk to it in football and plain English: "move the tells above the tiles," "I want the depth chart to feel more like Hudl," "show me the best players before anything else on the game plan," "new coat of paint — dark navy, gold accent." It will restate what it's about to do, make the change on its own branch, and give you a preview link to look at. If it says "that one goes to Matt," it means the change would alter what the app knows or computes — it's written up in `REQUESTS.md` and Matt will handle it.
 
 **Where his work lives:** one branch called `coach`. His live link, which rebuilds about a minute after every push:
 https://program-builder-git-coach-lostinedens-projects.vercel.app
