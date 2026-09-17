@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-17 — Coach branch created
+- **Asked for:** a place where all of the coach's work is recorded in GitHub, with a live link he can look at
+- **Changed:** created the `coach` branch from `master`. No app changes. Live link: https://program-builder-git-coach-lostinedens-projects.vercel.app
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** everything from the workspace lands on this branch; Matt merges it to `master` to ship.
+
 ## 2026-09-16 — Workspace created
 - **Asked for:** a way for the coach to work on the look and organization of the app himself, with everything recorded
 - **Changed:** added `docs/coach-workspace/` (SUPER-PROMPT, UI-MAP, this log, REQUESTS, README). No app changes.
