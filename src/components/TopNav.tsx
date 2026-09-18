@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Bell, ChevronDown } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
+import SectionTabs from "@/components/SectionTabs";
 import ChatDrawer from "@/components/ChatDrawer";
 
-// Navigation lives in the left bar only (Shopify-style). The top bar is
-// identity, search, the conversation, updates, and the coach chip.
+// Identity and tools above the desktop navigation tabs.
 export default function TopNav() {
   const router = useRouter();
   const hydrated = useHydrated();
@@ -29,16 +29,16 @@ export default function TopNav() {
   }, [q, players]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white">
-      <div className="flex items-center gap-6 px-5 h-[60px]">
+    <header className="sticky top-0 z-50 border-b border-line theme-navigation">
+      <div className="flex items-center gap-3 px-4 h-[52px]">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <span className="grid size-9 place-items-center rounded-xl bg-navy text-white font-extrabold text-sm">
+          <span className="grid size-8 place-items-center rounded-lg bg-navy text-white font-extrabold text-sm">
             CS
           </span>
-          <span className="display text-xl font-extrabold tracking-tight text-navy">CounterScheme</span>
+          <span className="display text-lg font-extrabold tracking-tight text-navy">CounterScheme</span>
         </Link>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2">
           <div className="relative hidden md:block">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim" />
             <input
@@ -46,7 +46,7 @@ export default function TopNav() {
               onChange={(e) => setQ(e.target.value)}
               onBlur={() => setTimeout(() => setQ(""), 200)}
               placeholder="Search players..."
-              className="w-72 rounded-lg border border-line bg-pitch pl-9 pr-3 py-2 text-sm placeholder:text-dim/70 focus:outline-none focus:border-grass"
+              className="w-56 rounded-md border border-line bg-panel pl-9 pr-3 py-2 text-sm placeholder:text-dim/70 focus:outline-none focus:border-grass"
             />
             {hydrated && matches.length > 0 && (
               <div className="absolute top-full mt-1 w-full rounded-xl border border-line bg-white shadow-lg overflow-hidden">
@@ -111,6 +111,7 @@ export default function TopNav() {
           </Link>
         </div>
       </div>
+      <SectionTabs />
     </header>
   );
 }

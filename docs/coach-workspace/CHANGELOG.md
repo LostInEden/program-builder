@@ -15,6 +15,62 @@ Entry format:
 
 ---
 
+## 2026-09-18 — Record complete-call combinations for engineering
+- **Asked for:** a tab where coverages, fronts, and adjustments "mesh", both to build calls and check how the pieces fit
+- **Changed:** brought request #2 into `docs/coach-workspace/REQUESTS.md`, describing saved Complete Calls and combination-specific fit checks.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Documentation only; Complete Calls and combination-specific checking are not implemented. Existing analysis still checks the whole scheme. Source: `7c56d48` on `preserved-coach-top-dropdown-navigation`.
+
+## 2026-09-18 — Record starting diagrams to review and adjust
+- **Asked for:** "Can we create drawings of each front, coverage, and pressure", with starting diagrams to "review and adjust"
+- **Changed:** brought request #1 into `docs/coach-workspace/REQUESTS.md`, including saved concept-to-diagram associations and preserving coach edits.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Documentation only; diagram generation is not implemented. Already included in `7c56d48` on `preserved-coach-top-dropdown-navigation`; no duplicate changes taken from the diagrams branch.
+
+## 2026-09-18 — Put terminology setup in Settings
+- **Asked for:** move one-time terminology setup elsewhere
+- **Changed:** moved the terminology entry out of the My Scheme menu and added an Edit terminology section to Settings, linking to the existing terminology screen.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing route and saved terminology are unchanged. Source: `7c56d48` on `preserved-coach-top-dropdown-navigation`.
+
+## 2026-09-18 — Put Defensive Analysis under My Scheme
+- **Asked for:** see how the defense fits and "name scheme fit defensive analysis"
+- **Changed:** placed the existing analysis screen under My Scheme, removed its duplicate top-level desktop tab, named its menu entry and heading Defensive Analysis, and added a return link to My Scheme.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing whole-scheme findings and calculations are unchanged. Sources: `7c56d48` and `d33d698` on `preserved-coach-top-dropdown-navigation`.
+
+## 2026-09-18 — Organize concepts in Scheme Library
+- **Asked for:** group fronts, coverages, pressures, and adjustments together; "scheme library is good for now"
+- **Changed:** grouped the four existing concept categories under My Scheme → Scheme Library and updated the editor heading. Removed Coverage Library menu and standalone editor links while preserving its content and responsibility tools.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves the final Scheme Library name, replacing the intermediate Defensive Calls wording. Existing category routes and saved data are unchanged. Sources: `f4ea202` and `261c8fe` on `preserved-coach-top-dropdown-navigation`.
+
+## 2026-09-18 — Keep the header and navigation compact
+- **Asked for:** "I like the clean layout that doesnt take up a lot of space"
+- **Changed:** brought over the 52px identity bar, 44px text navigation row, compact dropdowns, active underlines, and program name on wide screens in `TopNav.tsx` and `SectionTabs.tsx`.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves the final compact presentation rather than the earlier bulky tab styling. Source: `96ee197` on `preserved-coach-top-dropdown-navigation`.
+
+## 2026-09-18 — Restore top navigation with dropdown menus
+- **Asked for:** "I liked the previous layout how the tabs were on the top and had drop down menus"
+- **Changed:** replaced the desktop sidebar with top section navigation and dropdowns, using `SectionTabs.tsx`, shared section definitions, `TopNav.tsx`, and the page layout. Retained current-page indicators, counts, keyboard and outside-click dismissal, and phone bottom navigation.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Pages use the full available width. Existing routes and data are unchanged. Source: `e85b01b` on `preserved-coach-top-dropdown-navigation`.
+
+## 2026-09-18 — Apply the final dark-blue and charcoal-grey theme
+- **Asked for:** "Background colors - medium grey and light dark blue theme", then "maybe switch the two and make it darker"
+- **Changed:** brought over the final deep-blue page backgrounds and cards, charcoal-grey navigation and top bar, lighter text and controls, and white print backgrounds in `globals.css` and navigation components.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Final palette includes both theme revisions (`1c55527`, `0646061`) from `preserved-coach-top-dropdown-navigation`. No duplicate changes taken from the theme branch; no data or calculation changes. Validation for this integration: `tsc --noEmit` and `next build --webpack` passed, including all 23 generated pages. The default Turbopack build was blocked by this environment's local port restriction; no build configuration was changed.
+
 ## 2026-09-17 — Auto-merge turned on for the coach branch
 - **Asked for:** the coach's work should land and show on his link without anyone touching GitHub
 - **Changed:** added `.github/workflows/coach-automerge.yml` — pull requests into `coach` from the coach or Matt merge themselves. No app changes.

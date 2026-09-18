@@ -60,10 +60,10 @@ function ConceptsInner() {
       </Link>
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Manage {KIND_LABEL[kindParam]}</h1>
-          <p className="text-dim mt-0.5">Every concept here is part of your saved defensive model — the analysis and game plans read from it.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">Scheme Library</h1>
+          <p className="text-dim mt-0.5">Your fronts, coverages, pressures, and adjustments — all in one place.</p>
         </div>
-        <div className="flex gap-1 rounded-lg border border-line bg-white p-1">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-line bg-white p-1">
           {(Object.keys(KIND_LABEL) as ConceptKind[]).map((k) => (
             <button
               key={k}
@@ -282,7 +282,7 @@ function Editor({ c, onChange, onRemove, onConfirm }: { c: Concept; onChange: (p
         <div className={`${card} p-4 text-sm flex items-center gap-3`}>
           <BookOpen size={16} className="text-grass shrink-0" />
           <span className="text-dim">Knowledge base: <span className="font-semibold text-ink">{lib.name}</span> — {lib.summary}</span>
-          <Link href="/scheme/coverages" className="ml-auto text-xs font-bold text-grass hover:underline whitespace-nowrap">Open library</Link>
+          
         </div>
       )}
 

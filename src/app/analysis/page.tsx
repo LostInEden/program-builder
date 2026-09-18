@@ -75,9 +75,11 @@ export default function AnalysisPage() {
 
   return (
     <div className="px-6 py-8 max-w-6xl mx-auto">
+      <Link href="/scheme" className="mb-3 inline-block text-sm text-dim hover:text-ink">← My Scheme</Link>
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold tracking-tight">Defensive Analysis</h1>
-        <p className="text-dim mt-0.5">
+        <p className="text-dim mt-0.5">How your saved fronts, coverages, pressures, and adjustments work together.</p>
+        <p className="text-dim mt-2 text-sm">
           Your saved defense — {confirmed} concepts, {groupName} ({structureName}) — checked against personnel, formations,
           motions, run and pass concepts, coverage responsibilities, numbers, and situational football. Considerations, not corrections.
         </p>

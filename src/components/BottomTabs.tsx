@@ -20,7 +20,7 @@ export default function BottomTabs() {
   const pathname = usePathname();
   if (pathname.startsWith("/scheme/playbook")) return null;
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]">
+    <nav className="min-[900px]:hidden fixed bottom-0 inset-x-0 z-50 border-t border-line theme-navigation pb-[env(safe-area-inset-bottom)]">
       <div className="grid grid-cols-4">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);

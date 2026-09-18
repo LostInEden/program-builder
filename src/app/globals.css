@@ -1,18 +1,17 @@
 @import "tailwindcss";
 
-/* CounterScheme light theme (coach's V1 look, Aug 2026).
-   Token NAMES are historical (grass = primary accent, pitch = page bg) —
-   values are the light palette. */
+/* CounterScheme dark-blue and charcoal-grey theme.
+   Historical token names stay shared across every workspace. */
 @theme {
-  --color-pitch: #f4f6fa;        /* page background */
-  --color-panel: #ffffff;
-  --color-card: #ffffff;         /* surfaces */
-  --color-line: #e3e8f0;         /* hairline borders */
-  --color-ink: #0f1c2e;          /* primary text (navy) */
-  --color-dim: #64748b;          /* secondary text */
-  --color-grass: #1d63ed;        /* primary accent — CounterScheme blue */
-  --color-grass-deep: #1450c4;
-  --color-navy: #0b1526;         /* dark chips (position boxes, logo bar) */
+  --color-pitch: #17283e;        /* page background */
+  --color-panel: #34465b;
+  --color-card: #293b50;         /* surfaces */
+  --color-line: #526176;         /* hairline borders */
+  --color-ink: #edf2f8;          /* primary text */
+  --color-dim: #bdc9d7;          /* secondary text */
+  --color-grass: #39658f;        /* muted blue accent */
+  --color-grass-deep: #305579;
+  --color-navy: #1d3048;         /* dark chips (position boxes, logo bar) */
   --color-sky: #0284c7;
   --color-ember: #d97706;
   --color-mind: #7c3aed;
@@ -21,7 +20,7 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
@@ -30,11 +29,36 @@ body {
   font-family: var(--font-body);
 }
 
-/* Soft app background */
+/* Shared page background and grey navigation, desktop and phone. */
 .stadium-bg {
-  background:
-    radial-gradient(ellipse 70% 40% at 50% -10%, rgba(29, 99, 237, 0.05), transparent 60%),
-    linear-gradient(180deg, #f6f8fc 0%, #f4f6fa 100%);
+  background: var(--color-pitch);
+}
+
+.theme-navigation {
+  --color-ink: #f1f3f5;
+  --color-dim: #c5cbd3;
+  --color-grass: #d0e4ff;
+  --color-line: #555d68;
+  --color-navy: #282e37;
+  --color-ember: #ffd18a;
+  --color-slate-50: #454d58;
+  --color-slate-100: #505966;
+  --color-slate-200: #606a78;
+  background-color: #383e47;
+  color: var(--color-ink);
+}
+
+/* Existing light surface utilities share the dark palette on screen.
+   Keep text-white intact for filled buttons and preserve paper styling. */
+@media screen {
+  :root {
+    --color-slate-50: #34465b;
+    --color-slate-100: #3b4e64;
+    --color-slate-200: #526176;
+  }
+  .bg-white { background-color: var(--color-panel); }
+  .text-navy { color: var(--color-ink); }
+  .text-grass { color: #a9cff5; }
 }
 
 /* Historically the condensed-uppercase heading face; now just the UI face.
@@ -55,7 +79,7 @@ body {
 }
 
 ::selection {
-  background: rgba(29, 99, 237, 0.2);
+  background: rgba(53, 93, 135, 0.25);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -73,7 +97,7 @@ input[type="number"] {
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: light;
+  color-scheme: dark;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -82,18 +106,18 @@ select {
   cursor: pointer;
 }
 select option {
-  background-color: #ffffff;
-  color: #0f1c2e;
+  background-color: var(--color-panel);
+  color: #edf2f8;
 }
 select optgroup {
-  background-color: #ffffff;
-  color: #64748b;
+  background-color: var(--color-panel);
+  color: #bdc9d7;
   font-style: normal;
   font-weight: 600;
 }
 
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #d3dae5; border-radius: 8px; }
+*::-webkit-scrollbar-thumb { background: #69788c; border-radius: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* ---- Paper (Q44) ---------------------------------------------------------
@@ -102,6 +126,14 @@ select optgroup {
    Mark anything that shouldn't be on paper `no-print`; wrap a page body in
    `print-root`; `print-section` starts a new sheet. */
 @media print {
+  :root {
+    --color-pitch: #ffffff;
+    --color-panel: #ffffff;
+    --color-ink: #0f1c2e;
+    --color-dim: #46566b;
+    --color-card: #ffffff;
+    --color-line: #cbd5e1;
+  }
   @page {
     margin: 0.5in;
   }

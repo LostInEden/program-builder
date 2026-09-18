@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { motion } from "motion/react";
 import PageHeader from "@/components/PageHeader";
@@ -116,6 +117,14 @@ export default function SettingsPage() {
           </div>
         )}
       </motion.div>
+
+      <section className="rounded-xl border border-line bg-card p-5 mb-5 flex flex-wrap items-center gap-3">
+        <div>
+          <h2 className="text-lg font-bold">Terminology</h2>
+          <p className="text-sm text-dim">Set the names you use for positions, formations, and strength. Revisit when your language changes.</p>
+        </div>
+        <Link href="/scheme/terminology" className="ml-auto rounded-lg border border-line px-4 py-2 text-sm font-semibold text-grass hover:bg-slate-50">Edit terminology</Link>
+      </section>
 
       {/* Skill categories (Q10) */}
       <motion.div

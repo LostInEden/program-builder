@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import TopNav from "@/components/TopNav";
-import SideNav from "@/components/SideNav";
 import BottomTabs from "@/components/BottomTabs";
 
 const inter = Inter({
@@ -24,8 +23,7 @@ export default function RootLayout({
       <body className={`${inter.variable} antialiased stadium-bg min-h-screen`}>
         <TopNav />
         <div className="flex min-h-[calc(100vh-61px)]">
-          <SideNav />
-          <main className="flex-1 min-w-0 overflow-x-hidden pb-16 lg:pb-0">{children}</main>
+          <main className="flex-1 min-w-0 overflow-x-hidden pb-16 min-[900px]:pb-0">{children}</main>
         </div>
         <BottomTabs />
       </body>

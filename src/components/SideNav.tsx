@@ -24,7 +24,7 @@ type Section = {
 };
 type BadgeState = { pending: number; players: number };
 
-const SECTIONS: Section[] = [
+export const SECTIONS: Section[] = [
   { href: "/", label: "Home", icon: Home, match: ["/"] },
   {
     href: "/team",
@@ -46,15 +46,11 @@ const SECTIONS: Section[] = [
     href: "/scheme",
     label: "My Scheme",
     icon: Shield,
-    match: ["/scheme"],
+    match: ["/scheme", "/analysis"],
     badge: (s) => (s.pending ? `${s.pending} to confirm` : null),
     children: [
-      { href: "/scheme/concepts?kind=front", label: "Fronts" },
-      { href: "/scheme/concepts?kind=coverage", label: "Coverages" },
-      { href: "/scheme/concepts?kind=pressure", label: "Pressures" },
-      { href: "/scheme/concepts?kind=adjustment", label: "Adjustments" },
-      { href: "/scheme/coverages", label: "Coverage Library" },
-      { href: "/scheme/terminology", label: "Terminology" },
+      { href: "/scheme/concepts?kind=front", label: "Scheme Library" },
+      { href: "/analysis", label: "Defensive Analysis" },
     ],
   },
   {
@@ -119,7 +115,7 @@ function SideNavInner() {
   const badges: BadgeState = { pending: hydrated ? pending : 0, players: hydrated ? players : 0 };
 
   return (
-    <aside className="w-60 shrink-0 border-r border-line bg-white hidden lg:flex flex-col sticky top-[61px] h-[calc(100vh-61px)]">
+    <aside className="w-60 shrink-0 border-r border-line theme-navigation hidden lg:flex flex-col sticky top-[61px] h-[calc(100vh-61px)]">
       <nav className="flex-1 overflow-y-auto px-3 pt-3">
         {SECTIONS.map((sec) => {
           const active = inSection(pathname, sec);
