@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-18 — Authenticate this Mac for coach pushes
+- **Asked for:** "Help me authenticate this Mac with GitHub" and verify access before pushing the existing `coach` commit.
+- **Changed:** recorded the completed Git Credential Manager browser sign-in, verified push access to `LostInEden/program-builder`, and successfully ran `git push origin coach:coach` from this Mac.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** The verification push reported Everything up-to-date; local `coach`, `origin/coach`, and GitHub's `coach` all matched `f936304c42b7dfe8a96cc31d230ae4cb558b152c`. Authentication setup changed no app code, commits, or branches. This commit updates only the changelog; credentials are not stored in the repository.
+
 ## 2026-09-18 — Record complete-call combinations for engineering
 - **Asked for:** a tab where coverages, fronts, and adjustments "mesh", both to build calls and check how the pieces fit
 - **Changed:** brought request #2 into `docs/coach-workspace/REQUESTS.md`, describing saved Complete Calls and combination-specific fit checks.
