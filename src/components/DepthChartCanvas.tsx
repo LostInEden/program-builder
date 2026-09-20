@@ -9,9 +9,9 @@ import { slotLabelOf, type Player, type Overrides } from "@/lib/store";
 // Within a band, deeper slots (larger structure y) sit slightly higher.
 // Values are where the BOTTOM of a chip lands (chips render upward from it).
 const BANDS: Record<"deep" | "second" | "front", [number, number]> = {
-  deep: [50, 64],
-  second: [74, 76],
-  front: [90, 91],
+  deep: [42, 50],
+  second: [70, 71],
+  front: [91, 92],
 };
 
 export default function DepthChartCanvas({
@@ -60,19 +60,26 @@ export default function DepthChartCanvas({
   };
   const leftFor = (i: number) => {
     const slot = structure.slots[i];
+    const r = xRank.get(i);
+    // Spread crowded linebacker rows without letting custom inside spacing collide.
+    if (slot.level === "second" && r && r.count >= 3) {
+      const allInside = structure.slots.filter((s) => s.level === "second").every((s) => s.concept === "Off-ball LB");
+      if (r.count === 3 && allInside) return 28 + r.rank * 22;
+      if (r.count >= 4) return 18 + r.rank * (64 / (r.count - 1));
+    }
     // Keep the inside linebackers central and the corners near the sidelines.
     if (slot.concept === "Off-ball LB" && (slot.pos === "M" || slot.pos === "W")) {
       return slot.x < 50 ? 39 : slot.x > 50 ? 61 : 50;
     }
     if (slot.concept === "Corner") return slot.x < 50 ? 8 : 92;
-    const r = xRank.get(i);
     if (!r) return structure.slots[i].x;
     return 8 + ((r.rank + 0.5) / r.count) * 84;
   };
 
   return (
+    <div className="overflow-x-auto rounded-xl" role="region" aria-label="Depth chart field" tabIndex={0}>
     <div
-      className={`relative rounded-xl border border-line bg-[#174b3b] w-full aspect-[12/5] min-h-90 overflow-hidden ${className}`}
+      className={`relative rounded-xl border border-line bg-[#174b3b] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
       style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
@@ -126,7 +133,7 @@ export default function DepthChartCanvas({
               {label}
             </span>
             <span
-              className={`-mt-0.5 min-w-[86px] max-w-32 rounded-md border bg-white shadow-sm px-2 pt-1.5 pb-1 text-left ${
+              className={`-mt-0.5 w-32 rounded-md border bg-white shadow-sm px-2 pt-1.5 pb-1 text-left ${
                 changedSlots?.includes(i) ? "border-grass ring-1 ring-grass/30" : "border-line"
               }`}
             >
@@ -136,6 +143,7 @@ export default function DepthChartCanvas({
                 return p ? (
                   <span
                     key={pid}
+                    title={`${p.jersey ?? "—"} ${p.name}`}
                     className={`block truncate text-[11px] leading-4.5 ${depth === 0 ? "font-semibold text-ink" : "text-dim"}`}
                   >
                     <span className="tabular-nums text-dim mr-1.5">{p.jersey ?? "—"}</span>
@@ -150,6 +158,7 @@ export default function DepthChartCanvas({
           </motion.button>
         );
       })}
+    </div>
     </div>
   );
 }

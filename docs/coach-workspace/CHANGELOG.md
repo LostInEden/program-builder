@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Give depth chart names room between positions
+- **Asked for:** "space out the positions slightly so the names dont overlap and cover other positions"
+- **Changed:** increased the vertical gaps between defensive levels, spread crowded linebacker rows, and kept name cards at a consistent width. Narrow screens can scroll the field horizontally rather than squeezing positions together; full player names are available on hover.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Retains the opponent's 20-yard line, field markings, wide corners, and saved assignments. Display changes apply to both overview and editor.
+
 ## 2026-09-20 — Show the defense at the opponent's 20
 - **Asked for:** "make it the same but defense on the opponents 20 yards line"
 - **Changed:** relabeled the shared depth chart field from the opponent's 40 at the top to their 20 at the line of scrimmage. Added an explicit opponent's 20 label at the line and removed the goal-line marking.
