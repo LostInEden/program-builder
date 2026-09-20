@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Bring Mike and Will inside and widen the corners
+- **Asked for:** "move the mike and will in some and widen the corners"
+- **Changed:** positioned Mike and Will closer to the center and corners toward the sidelines in the shared depth chart display. Clamped player-card centers to keep edge cards inside the field on narrow screens.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Display positioning only; underlying defensive structures, player assignments, and saved data are unchanged.
+
+## 2026-09-20 — Make the depth chart field visible
+- **Asked for:** "The depth chart background needs to be fixed where you can see the field behind it"
+- **Changed:** replaced the pale depth chart background with dark green turf, subtle alternating strips, and visible white yard lines, numbers, hash marks, and boundary in `DepthChartCanvas.tsx`. Applies to the overview and depth chart editor.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** The old background used near-white field markings against a pale surface after the dark theme change. Styling only; player cards, positions, assignments, and editing behavior are unchanged.
+
 ## 2026-09-20 — Remove Watch List from the interface
 - **Asked for:** "I dont want watchlist on the software - remove that"
 - **Changed:** removed Watch List navigation, its team screen, roster badges, summary and quick-action links, player-profile toggle, and old Watch List entries from displayed activity feeds. Old Watch List URLs now show the team overview.

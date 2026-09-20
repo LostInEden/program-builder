@@ -59,6 +59,12 @@ export default function DepthChartCanvas({
     return hi - norm * (hi - lo); // deeper (larger y) → higher on the card
   };
   const leftFor = (i: number) => {
+    const slot = structure.slots[i];
+    // Keep the inside linebackers central and the corners near the sidelines.
+    if (slot.concept === "Off-ball LB" && (slot.pos === "M" || slot.pos === "W")) {
+      return slot.x < 50 ? 39 : slot.x > 50 ? 61 : 50;
+    }
+    if (slot.concept === "Corner") return slot.x < 50 ? 8 : 92;
     const r = xRank.get(i);
     if (!r) return structure.slots[i].x;
     return 8 + ((r.rank + 0.5) / r.count) * 84;
@@ -66,14 +72,16 @@ export default function DepthChartCanvas({
 
   return (
     <div
-      className={`relative rounded-xl border border-line bg-[#f8fafd] aspect-[12/5] min-h-64 overflow-hidden ${className}`}
+      className={`relative rounded-xl border border-line bg-[#174b3b] aspect-[12/5] min-h-64 overflow-hidden ${className}`}
+      style={{ backgroundImage: "repeating-linear-gradient(90deg, transparent 0%, transparent 14%, rgba(255,255,255,0.04) 14%, rgba(255,255,255,0.04) 28%)" }}
     >
+      <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
       {/* vertical yard lines with rotated numbers, like a field strip */}
       {[8, 22.75, 36.5, 50, 63.5, 77.25, 92].map((x, i) => (
         <div key={x} className="absolute inset-y-0" style={{ left: `${x}%` }}>
-          <div className="absolute inset-y-2 w-px bg-ink/8" />
+          <div className="absolute inset-y-2 w-px bg-white/40" />
           {[null, "10", "30", "50", "30", "10", null][i] && (
-            <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rotate-90 text-[13px] font-bold text-ink/10 select-none tabular-nums">
+            <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rotate-90 text-[13px] font-bold text-white/65 select-none tabular-nums">
               {[null, "10", "30", "50", "30", "10", null][i]}
             </span>
           )}
@@ -83,7 +91,7 @@ export default function DepthChartCanvas({
       {[30, 45, 60, 75].map((y) => (
         <div key={y} className="absolute inset-x-6 flex justify-between pointer-events-none" style={{ top: `${y}%` }}>
           {Array.from({ length: 24 }, (_, i) => (
-            <span key={i} className="h-1 w-px bg-ink/5" />
+            <span key={i} className="h-1 w-px bg-white/45" />
           ))}
         </div>
       ))}
@@ -103,7 +111,7 @@ export default function DepthChartCanvas({
             className={`absolute -translate-x-1/2 -translate-y-full flex flex-col items-center ${
               onSlotClick ? "cursor-pointer" : "cursor-default"
             }`}
-            style={{ left: `${leftFor(i)}%`, top: `${topFor(slot.level, slot.y)}%` }}
+            style={{ left: `clamp(68px, ${leftFor(i)}%, calc(100% - 68px))`, top: `${topFor(slot.level, slot.y)}%` }}
           >
             <span
               className={`display relative z-10 rounded-[4px] px-2.5 py-[3px] text-[10.5px] font-bold tracking-wide text-white transition-colors ${
