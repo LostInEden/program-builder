@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Remove Watch List from the interface
+- **Asked for:** "I dont want watchlist on the software - remove that"
+- **Changed:** removed Watch List navigation, its team screen, roster badges, summary and quick-action links, player-profile toggle, and old Watch List entries from displayed activity feeds. Old Watch List URLs now show the team overview.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing saved metadata is left untouched for compatibility; Watch List is no longer accessible in the interface. Player evaluation stars remain because they are football grades, not Watch List controls.
+
+## 2026-09-20 — Simplify My Team navigation
+- **Asked for:** "Keep depth chart, roster, and schedule on there" and "have the rest on the overview part as options"
+- **Changed:** kept Overview, Depth Chart, Roster, and Schedule in the My Team dropdown. Added prominent Player Profiles, Weight Room, and Injuries links to Overview, plus a return-to-overview link on team subviews.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing profile, weight room, injury, roster, depth chart, and schedule functionality is retained. No changes to saved team data or calculations.
+
 ## 2026-09-20 — Add Self scout under My Scheme
 - **Asked for:** "Add Self scout to my scheme"; defense for now, with both sides once offense is added.
 - **Changed:** added Self scout to the My Scheme dropdown, a link on the scheme overview, and `/scheme/self-scout` with the team's name, defense scope, and an explicit report-unavailable state. Documented defensive snap import, storage, and tendency reporting as request #3.

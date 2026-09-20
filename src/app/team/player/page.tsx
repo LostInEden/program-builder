@@ -47,8 +47,6 @@ function PlayerProfile() {
   const player = useStore((s) => s.players.find((p) => p.id === id));
   const updatePlayer = useStore((s) => s.updatePlayer);
   const removePlayer = useStore((s) => s.removePlayer);
-  const watchList = useStore((s) => s.watchList);
-  const toggleWatch = useStore((s) => s.toggleWatch);
   const skillCategories = useStore((s) => s.skillCategories);
   const seasonSchedule = useStore((s) => s.seasonSchedule);
   const setWeeklyGrade = useStore((s) => s.setWeeklyGrade);
@@ -134,15 +132,6 @@ function PlayerProfile() {
                 <option>Out</option>
               </select>
             </div>
-            <button
-              onClick={() => toggleWatch(id)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold ${
-                watchList.includes(id) ? "border-amber-300 bg-amber-50 text-amber-700" : "border-line text-dim hover:text-ink"
-              }`}
-            >
-              <Star size={15} className={watchList.includes(id) ? "fill-amber-400 text-amber-400" : ""} />
-              {watchList.includes(id) ? "On Watch List" : "Watch"}
-            </button>
           </div>
         </div>
 

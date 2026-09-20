@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import {
   Search, Upload, Plus, Pencil, X, ChevronRight, ArrowUp, ArrowDown, Check,
-  Star, Users, ClipboardCheck, Ambulance, UserPlus, LayoutGrid, Undo2, Trash2,
+  Users, ClipboardCheck, Ambulance, UserPlus, LayoutGrid, Undo2, Trash2,
 } from "lucide-react";
 import {
   useStore, useHydrated, slotLabelOf, fmtHeight, baseGroupFor, effectiveSlots, overriddenSlots,
@@ -35,10 +35,9 @@ const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink
 const th = "display uppercase text-[11px] tracking-widest text-dim font-semibold";
 
 function RosterRows({
-  players, watchList, limit,
+  players, limit,
 }: {
   players: Player[];
-  watchList: string[];
   limit?: number;
 }) {
   const shown = limit ? players.slice(0, limit) : players;
@@ -66,9 +65,6 @@ function RosterRows({
               <Link href={`/team/player?id=${p.id}`} className="font-semibold text-grass hover:underline">
                 {p.name}
               </Link>
-              {watchList.includes(p.id) && (
-                <Star size={11} className="inline ml-1.5 -mt-0.5 fill-amber-400 text-amber-400" />
-              )}
             </td>
             <td className="px-4 py-2.5 text-dim">{p.positions.join("/") || "—"}</td>
             <td className="px-4 py-2.5 text-dim">{p.cls || "—"}</td>
@@ -94,12 +90,13 @@ function TeamPageInner() {
   const hydrated = useHydrated();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const view = searchParams.get("view") ?? "overview";
+  const requestedView = searchParams.get("view") ?? "overview";
+  const view = ["depth", "roster", "profiles", "weights", "injuries", "schedule"].includes(requestedView) ? requestedView : "overview";
 
   const {
-    players, groups, activeGroupId, overrides, watchList, activity,
+    players, groups, activeGroupId, overrides, activity,
     setActiveGroup, setSlotPlayers, clearSlotOverride, setGroupStructure, addGroup, renameGroup, removeGroup,
-    addPlayer, updatePlayer, setSlotOverride, seasonSchedule, updateScheduleWeek, toggleWatch,
+    addPlayer, updatePlayer, setSlotOverride, seasonSchedule, updateScheduleWeek,
   } = useStore();
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState(false);
@@ -133,6 +130,7 @@ function TeamPageInner() {
 
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
 
+  const visibleActivity = activity.filter((a) => !/watch list/i.test(a.sub ?? ""));
   const injured = players.filter((p) => p.status !== "Healthy");
   const filledSlots = Object.values(slots).filter((ids) => ids.length > 0).length;
 
@@ -152,7 +150,6 @@ function TeamPageInner() {
     roster: ["Roster", "Every player with measurables. Football skill grades live on the player profile."],
     profiles: ["Player Profiles", "Open a player to edit identity, measurables, and evaluation."],
     injuries: ["Injuries", "Availability status for every player."],
-    watchlist: ["Watch List", "Players you're keeping an eye on."],
     weights: ["Weight Room", "Testing numbers — syncs to player profiles."],
     schedule: ["Season Schedule", "10 games + bye over 11 weeks. The calendar follows this."],
   };
@@ -413,6 +410,23 @@ function TeamPageInner() {
         </div>
       </div>
 
+      {view !== "overview" && <Link href="/team" className="mb-4 inline-block text-sm font-semibold text-grass hover:underline">← My Team overview</Link>}
+
+      {view === "overview" && (
+        <nav aria-label="Team options" className="mb-5 grid gap-3 sm:grid-cols-3">
+          {[
+            { view: "profiles", label: "Player Profiles", description: "Player details and football evaluations." },
+            { view: "weights", label: "Weight Room", description: "Testing numbers and weight room imports." },
+            { view: "injuries", label: "Injuries", description: "Player availability and injury status." },
+          ].map((option) => (
+            <Link key={option.view} href={`/team?view=${option.view}`} className="rounded-xl border border-line bg-card p-4 transition hover:border-grass focus-visible:outline-2 focus-visible:outline-grass">
+              <span className="flex items-center justify-between gap-2 font-bold">{option.label}<ChevronRight size={16} className="text-grass" /></span>
+              <span className="mt-1 block text-sm text-dim">{option.description}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
+
       {view === "overview" && (
         <div className="grid gap-5 xl:grid-cols-[1fr_300px] items-start">
           <div className="flex flex-col gap-5 min-w-0">
@@ -467,7 +481,7 @@ function TeamPageInner() {
                 </div>
               </div>
               <div className="overflow-x-auto">
-                <RosterRows players={filtered} watchList={watchList} limit={8} />
+                <RosterRows players={filtered} limit={8} />
               </div>
               <div className="border-t border-line px-5 py-3 text-center">
                 <Link href="/team?view=roster" className="inline-flex items-center gap-1 text-sm font-semibold text-grass hover:underline">
@@ -486,7 +500,6 @@ function TeamPageInner() {
                   { icon: Users, label: "Total Players", value: players.length, href: "/team?view=roster" },
                   { icon: ClipboardCheck, label: "Positions Filled", value: `${filledSlots} / ${structure.slots.length}`, href: "/team?view=depth" },
                   { icon: Ambulance, label: "Injuries", value: injured.length, href: "/team?view=injuries" },
-                  { icon: Star, label: "Watch List", value: watchList.length, href: "/team?view=watchlist" },
                 ].map(({ icon: Icon, label, value, href }) => (
                   <Link key={label} href={href} className="flex items-center gap-3 py-2.5 border-b border-line/60 last:border-0 hover:text-grass">
                     <Icon size={16} className="text-dim" />
@@ -504,7 +517,6 @@ function TeamPageInner() {
                   { icon: UserPlus, label: "Add New Player", onClick: () => { const id = addPlayer(); router.push(`/team/player?id=${id}`); } },
                   { icon: LayoutGrid, label: "Create Depth Chart", onClick: () => router.push("/team?view=depth") },
                   { icon: Upload, label: "Import Roster", onClick: () => setImportOpen(true) },
-                  { icon: Star, label: "Manage Watch List", onClick: () => router.push("/team?view=watchlist") },
                 ].map(({ icon: Icon, label, onClick }) => (
                   <button
                     key={label}
@@ -522,8 +534,8 @@ function TeamPageInner() {
             <div className={card}>
               <div className={cardHead}>Recent Updates</div>
               <div className="px-5 py-2 text-sm">
-                {activity.length === 0 && <div className="py-3 text-dim">No updates yet.</div>}
-                {activity.slice(0, 5).map((a) => (
+                {visibleActivity.length === 0 && <div className="py-3 text-dim">No updates yet.</div>}
+                {visibleActivity.slice(0, 5).map((a) => (
                   <div key={a.id} className="py-2.5 border-b border-line/60 last:border-0 flex gap-2.5">
                     <span className="mt-1.5 size-2 shrink-0 rounded-full bg-grass" />
                     <div className="leading-tight">
@@ -555,7 +567,7 @@ function TeamPageInner() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            <RosterRows players={filtered} watchList={watchList} />
+            <RosterRows players={filtered} />
           </div>
         </div>
       )}
@@ -618,37 +630,6 @@ function TeamPageInner() {
                   </td>
                 </tr>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {view === "watchlist" && (
-        <div className={card}>
-          <div className={cardHead}>Watch List ({watchList.length})</div>
-          <div className="px-5 py-3 text-sm text-dim border-b border-line">
-            Star a player here or from their profile to keep them on this list.
-          </div>
-          <table className="w-full text-sm">
-            <tbody>
-              {sorted.map((p) => {
-                const on = watchList.includes(p.id);
-                return (
-                  <tr key={p.id} className={`border-b border-line/60 last:border-0 ${on ? "" : "opacity-70"}`}>
-                    <td className="px-4 py-2 w-10">
-                      <button onClick={() => toggleWatch(p.id)} aria-label="Toggle watch">
-                        <Star size={16} className={on ? "fill-amber-400 text-amber-400" : "text-slate-300 hover:text-amber-400"} />
-                      </button>
-                    </td>
-                    <td className="px-4 py-2 tabular-nums text-dim w-12">{p.jersey ?? "—"}</td>
-                    <td className="px-4 py-2">
-                      <Link href={`/team/player?id=${p.id}`} className="font-semibold text-grass hover:underline">{p.name}</Link>
-                    </td>
-                    <td className="px-4 py-2 text-dim">{p.positions.join("/") || "—"}</td>
-                    <td className="px-4 py-2 text-dim">{p.cls || "—"}</td>
-                  </tr>
-                );
-              })}
             </tbody>
           </table>
         </div>

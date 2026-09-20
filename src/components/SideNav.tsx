@@ -35,11 +35,7 @@ export const SECTIONS: Section[] = [
     children: [
       { href: "/team?view=depth", label: "Depth Chart" },
       { href: "/team?view=roster", label: "Roster" },
-      { href: "/team?view=profiles", label: "Player Profiles" },
-      { href: "/team?view=weights", label: "Weight Room" },
-      { href: "/team?view=injuries", label: "Injuries" },
-      { href: "/team?view=watchlist", label: "Watch List" },
-      { href: "/team?view=schedule", label: "Season Schedule" },
+      { href: "/team?view=schedule", label: "Schedule" },
     ],
   },
   {

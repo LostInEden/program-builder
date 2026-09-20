@@ -13,7 +13,8 @@ export default function TopNav() {
   const router = useRouter();
   const hydrated = useHydrated();
   const players = useStore((s) => s.players);
-  const activity = useStore((s) => s.activity);
+  const allActivity = useStore((s) => s.activity);
+  const activity = allActivity.filter((a) => !/watch list/i.test(a.sub ?? ""));
   const program = useStore((s) => s.program);
   // Until the store rehydrates, show the program identity the server rendered.
   const coachName = hydrated ? (program.coachName?.trim() || program.name) : "";
