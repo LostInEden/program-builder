@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Widen the depth chart and bring the defense toward the line
+- **Asked for:** "Make the depth chart wider like it was before but only show 20 yards. The whole defense has to be near the line of scrimmage"
+- **Changed:** restored the full-width landscape depth chart with horizontal field markings showing only the goal line through the 20. Added a visible line of scrimmage at the bottom and moved all defensive levels closer to it, with safeties deepest, linebackers behind the front, and corners still wide.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Shared by overview and editor. This is display spacing only; saved structures and assignments are unchanged. A minimum display height keeps the stacked player cards readable.
+
 ## 2026-09-20 — Turn the depth chart field vertical
 - **Asked for:** "Turn the field from horizontal to vertical" and show "the 40 yard line and in".
 - **Changed:** made the shared depth chart a centered portrait field showing the goal line through the 40, with horizontal five-yard lines, paired 10/20/30/40 labels, and vertical columns of hash marks. Rotated the turf striping to match.

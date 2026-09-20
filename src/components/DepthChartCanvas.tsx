@@ -9,9 +9,9 @@ import { slotLabelOf, type Player, type Overrides } from "@/lib/store";
 // Within a band, deeper slots (larger structure y) sit slightly higher.
 // Values are where the BOTTOM of a chip lands (chips render upward from it).
 const BANDS: Record<"deep" | "second" | "front", [number, number]> = {
-  deep: [32, 46],
-  second: [66, 68],
-  front: [91, 92],
+  deep: [50, 64],
+  second: [74, 76],
+  front: [90, 91],
 };
 
 export default function DepthChartCanvas({
@@ -72,14 +72,14 @@ export default function DepthChartCanvas({
 
   return (
     <div
-      className={`relative rounded-xl border border-line bg-[#174b3b] mx-auto w-full max-w-160 aspect-[4/5] min-h-120 overflow-hidden ${className}`}
-      style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 10.5%, rgba(255,255,255,0.04) 10.5%, rgba(255,255,255,0.04) 21%)" }}
+      className={`relative rounded-xl border border-line bg-[#174b3b] w-full aspect-[12/5] min-h-90 overflow-hidden ${className}`}
+      style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
-      {/* Vertical field: goal line at the top through the 40 at the bottom. */}
+      {/* Wide 20-yard view, with the line of scrimmage at the bottom. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none">
-        {[0, 5, 10, 15, 20, 25, 30, 35, 40].map((yard) => (
-          <div key={yard} className="absolute inset-x-2" style={{ top: `${8 + yard * 2.1}%` }}>
+        {[0, 5, 10, 15, 20].map((yard) => (
+          <div key={yard} className="absolute inset-x-2" style={{ top: `${8 + yard * 4.2}%` }}>
             <div className={`absolute inset-x-0 h-px ${yard === 0 ? "bg-white/75" : "bg-white/40"}`} />
             {yard % 10 === 0 && (
               <>
@@ -89,12 +89,16 @@ export default function DepthChartCanvas({
             )}
           </div>
         ))}
-        {Array.from({ length: 39 }, (_, i) => i + 1).filter((yard) => yard % 5 !== 0).map((yard) => (
-          <div key={yard} className="absolute inset-x-0" style={{ top: `${8 + yard * 2.1}%` }}>
+        {Array.from({ length: 19 }, (_, i) => i + 1).filter((yard) => yard % 5 !== 0).map((yard) => (
+          <div key={yard} className="absolute inset-x-0" style={{ top: `${8 + yard * 4.2}%` }}>
             <span className="absolute left-[37%] h-px w-2 bg-white/45" />
             <span className="absolute right-[37%] h-px w-2 bg-white/45" />
           </div>
         ))}
+      </div>
+
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-[92%] border-t-2 border-sky-300">
+        <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wider text-sky-100">LINE OF SCRIMMAGE</span>
       </div>
 
       {structure.slots.map((slot, i) => {
