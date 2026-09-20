@@ -76,15 +76,15 @@ export default function DepthChartCanvas({
       style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
-      {/* Wide 20-yard view, with the line of scrimmage at the bottom. */}
+      {/* Opponent territory: the 40 at the top, with the line of scrimmage at their 20. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none">
         {[0, 5, 10, 15, 20].map((yard) => (
           <div key={yard} className="absolute inset-x-2" style={{ top: `${8 + yard * 4.2}%` }}>
-            <div className={`absolute inset-x-0 h-px ${yard === 0 ? "bg-white/75" : "bg-white/40"}`} />
+            <div className="absolute inset-x-0 h-px bg-white/40" />
             {yard % 10 === 0 && (
               <>
-                <span className="absolute left-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:left-4 sm:text-lg">{yard === 0 ? "G" : yard}</span>
-                <span className="absolute right-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:right-4 sm:text-lg">{yard === 0 ? "G" : yard}</span>
+                <span className="absolute left-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:left-4 sm:text-lg">{40 - yard}</span>
+                <span className="absolute right-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:right-4 sm:text-lg">{40 - yard}</span>
               </>
             )}
           </div>
@@ -98,7 +98,7 @@ export default function DepthChartCanvas({
       </div>
 
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-[92%] border-t-2 border-sky-300">
-        <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wider text-sky-100">LINE OF SCRIMMAGE</span>
+        <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wider text-sky-100">OPPONENT’S 20 · LINE OF SCRIMMAGE</span>
       </div>
 
       {structure.slots.map((slot, i) => {

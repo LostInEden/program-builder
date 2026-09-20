@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Show the defense at the opponent's 20
+- **Asked for:** "make it the same but defense on the opponents 20 yards line"
+- **Changed:** relabeled the shared depth chart field from the opponent's 40 at the top to their 20 at the line of scrimmage. Added an explicit opponent's 20 label at the line and removed the goal-line marking.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves the approved field dimensions, defensive spacing, and player assignments. Display labels only; the defense faces the opponent's end zone beyond the bottom of the view.
+
 ## 2026-09-20 — Widen the depth chart and bring the defense toward the line
 - **Asked for:** "Make the depth chart wider like it was before but only show 20 yards. The whole defense has to be near the line of scrimmage"
 - **Changed:** restored the full-width landscape depth chart with horizontal field markings showing only the goal line through the 20. Added a visible line of scrimmage at the bottom and moved all defensive levels closer to it, with safeties deepest, linebackers behind the front, and corners still wide.
