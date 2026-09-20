@@ -51,6 +51,7 @@ export const SECTIONS: Section[] = [
     children: [
       { href: "/scheme/concepts?kind=front", label: "Scheme Library" },
       { href: "/analysis", label: "Defensive Analysis" },
+      { href: "/scheme/self-scout", label: "Self scout" },
     ],
   },
   {

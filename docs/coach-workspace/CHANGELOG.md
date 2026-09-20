@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Add Self scout under My Scheme
+- **Asked for:** "Add Self scout to my scheme"; defense for now, with both sides once offense is added.
+- **Changed:** added Self scout to the My Scheme dropdown, a link on the scheme overview, and `/scheme/self-scout` with the team's name, defense scope, and an explicit report-unavailable state. Documented defensive snap import, storage, and tendency reporting as request #3.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Navigation and page only; the tendency report is not implemented. Current imports analyze opponents' offensive snaps, so they are not used as own-team defensive evidence. No fake statistics, inactive upload controls, or changes to data/calculations. Offense remains a future extension.
+
 ## 2026-09-18 — Authenticate this Mac for coach pushes
 - **Asked for:** "Help me authenticate this Mac with GitHub" and verify access before pushing the existing `coach` commit.
 - **Changed:** recorded the completed Git Credential Manager browser sign-in, verified push access to `LostInEden/program-builder`, and successfully ran `git push origin coach:coach` from this Mac.

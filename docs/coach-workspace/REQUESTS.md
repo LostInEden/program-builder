@@ -14,6 +14,12 @@ Entry format:
 
 ---
 
+## #3 — 2026-09-20 — Self scout our defense, then both sides
+- **Coach asked:** "Add Self scout to my scheme. This will include a tendency report on the team using the software." Clarified: "Defense for now, but ones offense is added it will do both".
+- **Why it's not front-end:** Own-team defensive game snaps are not saved in `src/lib/store.ts`. Existing `Play` records belong to opponents and lack dedicated defensive front, coverage, and pressure fields; `rowsToPlays` in `src/lib/tendencies.ts` filters out defensive snaps, and `TendencyImport.tsx` applies imports to an opponent. Engineering needs separate own-team snap storage and game identity, a defensive import/mapping flow, and defensive tendency calculations with sample sizes and underlying snap evidence. Do not derive usage percentages from scheme concepts or reuse opponent data as this team's snaps. Confirm the coach's export columns and situational breakdowns before implementing calculations. Preserve a path to separate offense/defense reports when offense support is added.
+- **Where it would show up:** My Scheme → Self scout (`/scheme/self-scout`), also linked from the scheme overview for phone access. The page currently states that the report is unavailable. The requested report should show this team's front, coverage, and pressure usage by game situation, with missing tags and sample sizes made clear; offense comes later, not in this first scope.
+- **Status:** Open
+
 ## #2 — 2026-09-17 — Build complete calls and check how they fit
 - **Coach asked:** a tab where coverages, fronts, and adjustments "mesh"; confirmed "Both" for building combinations to call on Friday and seeing whether the pieces work together.
 - **Why it's not front-end:** the existing `Concept` records in `src/lib/store.ts` are separate concepts without a persisted complete-call association. Naming and saving a combination of front, coverage, pressure, and adjustment needs a data model and actions. Checking a selected combination, rather than the whole saved scheme, also needs engineering support in `src/lib/analyze.ts`; any effects on recommendations or the call sheet belong in `src/lib/plan.ts` and `src/lib/callsheet.ts` after coach/engineering agreement. Do not invent compatibility judgments.
@@ -25,4 +31,3 @@ Entry format:
 - **Why it's not front-end:** `Concept` in `src/lib/store.ts` has no link to a saved drawing. The separate `Call` model stores drawings (`lines`, `zones`, and other drawing fields), and `PRESET_PLAYS` supplies some starting plays, but there is no confirmed mapping from every saved concept to a correct diagram. Creating and persisting that association, producing starting alignments/assignments from the saved scheme, and preserving coach edits requires engineering changes. Relevant existing pieces: `addCall`, `updateCall`, `addPresetCall` in `src/lib/store.ts`; `src/lib/football.ts`; `src/components/StudioCanvas.tsx`.
 - **Where it would show up:** My Scheme's front, coverage, and pressure concept detail (`src/app/scheme/concepts/page.tsx`), with a starting diagram to review and adjust using the existing drawing tools (`src/app/scheme/playbook/page.tsx`). Fronts show alignment; coverages show assignments; pressures show rush paths and coverage responsibilities. The diagram should use the coach's saved rules and terminology, make the offensive look clear, and ask for missing football details instead of treating guesses as his defense. Coach edits must survive reopening and any later regeneration.
 - **Status:** Open
-

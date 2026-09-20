@@ -135,6 +135,15 @@ export default function SchemePage() {
         </div>
       </div>
 
+      <Link href="/scheme/self-scout" className="mb-5 flex items-center gap-3 rounded-xl border border-line bg-card p-5 hover:border-grass">
+        <Shield size={20} className="shrink-0 text-grass" />
+        <div>
+          <h2 className="font-bold">Self scout</h2>
+          <p className="text-sm text-dim">Your defense’s tendencies. Report setup is planned; offense will follow later.</p>
+        </div>
+        <ChevronRight size={18} className="ml-auto shrink-0 text-dim" />
+      </Link>
+
       {/* Identity strip */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${card} grid md:grid-cols-[1fr_1.6fr_1fr] divide-y md:divide-y-0 md:divide-x divide-line mb-5`}>
         <div className="p-6">
