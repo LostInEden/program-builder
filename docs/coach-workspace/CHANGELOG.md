@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Turn the depth chart field vertical
+- **Asked for:** "Turn the field from horizontal to vertical" and show "the 40 yard line and in".
+- **Changed:** made the shared depth chart a centered portrait field showing the goal line through the 40, with horizontal five-yard lines, paired 10/20/30/40 labels, and vertical columns of hash marks. Rotated the turf striping to match.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Applies to My Team overview and the depth chart editor. Retains the closer Mike/Will spacing and wider corners; player assignments and defensive structure data are unchanged.
+
 ## 2026-09-20 — Bring Mike and Will inside and widen the corners
 - **Asked for:** "move the mike and will in some and widen the corners"
 - **Changed:** positioned Mike and Will closer to the center and corners toward the sidelines in the shared depth chart display. Clamped player-card centers to keep edge cards inside the field on narrow screens.

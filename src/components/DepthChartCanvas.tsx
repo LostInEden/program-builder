@@ -72,29 +72,30 @@ export default function DepthChartCanvas({
 
   return (
     <div
-      className={`relative rounded-xl border border-line bg-[#174b3b] aspect-[12/5] min-h-64 overflow-hidden ${className}`}
-      style={{ backgroundImage: "repeating-linear-gradient(90deg, transparent 0%, transparent 14%, rgba(255,255,255,0.04) 14%, rgba(255,255,255,0.04) 28%)" }}
+      className={`relative rounded-xl border border-line bg-[#174b3b] mx-auto w-full max-w-160 aspect-[4/5] min-h-120 overflow-hidden ${className}`}
+      style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 10.5%, rgba(255,255,255,0.04) 10.5%, rgba(255,255,255,0.04) 21%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
-      {/* vertical yard lines with rotated numbers, like a field strip */}
-      {[8, 22.75, 36.5, 50, 63.5, 77.25, 92].map((x, i) => (
-        <div key={x} className="absolute inset-y-0" style={{ left: `${x}%` }}>
-          <div className="absolute inset-y-2 w-px bg-white/40" />
-          {[null, "10", "30", "50", "30", "10", null][i] && (
-            <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rotate-90 text-[13px] font-bold text-white/65 select-none tabular-nums">
-              {[null, "10", "30", "50", "30", "10", null][i]}
-            </span>
-          )}
-        </div>
-      ))}
-      {/* hash ticks */}
-      {[30, 45, 60, 75].map((y) => (
-        <div key={y} className="absolute inset-x-6 flex justify-between pointer-events-none" style={{ top: `${y}%` }}>
-          {Array.from({ length: 24 }, (_, i) => (
-            <span key={i} className="h-1 w-px bg-white/45" />
-          ))}
-        </div>
-      ))}
+      {/* Vertical field: goal line at the top through the 40 at the bottom. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none">
+        {[0, 5, 10, 15, 20, 25, 30, 35, 40].map((yard) => (
+          <div key={yard} className="absolute inset-x-2" style={{ top: `${8 + yard * 2.1}%` }}>
+            <div className={`absolute inset-x-0 h-px ${yard === 0 ? "bg-white/75" : "bg-white/40"}`} />
+            {yard % 10 === 0 && (
+              <>
+                <span className="absolute left-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:left-4 sm:text-lg">{yard === 0 ? "G" : yard}</span>
+                <span className="absolute right-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:right-4 sm:text-lg">{yard === 0 ? "G" : yard}</span>
+              </>
+            )}
+          </div>
+        ))}
+        {Array.from({ length: 39 }, (_, i) => i + 1).filter((yard) => yard % 5 !== 0).map((yard) => (
+          <div key={yard} className="absolute inset-x-0" style={{ top: `${8 + yard * 2.1}%` }}>
+            <span className="absolute left-[37%] h-px w-2 bg-white/45" />
+            <span className="absolute right-[37%] h-px w-2 bg-white/45" />
+          </div>
+        ))}
+      </div>
 
       {structure.slots.map((slot, i) => {
         const ids = slots[i] ?? [];
