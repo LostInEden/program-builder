@@ -14,6 +14,12 @@ Entry format:
 
 ---
 
+## #4 — 2026-09-21 — Connect conversational staff-meeting AI
+- **Coach asked:** CounterScheme should discuss a game-plan priority naturally, compare football options, ask useful questions, and evaluate ideas against My Scheme, My Team, opponent evidence, and earlier decisions.
+- **Why it's not front-end:** The provider registry currently contains only the local rules/template engine. A real conversational provider requires a server-side integration, credentials, grounded prompts, conversation context handling, and validation of scheme/personnel claims. No remote model or credentials are configured in this workspace. The guided UI and persisted coach approval workflow are implemented; local replies do not satisfy unrestricted football reasoning.
+- **Where it would show up:** Game Plan → Build Plan → Talk It Through. The existing provider receives current priority/evidence, discussion history, saved scheme/team context, and approved decisions. Preserve the explicit Add to Plan boundary and never auto-file speculative scheme rules.
+- **Status:** Open
+
 ## #3 — 2026-09-20 — Self scout our defense, then both sides
 - **Coach asked:** "Add Self scout to my scheme. This will include a tendency report on the team using the software." Clarified: "Defense for now, but ones offense is added it will do both".
 - **Why it's not front-end:** Own-team defensive game snaps are not saved in `src/lib/store.ts`. Existing `Play` records belong to opponents and lack dedicated defensive front, coverage, and pressure fields; `rowsToPlays` in `src/lib/tendencies.ts` filters out defensive snaps, and `TendencyImport.tsx` applies imports to an opponent. Engineering needs separate own-team snap storage and game identity, a defensive import/mapping flow, and defensive tendency calculations with sample sizes and underlying snap evidence. Do not derive usage percentages from scheme concepts or reuse opponent data as this team's snaps. Confirm the coach's export columns and situational breakdowns before implementing calculations. Preserve a path to separate offense/defense reports when offense support is added.

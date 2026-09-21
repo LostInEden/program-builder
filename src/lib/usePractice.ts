@@ -5,6 +5,7 @@
 // choices are stored — so it stays current the same way the plan does, and
 // regenerating never throws away an elimination he already made.
 
+import { approvedPlan } from "@/lib/meeting";
 import { useMemo } from "react";
 import { useStore, type GamePlan, type Opponent, type PracticeSelection } from "@/lib/store";
 import {
@@ -42,7 +43,7 @@ export function usePractice(opponent: Opponent | null): PracticeWeek {
   const plan = opponent ? gamePlans.find((g) => g.opponentId === opponent.id) : undefined;
 
   const pool = useMemo(
-    () => (opponent ? buildPracticePool({ opponent, concepts, termMap, plan }) : null),
+    () => (opponent ? buildPracticePool({ opponent, concepts, termMap, plan: approvedPlan(plan) }) : null),
     [opponent, concepts, termMap, plan],
   );
 

@@ -10,6 +10,7 @@
 // reminders; the call is his.
 
 import type { CallSheet, CallSheetSection, Concept, GamePlan, Play, PlanItem } from "@/lib/store";
+import { decisionGroups, decisionText } from "@/lib/meeting";
 import { lockable } from "@/lib/plan";
 import { computeTells, makeResolver, tellSentence } from "@/lib/tendencies";
 import type { TermMapping } from "@/lib/knowledge";
@@ -180,6 +181,7 @@ export function tighten(raw: string, max = 120): string {
  */
 export function planBlocks(plan: GamePlan | undefined): SheetBlock[] {
   if (!plan) return [];
+  if (plan.meeting) return decisionGroups(plan.meeting.decisions).map(g => ({ heading: g.category, lines: g.decisions.map(d => ({ text: d.title, note: decisionText(d), strong: true })) }));
   const seen = new Set<string>();
   const rows = (items: PlanItem[] = [], heading: string): SheetBlock | null => {
     const lines: SheetLine[] = [];

@@ -279,7 +279,21 @@ export type PendingUpdate = {
   changes: PlanChange[];
 };
 
+export type MeetingAnswer = {
+  category: string; call: string; check: string; fit: string; point: string;
+};
+export type MeetingDecision = MeetingAnswer & {
+  id: string; title: string; evidence: string; playIds: string[]; approvedAt: number;
+};
+export type StaffMeeting = {
+  topics?: { id: string; title: string; detail: string; evidence: string; section: string; playIds?: string[] }[];
+  decisions: MeetingDecision[];
+  conversations: Record<string, { role: "coach" | "counterscheme"; text: string }[]>;
+  drafts: Record<string, MeetingAnswer>;
+};
+
 export type GamePlan = {
+  meeting?: StaffMeeting;
   opponentId: string;
   priorities: PlanItem[]; // however many actually matter (Q44) — never padded
   bestPlayers: PlanItem[]; // Q28: their best players come first

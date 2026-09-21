@@ -9,6 +9,8 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import PlanNavigation from "@/components/PlanNavigation";
+import ApprovedDecisionReference from "@/components/ApprovedDecisionReference";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft, ArrowDown, ArrowUp, ChevronDown, ChevronRight, ClipboardList, Printer,
@@ -252,6 +254,8 @@ function PracticeInner() {
 
   return (
     <div className="px-6 py-8 max-w-6xl mx-auto print-root">
+      {opponent && <PlanNavigation id={opponent.id} active="Practice Script" />}
+      {opponent && <ApprovedDecisionReference id={opponent.id} />}
       <style>{`
         @media print {
           header, aside, .no-print { display: none !important; }

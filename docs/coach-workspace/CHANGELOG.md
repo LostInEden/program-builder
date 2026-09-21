@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Guided Build Plan and coach-approved Final Plan
+- **Asked for:** A digital staff meeting where CounterScheme brings opponent priorities and the coach decides the answer, with Build Plan and Final Plan views.
+- **Changed:** Shared the existing matchup priority presentation with Game Plan; added per-priority evidence, saved-scheme suggestions, Accept Answer, Modify, editable decision cards, and populated-only Final Plan categories. Added Plan / Call Sheet / Practice Script navigation and preserved the prior planning workspace.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Added optional meeting metadata to existing GamePlan storage for drafts, conversations, topics, and approved decisions. Existing plans are preserved; no migration or deletion. Opening guided planning initializes an empty approval layer; legacy plans are not silently promoted. Automatic generated-plan updates stop for guided plans.
+
+## 2026-09-21 — In-place priority discussions
+- **Asked for:** Talk It Through in the selected priority, with opponent, scheme, team, evidence, and previous decisions as context, then Add to Plan.
+- **Changed:** Added persistent per-priority discussions through the existing assistant interface, context for prior approved decisions, staff questions, and a reviewable decision draft action. Discussion cannot approve a decision or modify scheme rules as a side effect.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** The repository only has the local rules-based provider. Natural conversational reasoning requires a connected model; the UI states this limitation. See REQUESTS.md #4. No model credentials or external service were added.
+
+## 2026-09-21 — Connect approved decisions to weekly preparation
+- **Asked for:** Call Sheet and Practice Script should use Final Plan and reflect edits without re-entering decisions.
+- **Changed:** Call Sheet renders approved decisions by category; practice shows live approved coaching references and uses chosen answers on reps linked to the decision's existing evidence snaps. Drafts and unapproved legacy lines do not enter guided plan outputs.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Staff-added decisions without linked snaps remain explicit practice reminders. Existing rep selection, script ordering, call sheet customization, and legacy plan behavior outside guided mode remain intact. Added regression checks for approval boundaries, edits, categories, persistence, call sheet, and practice integration.
+
 ## 2026-09-21 — Add opponent Personnel and Situational Tendencies tabs
 - **Asked for:** Add a Personnel tab and a Situational Tendencies tab to Opponent Matchup.
 - **Changed:** Added both entries to the shared Opponent Matchup navigation and focused scouting views with view tabs. Personnel shows existing grouping and formation breakdowns; Situational Tendencies shows down-and-distance, existing situational analysis, tells, combinations, and red-zone notes.

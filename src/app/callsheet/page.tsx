@@ -11,6 +11,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import PlanNavigation from "@/components/PlanNavigation";
+import ApprovedDecisionReference from "@/components/ApprovedDecisionReference";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
@@ -166,6 +168,7 @@ function CallSheetInner() {
 
   return (
     <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-[1500px] mx-auto print-root sheet-root">
+      {o && <PlanNavigation id={o.id} active="Call Sheet" />}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 no-print">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Call Sheet — {o.name}</h1>

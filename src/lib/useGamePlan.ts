@@ -93,7 +93,7 @@ export function useGamePlan(opponent: Opponent | null) {
   // Auto-refresh only once a plan exists — the first one is still the coach's
   // call, so the empty state stays honest.
   useEffect(() => {
-    if (!opponent || !plan?.generatedAt) return;
+    if (!opponent || !plan?.generatedAt || plan.meeting) return;
     if (plan.pendingUpdate) {
       // Already staged for exactly this data: leave it alone until he answers.
       if (plan.pendingUpdate.inputHash !== inputHash) void stage();
@@ -105,7 +105,7 @@ export function useGamePlan(opponent: Opponent | null) {
     const major = !!plan.majorHash && plan.majorHash !== majorHash;
     if (major) void stage();
     else void regenerate();
-  }, [opponent, plan?.generatedAt, plan?.inputHash, plan?.majorHash, plan?.pendingUpdate, inputHash, majorHash, regenerate, stage]);
+  }, [opponent, plan?.meeting, plan?.generatedAt, plan?.inputHash, plan?.majorHash, plan?.pendingUpdate, inputHash, majorHash, regenerate, stage]);
 
   // ---- answering the banner -------------------------------------------------
 

@@ -1,3 +1,4 @@
+import { decisionText } from "@/lib/meeting";
 // Practice emphasis + scout script (Q5, Q40 steps 5–6).
 //
 // Q5 is the coach's biggest pain point: "the biggest time/stress point is
@@ -183,6 +184,7 @@ function planIndex(plan?: GamePlan) {
   const mark = (ids: string[] | undefined, into: Map<string, string>, text: string) => {
     for (const id of ids ?? []) if (!into.has(id)) into.set(id, text);
   };
+  for (const d of plan?.meeting?.decisions ?? []) { mark(d.playIds, threat, d.title); for (const id of d.playIds) emphasis.add(id); }
   for (const it of plan?.concerns ?? []) mark(it.evidence?.playIds, concern, it.text);
   for (const it of plan?.threats ?? []) mark(it.evidence?.playIds, threat, it.text);
   for (const it of plan?.priorities ?? []) mark(it.evidence?.playIds, threat, it.text);
@@ -329,6 +331,7 @@ export function buildPracticePool(input: PracticeInput): PracticePool {
       situation ? `Give it to us on ${situation}.` : "",
     ].filter(Boolean).join(" ");
 
+    const approved = plan?.meeting?.decisions.filter(d => d.playIds.some(id => ids.includes(id))) ?? [];
     reps.push({
       id: `r-${stable(key)}`,
       kind: "look",
@@ -347,8 +350,8 @@ export function buildPracticePool(input: PracticeInput): PracticePool {
       stats: st,
       why,
       note,
-      answer: hasAnswer || ans.generic ? ans.text : ans.practice ?? null,
-      hasAnswer,
+      answer: approved.length ? approved.map(d => `${d.title}: ${decisionText(d)}`).join(" | ") : hasAnswer || ans.generic ? ans.text : ans.practice ?? null,
+      hasAnswer: approved.length > 0 || hasAnswer,
       conceptIds: ans.conceptIds,
       score,
       scoreParts: { frequency, success, stress },
