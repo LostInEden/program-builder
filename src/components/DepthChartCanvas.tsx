@@ -82,7 +82,7 @@ export default function DepthChartCanvas({
   return (
     <div className="overflow-x-auto rounded-xl" role="region" aria-label="Depth chart field" tabIndex={0}>
     <div
-      className={`relative rounded-xl border border-line bg-[#174b3b] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
+      className={`relative rounded-xl border border-line bg-[#252A30] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
       style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
@@ -90,7 +90,7 @@ export default function DepthChartCanvas({
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none">
         {[0, 5, 10, 15, 20].map((yard) => (
           <div key={yard} className="absolute inset-x-2" style={{ top: `${8 + yard * 4.2}%` }}>
-            <div className="absolute inset-x-0 h-px bg-white/40" />
+            <div className="absolute inset-x-0 h-px bg-white/50" />
             {yard % 10 === 0 && (
               <>
                 <span className="absolute left-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:left-4 sm:text-lg">{40 - yard}</span>

@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Make the depth chart field neutral
+- **Asked for:** "Make the field on the depth chart a nuetral color where you can still see the lines and names"
+- **Changed:** replaced the green field with neutral charcoal #252A30 and increased yard-line contrast. Retained subtle field stripes, light yard numbers and hash marks, and separate name cards.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Shared by the team overview and depth chart editor. Field dimensions, position spacing, player names, and saved assignments are unchanged.
+
 ## 2026-09-20 — Apply the charcoal and muted-blue palette
 - **Asked for:** Main Background #292E33, Sidebar #1C2126, Cards #353B42, Raised Panels #40474F, Accent #4C8DBB, Primary Text #F2F4F5, Secondary Text #AEB7BF, Borders #505860.
 - **Changed:** applied the eight supplied colors to the shared theme, navigation, cards, raised panels, controls, text, and dividers. Restored dark native controls and adjusted legacy white surfaces and status indicators for dark backgrounds.
