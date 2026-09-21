@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Enlarge and simplify the existing diagram workspace
+- **Asked for:** Adjust the existing StudioCanvas into a larger, clearer coaching board with compact controls.
+- **Changed:** Expanded the board area, collapsed saved diagrams and secondary inputs, reduced the inspector and toolbar, and improved dark position/text contrast on the light field. Defender labels now show positions rather than athlete tooltips or roster names.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing drawing handlers, stored diagrams, and automatic saving remain intact. This is the visual phase; Save/Cancel, independent defender identities, traditional symbol rules, and scheme-linked diagrams remain engineering work in REQUESTS.md #1.
+
 ## 2026-09-21 — Remove My Team player-count badge
 - **Asked for:** Take the player count off beside My Team.
 - **Changed:** Removed the roster-count badge from the shared My Team navigation entry.

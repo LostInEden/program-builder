@@ -36,7 +36,6 @@ export default function PlaybookPage() {
   // Packages inherit the level's Base chart (Q9) — read the effective spots.
   const groupSlots = effectiveSlots(group, baseGroupFor(groups, group.level));
   const structure = getStructure(group.structureId);
-  const byId = new Map(players.map((p) => [p.id, p]));
   const sectionCalls = section === "Playbook" ? calls : calls.filter((c) => c.section === section);
   const call =
     calls.find((c) => c.id === activeCallId && (section === "Playbook" || c.section === section)) ??
@@ -51,13 +50,13 @@ export default function PlaybookPage() {
   const selDef = selection?.kind === "def" ? selection.slot : null;
 
   return (
-    <div className="px-6 py-6 max-w-[1700px] mx-auto">
+    <div className="px-4 sm:px-6 py-4 max-w-[1800px] mx-auto">
       <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
         <ArrowLeft size={15} /> My Scheme
       </Link>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="display text-4xl font-bold">Playbook</h1>
+        <h1 className="display text-2xl font-bold">Diagram Tool</h1>
         <Link
           href="/scheme/playbook/print"
           className="display rounded-full border border-line px-4 py-1.5 text-xs font-semibold text-dim transition hover:text-ink hover:border-dim"
@@ -65,13 +64,13 @@ export default function PlaybookPage() {
           Print / PDF
         </Link>
         <span className="text-xs text-dim">{group.name} ({structure.name}) · saves automatically</span>
-        <div className="ml-auto flex gap-1.5 rounded-full border border-line bg-card p-1">
+        <div className="ml-auto flex flex-wrap gap-1.5 rounded-full border border-line bg-card p-1">
           {TABS.map((s) => (
             <button
               key={s}
               onClick={() => { setSection(s); setSelection(null); }}
               className={`display rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                s === section ? "bg-sky text-white" : "text-dim hover:text-ink"
+                s === section ? "bg-grass text-white" : "text-dim hover:text-ink"
               }`}
             >
               {s}
@@ -80,9 +79,11 @@ export default function PlaybookPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[210px_minmax(0,1fr)_290px] items-start">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px] items-start">
         {/* Call list */}
-        <div className="rounded-xl border border-line bg-card/80 p-3 flex flex-col gap-1.5">
+        <details className="xl:col-span-2 rounded-xl border border-line bg-card/80 p-3">
+          <summary className="cursor-pointer text-sm font-semibold">Saved diagrams · {call?.name ?? "Choose or create a diagram"} <span className="text-dim font-normal">({sectionCalls.length})</span></summary>
+          <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {sectionCalls.map((c) => (
             <button
               key={c.id}
@@ -106,7 +107,7 @@ export default function PlaybookPage() {
             onClick={() => addCall(section === "Playbook" ? "Fronts" : section)}
             className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-line px-3 py-2.5 text-sm text-dim transition hover:text-ink hover:border-dim"
           >
-            <Plus size={14} /> New call
+            <Plus size={14} /> New diagram
           </button>
           <select
             value=""
@@ -128,7 +129,8 @@ export default function PlaybookPage() {
               ) : null;
             })}
           </select>
-        </div>
+          </div>
+        </details>
 
         {/* Editor */}
         <div className="min-w-0">
@@ -193,7 +195,7 @@ export default function PlaybookPage() {
                 </div>
               </div>
 
-              <div className="mb-3 grid gap-3 sm:grid-cols-2">
+              <details className="mb-3 rounded-lg border border-line px-3 py-2"><summary className="text-xs text-dim cursor-pointer">Formation name &amp; concept · {call.offForm || "Not named"}</summary><div className="mt-2 grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs text-dim mb-1">Offensive formation</label>
                   <input
@@ -212,7 +214,7 @@ export default function PlaybookPage() {
                     className="w-full rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm"
                   />
                 </div>
-              </div>
+              </div></details>
 
               <StudioCanvas
                 call={call}
@@ -252,12 +254,12 @@ export default function PlaybookPage() {
         </div>
 
         {/* Inspector */}
-        <div className="rounded-xl border border-line bg-card/80 p-4">
+        <div className="rounded-xl border border-line bg-card/80 p-3 xl:sticky xl:top-28">
           {call && selOff ? (
             <>
               <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">Offensive player</div>
               <div className="mb-3 flex items-center gap-2">
-                <span className="grid size-9 place-items-center rounded-full bg-ink text-xs font-bold text-white">{selOff.label}</span>
+                <span className="grid size-9 place-items-center rounded-full bg-panel text-xs font-bold text-ink">{selOff.label}</span>
                 <div className="text-sm font-bold">{selOff.label} {selOff.ptype ? `(${selOff.ptype})` : ""}</div>
               </div>
               <Field label="Type">
@@ -364,11 +366,7 @@ export default function PlaybookPage() {
               <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">Assignment</div>
               <div className="mb-2 flex items-baseline gap-2">
                 <span className="display text-2xl font-bold text-ember">{label(selDef)}</span>
-                {(groupSlots[selDef] ?? [])[0] && (
-                  <span className="text-sm text-dim">
-                    #{byId.get(groupSlots[selDef][0])?.jersey} {byId.get(groupSlots[selDef][0])?.name}
-                  </span>
-                )}
+
               </div>
               <textarea
                 rows={5}
@@ -396,8 +394,8 @@ export default function PlaybookPage() {
           )}
 
           {call && (
-            <>
-              <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mt-5 mb-2">All assignments</div>
+            <details className="mt-4 border-t border-line pt-3">
+              <summary className="cursor-pointer text-xs font-semibold text-dim">All assignments &amp; notes</summary>
               <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
                 {structure.slots.map((slot, i) =>
                   call.assignments[i] ? (
@@ -421,7 +419,7 @@ export default function PlaybookPage() {
                   className="w-full rounded-lg border border-line bg-slate-50 px-3 py-2 text-xs resize-y"
                 />
               </div>
-            </>
+            </details>
           )}
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MousePointer2,
   Minus,
@@ -68,12 +68,12 @@ const legacy = (c?: string) =>
 const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string; key: string; alias: string }[] = [
   { id: "select", icon: MousePointer2, label: "Select", key: "1", alias: "v" },
   { id: "line", icon: Minus, label: "Line", key: "2", alias: "l" },
-  { id: "route", icon: ArrowUpRight, label: "Route", key: "3", alias: "r" },
+  { id: "route", icon: ArrowUpRight, label: "Arrow", key: "3", alias: "r" },
   { id: "motion", icon: MoveRight, label: "Motion", key: "4", alias: "m" },
   { id: "block", icon: RectangleHorizontal, label: "Block", key: "5", alias: "b" },
   { id: "text", icon: Type, label: "Text", key: "6", alias: "t" },
   { id: "zone", icon: Circle, label: "Zone", key: "7", alias: "z" },
-  { id: "player", icon: UserPlus, label: "Player", key: "8", alias: "p" },
+  { id: "player", icon: UserPlus, label: "Add Offense", key: "8", alias: "p" },
 ];
 
 const STYLES: { id: LineStyle; label: string }[] = [
@@ -85,8 +85,6 @@ const STYLES: { id: LineStyle; label: string }[] = [
 export default function StudioCanvas({
   call,
   structureId,
-  groupSlots,
-  players,
   labelFor,
   selection,
   onSelect,
@@ -101,7 +99,6 @@ export default function StudioCanvas({
 }) {
   const updateCall = useStore((s) => s.updateCall);
   const structure = getStructure(structureId);
-  const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const texts = call.texts ?? [];
 
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -471,10 +468,11 @@ export default function StudioCanvas({
       : null;
 
   const markerBase =
-    "grid size-9 place-items-center rounded-full display text-[13px] font-bold text-white select-none transition bg-ink";
+    "grid min-w-9 h-9 px-1 place-items-center rounded-full border-2 border-[#17212B] text-[13px] font-bold text-[#17212B] select-none bg-[#FFFFFF]";
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
+      <p className="mb-2 text-xs text-dim">Drag positions to align · Choose Arrow, then a player and destination · Select an object to edit</p>
       <div
         ref={fieldRef}
         onPointerDown={onFieldPointerDown}
@@ -518,7 +516,7 @@ export default function StudioCanvas({
               <polygon key={`${x}-${y}`} points={`${x - 0.5},${y + 0.35} ${x + 0.5},${y + 0.35} ${x},${y - 0.45}`} fill="rgba(15,28,46,0.08)" />
             )),
           )}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#1d63ed" strokeWidth="0.4" strokeOpacity="0.7" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#505860" strokeWidth="0.4" strokeOpacity="0.8" />
 
           {call.zones.map((z) => (
             <g key={z.id}>
@@ -673,8 +671,8 @@ export default function StudioCanvas({
           <span
             key={t.id}
             onPointerDown={(e) => beginMarkerDrag(e, "text", t.id)}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[12px] font-semibold whitespace-pre ${
-              selection?.kind === "text" && selection.id === t.id ? "bg-ember/20 text-ember ring-1 ring-ember" : "text-ink/80"
+            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[14px] font-semibold whitespace-pre ${
+              selection?.kind === "text" && selection.id === t.id ? "bg-[#F4E8E8] text-[#17212B] ring-1 ring-[#8F1D22]" : "text-[#17212B]"
             } ${tool === "select" ? "cursor-grab" : ""}`}
             style={{ left: `${t.x}%`, top: `${(t.y / FIELD_H) * 100}%` }}
           >
@@ -687,19 +685,17 @@ export default function StudioCanvas({
           const [x, y] = defPos(i);
           const sel = selection?.kind === "def" && selection.slot === i;
           const armed = pending === `def:${i}`;
-          const ids = groupSlots[i] ?? [];
-          const pl = ids[0] ? byId.get(ids[0]) : undefined;
           return (
             <button
               key={`d${i}`}
               onPointerDown={(e) => beginMarkerDrag(e, "def", `${i}`, i)}
               onDoubleClick={(e) => { e.stopPropagation(); if (tool === "select") blockTo(i); }}
-              title={pl ? `#${pl.jersey} ${pl.name}` : undefined}
+              title={`${labelFor(i)} · drag to align`}
               className="group absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-white" : ""}`}>
+              <span className={`grid min-w-10 min-h-10 px-1 place-items-center text-[17px] font-extrabold text-[#17212B] whitespace-nowrap ${sel || armed ? "rounded-md ring-2 ring-[#8F1D22] bg-[#F4E8E8]" : ""}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -718,7 +714,7 @@ export default function StudioCanvas({
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-ember bg-ember text-white" : ""}`}>
+              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-[#8F1D22]" : ""}`}>
                 {(o.showLabel ?? true) ? o.label : ""}
               </span>
             </span>
@@ -749,13 +745,13 @@ export default function StudioCanvas({
       </div>
 
       {/* Floating toolbar */}
-      <div className="mx-auto mt-3 flex flex-wrap items-center gap-1 rounded-xl border border-line bg-card px-2 py-1.5 shadow-lg">
+      <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-0.5 rounded-lg border border-line bg-card px-2 py-1">
         {TOOLS.map((t) => (
           <button
             key={t.id}
             onClick={() => { setPending(null); setExtendId(null); setTool(t.id); }}
             title={`${t.label} (${t.key})`}
-            className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-[10px] font-semibold transition ${
+            className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition ${
               tool === t.id ? "bg-grass/15 text-grass ring-1 ring-grass/40" : "text-dim hover:bg-slate-100 hover:text-ink"
             }`}
           >
