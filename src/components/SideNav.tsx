@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {
-  Home, Users, Shield, Binoculars, ClipboardList, ShieldCheck, BarChart3, Settings,
+  Home, Users, Shield, Binoculars, ClipboardList, ShieldCheck, Settings,
 } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
 
@@ -71,7 +71,6 @@ export const SECTIONS: Section[] = [
     ],
   },
   { href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck, match: ["/analysis"] },
-  { href: "/reports", label: "Reports", icon: BarChart3, match: ["/reports"] },
 ];
 
 function inSection(pathname: string, sec: Section) {

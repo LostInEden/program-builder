@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Remove the Reports navigation tab
+- **Asked for:** Get rid of the Reports tab because the information is available elsewhere.
+- **Changed:** Removed Reports from the shared navigation configuration used by the desktop and mobile menus.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing report page remains accessible by direct URL. No stored data, calculations, or other reporting/scouting features changed.
+
 ## 2026-09-20 — Restore the side-by-side opponent dashboard
 - **Asked for:** Keep a categorized coaching dashboard with full-width priorities, Offensive Identity beside Key Players, and What They Do beside When They Do It.
 - **Changed:** Reworked the overview into compact paired cards with horizontal priority tiles, restored Build Game Plan in the top controls, and added direct player, tendency, and situation links. Moved opponent identification into a compact line above the cards.
