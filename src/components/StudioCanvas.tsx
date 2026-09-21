@@ -517,7 +517,7 @@ export default function StudioCanvas({
       : null;
 
   const markerBase =
-    "grid min-w-9 h-9 px-1 place-items-center rounded-full border-2 border-[#17212B] text-[13px] font-bold text-[#17212B] select-none bg-[#FFFFFF]";
+    "grid min-w-7 h-7 px-0.5 place-items-center rounded-full border-[1.5px] border-[#17212B] text-[11px] font-bold text-[#17212B] select-none bg-[#FFFFFF]";
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -551,7 +551,7 @@ export default function StudioCanvas({
                 const halfHeight = 11 * 100 / fieldWidth;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
-              {call.offLook.map((m) => <circle key={m.id} cx={m.x} cy={m.y} r={21 * 100 / fieldWidth} fill="black" />)}
+              {call.offLook.map((m) => <circle key={m.id} cx={m.x} cy={m.y} r={16 * 100 / fieldWidth} fill="black" />)}
             </mask>
             {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
@@ -617,8 +617,8 @@ export default function StudioCanvas({
             // Keep the attached start handle just outside the player so it is reachable.
             const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
             const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
-            const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : 22) * 100 / fieldWidth;
-            const halfHeight = 22 * 100 / fieldWidth;
+            const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : 17) * 100 / fieldWidth;
+            const halfHeight = (defIndex !== null ? 22 : 17) * 100 / fieldWidth;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l, selected);

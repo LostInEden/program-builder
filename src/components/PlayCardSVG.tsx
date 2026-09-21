@@ -164,11 +164,11 @@ export default function PlayCardSVG({
         return (
           <g key={o.id}>
             {isCenter ? (
-              <rect x={o.x - 1.9} y={o.y - 1.9} width="3.8" height="3.8" fill="#fff" stroke={OFF} strokeWidth="0.35" />
+              <rect x={o.x - 1.5} y={o.y - 1.5} width="3" height="3" fill="#fff" stroke={OFF} strokeWidth="0.35" />
             ) : (
-              <circle cx={o.x} cy={o.y} r="2" fill="#fff" stroke={OFF} strokeWidth="0.35" />
+              <circle cx={o.x} cy={o.y} r="1.55" fill="#fff" stroke={OFF} strokeWidth="0.35" />
             )}
-            <text x={o.x} y={o.y + 0.8} textAnchor="middle" fontSize="1.9" fontWeight="700" fill={OFF}>{o.label}</text>
+            <text x={o.x} y={o.y + 0.6} textAnchor="middle" fontSize="1.5" fontWeight="700" fill={OFF}>{o.label}</text>
           </g>
         );
       })}

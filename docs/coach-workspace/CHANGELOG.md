@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Make offensive markers more compact for boundary formations
+- **Asked for:** Either the offensive players need to be smaller or the field wider; I can't draw a formation into the boundary.
+- **Changed:** Reduced offensive markers from 36px to 28px with compact readable labels and thinner borders. Reduced their route-clearance masks and start-handle offsets to match. Scaled offensive symbols down in printed diagrams too.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Player coordinates, offensive-line group dragging, defense, field width, and saved routes remain unchanged. Smaller markers leave more usable space for tight boundary formations.
+
 ## 2026-09-21 — Drag the offensive line as a group
 - **Asked for:** Make it where the offensive line is grouped together for dragging.
 - **Changed:** Dragging an offensive lineman in Select mode moves the offensive line as one group, preserving splits and relative depths. Shift-drag adjusts an individual lineman. Group movement is clamped together at the field limits and is one undo action.
