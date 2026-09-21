@@ -84,7 +84,7 @@ export default function OpponentOverview({ opponent: o }: { opponent: Opponent }
       <section aria-labelledby="when-heading" className={`${card} p-5 min-w-0 flex flex-col`}>
         <h2 id="when-heading" className={heading}>When They Do It</h2>
         {rows([["1st Down", rate(summary.firstDownRun)], ["3rd Down · 7+", rate(summary.downDistance["3rd"]["Long (7+)"])], ["Red Zone", o.redZone.trim() ? (o.redZone.length > 105 ? `${o.redZone.slice(0, 102)}…` : o.redZone) : "Not entered"], ["Short Yardage · 3rd & 1–3", rate(summary.downDistance["3rd"]["Short (1-3)"])]])}
-        <Link href={`${details}#situations`} className={more}>View Situations →</Link>
+        <Link href={`${scout}&view=situations`} className={more}>View Situations →</Link>
       </section>
     </div>
     <div className="flex flex-wrap items-center justify-between gap-3 pt-1 pb-3">

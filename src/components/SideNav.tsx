@@ -56,7 +56,11 @@ export const SECTIONS: Section[] = [
     icon: Binoculars,
     match: ["/matchup", "/scout", "/scouting"],
     // Q43: the scouting report is the long half of the matchup — what they do.
-    children: [{ href: "/scouting", label: "Scouting Report" }],
+    children: [
+      { href: "/scouting", label: "Scouting Report" },
+      { href: "/scouting?view=personnel", label: "Personnel" },
+      { href: "/scouting?view=situations", label: "Situational Tendencies" },
+    ],
   },
   {
     href: "/gameplan",

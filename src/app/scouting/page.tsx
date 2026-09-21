@@ -10,7 +10,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import { Binoculars, ChevronRight, ClipboardList, Printer, Upload, Users2 } from "lucide-react";
-import { useStore, useHydrated } from "@/lib/store";
+import { useStore, useHydrated, DOWNS, DISTANCES } from "@/lib/store";
+import { headlineFromPlays } from "@/lib/tendencies";
 import {
   BestPlaysCard, CombosCard, FormationsByPersonnelCard, PersonnelCard, PlayerUsageCard,
   SituationsCard, TellsCard, TopFormationsCard,
@@ -37,10 +38,15 @@ function ScoutingInner() {
   const hydrated = useHydrated();
   const router = useRouter();
   const sp = useSearchParams();
-  const { opponents } = useStore();
+  const { opponents, lastOpponentId } = useStore();
+  const view = sp.get("view");
+  const personnelOnly = view === "personnel";
+  const situationsOnly = view === "situations";
+  const full = !personnelOnly && !situationsOnly;
+  const title = personnelOnly ? "Personnel" : situationsOnly ? "Situational Tendencies" : "Scouting Report";
   const setLastOpponent = useStore((s) => s.setLastOpponent);
 
-  const o = opponents.find((x) => x.id === sp.get("id")) ?? opponents.find((x) => !x.isDemo) ?? opponents[0] ?? null;
+  const o = opponents.find((x) => x.id === sp.get("id")) ?? opponents.find((x) => x.id === lastOpponentId) ?? opponents.find((x) => !x.isDemo) ?? opponents[0] ?? null;
   useEffect(() => {
     if (o) setLastOpponent(o.id);
   }, [o, setLastOpponent]);
@@ -48,6 +54,7 @@ function ScoutingInner() {
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
 
   const plays = o?.plays ?? [];
+  const situationGrid = plays.length ? headlineFromPlays(plays).downDistance ?? o?.downDistance : o?.downDistance;
   const keyPlayers = (o?.keyPlayers ?? []).filter((k) => k.name.trim() || (k.jersey ?? "").trim());
   const notes = (o?.matchupNotes ?? []).filter((m) => m.label.trim() || m.value.trim());
   // Which of the five headings have something real behind them.
@@ -63,12 +70,12 @@ function ScoutingInner() {
     <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-[1400px] mx-auto print-root">
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between no-print">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Scouting Report{o ? ` — ${o.name}` : ""}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{title}{o ? ` — ${o.name}` : ""}</h1>
           <p className="text-dim mt-0.5">Scouting Report = What they do. Game Plan = What we&apos;re going to do about it.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {opponents.length > 0 && (
-            <select value={o?.id ?? ""} onChange={(e) => router.push(`/scouting?id=${e.target.value}`)} className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold">
+            <select value={o?.id ?? ""} onChange={(e) => router.push(`/scouting?id=${e.target.value}${full ? "" : `&view=${view}`}`)} className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold">
               {opponents.map((x) => <option key={x.id} value={x.id}>{x.name}{x.week ? ` (Wk ${x.week})` : ""}{x.isDemo ? " · demo" : ""}</option>)}
             </select>
           )}
@@ -87,9 +94,12 @@ function ScoutingInner() {
         </div>
       </div>
 
+      {o && <nav aria-label="Opponent scouting views" className="no-print flex flex-wrap gap-2 mb-5">
+        {[{ label: "Overview", href: `/matchup?id=${o.id}`, active: false }, { label: "Full Scout", href: `/scouting?id=${o.id}`, active: full }, { label: "Personnel", href: `/scouting?id=${o.id}&view=personnel`, active: personnelOnly }, { label: "Situational Tendencies", href: `/scouting?id=${o.id}&view=situations`, active: situationsOnly }].map(tab => <Link key={tab.label} href={tab.href} aria-current={tab.active ? "page" : undefined} className={`rounded-lg px-4 py-2 text-sm font-semibold border ${tab.active ? "bg-grass border-grass text-white" : "border-line text-dim hover:text-ink"}`}>{tab.label}</Link>)}
+      </nav>}
       {/* The paper version says who and what it is. */}
       <div className="hidden print:block mb-4">
-        <h1 className="text-2xl font-extrabold">Scouting Report — {o?.name ?? ""}</h1>
+        <h1 className="text-2xl font-extrabold">{title} — {o?.name ?? ""}</h1>
         <p className="text-sm text-dim">Scouting Report = What they do. Game Plan = What we&apos;re going to do about it.</p>
       </div>
 
@@ -102,7 +112,7 @@ function ScoutingInner() {
         </div>
       ) : (
         <motion.div key={o.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-7">
-          {hasPersonnel && (
+          {!situationsOnly && hasPersonnel && (
             <Section n={next()} title="Personnel" note={plays.length ? `off ${plays.length} snaps` : "from what you entered by hand"}>
               {plays.length ? (
                 <PersonnelCard plays={plays} />
@@ -122,7 +132,23 @@ function ScoutingInner() {
             </Section>
           )}
 
-          {hasFormations && (
+          {personnelOnly && plays.length > 0 && <FormationsByPersonnelCard plays={plays} />}
+          {personnelOnly && !hasPersonnel && <div className={`${card} p-6 text-dim`}>No personnel breakdown yet. Add personnel groupings in Opponent Details or upload a report.</div>}
+          {situationsOnly && <>
+            <section className={`${card} p-5 overflow-x-auto`}>
+              <h2 className="font-bold mb-3">Down &amp; Distance</h2>
+              <table className="w-full min-w-[480px] text-sm"><thead><tr><th className="text-left p-2">Distance</th>{DOWNS.map(d => <th key={d} className="p-2">{d} Down</th>)}</tr></thead>
+                <tbody>{DISTANCES.map(distance => <tr key={distance} className="border-t border-line"><th className="p-3 text-left text-dim">{distance}</th>{DOWNS.map(down => {
+                  const value = situationGrid?.[down][distance];
+                  return <td key={down} className="p-3 text-center">{value == null ? "—" : `${value}% run / ${100-value}% pass`}</td>;
+                })}</tr>)}</tbody>
+              </table>
+              <p className="text-xs text-dim mt-3">{plays.length ? "From uploaded snaps; cells with insufficient data are blank." : "From saved scouting entries; blank cells have no data."}</p>
+            </section>
+            {plays.length > 0 && <><SituationsCard plays={plays} /><TellsCard plays={plays} /><CombosCard plays={plays} /></>}
+            <section className={`${card} p-5`}><h2 className="font-bold mb-2">Red Zone</h2><p className="text-sm text-dim whitespace-pre-wrap">{o.redZone || "No red-zone notes entered yet."}</p></section>
+          </>}
+          {full && hasFormations && (
             <Section n={next()} title="Top Formations" note="what they line up in, most first">
               {plays.length ? (
                 <>
@@ -146,7 +172,7 @@ function ScoutingInner() {
             </Section>
           )}
 
-          {hasPlays && (
+          {full && hasPlays && (
             <Section n={next()} title="Top Plays" note="most called and most dangerous">
               {plays.length ? (
                 <BestPlaysCard plays={plays} />
@@ -168,7 +194,7 @@ function ScoutingInner() {
             </Section>
           )}
 
-          {hasPlayers && (
+          {full && hasPlayers && (
             <Section n={next()} title="Best Players" note="who has to be accounted for">
               <div className="grid gap-4 lg:grid-cols-2 items-start">
                 {plays.some((p) => p.player.trim()) && <PlayerUsageCard plays={plays} />}
@@ -193,7 +219,7 @@ function ScoutingInner() {
             </Section>
           )}
 
-          {hasTells && (
+          {full && hasTells && (
             <Section n={next()} title="Key Tendencies / Tells" note="what gives them away">
               <TellsCard plays={plays} />
               <div className="grid gap-4 lg:grid-cols-2 items-start">
@@ -203,7 +229,7 @@ function ScoutingInner() {
             </Section>
           )}
 
-          {(notes.length > 0 || o.redZone.trim() || o.notes.trim()) && (
+          {full && (notes.length > 0 || o.redZone.trim() || o.notes.trim()) && (
             <section className="print-section flex flex-col gap-3">
               <h2 className="text-xl font-extrabold tracking-tight">Coach&apos;s Notes</h2>
               <div className={card}>
@@ -220,7 +246,7 @@ function ScoutingInner() {
             </section>
           )}
 
-          {!hasPersonnel && !hasFormations && !hasPlays && !hasPlayers && !hasTells && (
+          {full && !hasPersonnel && !hasFormations && !hasPlays && !hasPlayers && !hasTells && (
             <div className={`${card} px-6 py-14 text-center`}>
               <Upload size={34} className="mx-auto text-dim mb-3" />
               <div className="text-lg font-bold mb-1">Nothing scouted on {o.name} yet</div>

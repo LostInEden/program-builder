@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Add opponent Personnel and Situational Tendencies tabs
+- **Asked for:** Add a Personnel tab and a Situational Tendencies tab to Opponent Matchup.
+- **Changed:** Added both entries to the shared Opponent Matchup navigation and focused scouting views with view tabs. Personnel shows existing grouping and formation breakdowns; Situational Tendencies shows down-and-distance, existing situational analysis, tells, combinations, and red-zone notes.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Uses existing stored data and scouting calculations. Full Scout and editing tools remain available. Opponent selection is retained between scouting views.
+
 ## 2026-09-20 — Remove the Reports navigation tab
 - **Asked for:** Get rid of the Reports tab because the information is available elsewhere.
 - **Changed:** Removed Reports from the shared navigation configuration used by the desktop and mobile menus.

@@ -11,6 +11,12 @@ function SectionTabsInner() {
   const pathname = usePathname();
   const search = useSearchParams();
   const hydrated = useHydrated();
+  const lastOpponentId = useStore((s) => s.lastOpponentId);
+  const opponentHref = (href: string) => {
+    if (!href.startsWith("/scouting") && href !== "/matchup") return href;
+    const id = (["/matchup", "/scouting"].includes(pathname) ? search.get("id") : null) || lastOpponentId;
+    return id ? `${href}${href.includes("?") ? "&" : "?"}id=${encodeURIComponent(id)}` : href;
+  };
   const program = useStore((s) => s.program);
   const players = useStore((s) => s.players.length);
   const pending = useStore((s) => s.concepts.filter((c) => !c.confirmed).length);
@@ -64,7 +70,7 @@ function SectionTabsInner() {
                 </button>
                 {expanded && <div id={`section-menu-${index}`} className="absolute left-0 top-full z-50 mt-0 w-60 rounded-b-lg border border-line bg-panel p-2 shadow-xl">
                   {[{ href: section.href, label: "Overview" }, ...section.children].map((child) => <Link
-                    key={child.href} href={child.href} aria-current={current(child.href) ? "page" : undefined}
+                    key={child.href} href={opponentHref(child.href)} aria-current={current(child.href) ? "page" : undefined}
                     onClick={() => setOpen(null)}
                     className={`block rounded-lg px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-grass ${current(child.href) ? "bg-slate-100 text-ink font-semibold" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>
                     {child.label}
