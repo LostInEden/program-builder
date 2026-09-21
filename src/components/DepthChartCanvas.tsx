@@ -82,7 +82,7 @@ export default function DepthChartCanvas({
   return (
     <div className="overflow-x-auto rounded-xl" role="region" aria-label="Depth chart field" tabIndex={0}>
     <div
-      className={`relative rounded-xl border border-line bg-[#252A30] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
+      className={`relative rounded-xl border border-line bg-[#121212] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
       style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
@@ -107,8 +107,8 @@ export default function DepthChartCanvas({
         ))}
       </div>
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-[92%] border-t-2 border-sky-300">
-        <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wider text-sky-100">OPPONENT’S 20 · LINE OF SCRIMMAGE</span>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-[92%] border-t-2 border-gold">
+        <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wider text-gold">OPPONENT’S 20 · LINE OF SCRIMMAGE</span>
       </div>
 
       {structure.slots.map((slot, i) => {

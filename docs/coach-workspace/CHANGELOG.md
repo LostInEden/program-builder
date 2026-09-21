@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Apply CounterScheme red, gold, and graphite
+- **Asked for:** Near Black #121212, Graphite #252729, Dark Gray #36393C, Counter Red #C62828, Deep Red #8F1D22, Champagne Gold #BFA46F, Metallic Gray #9DA3A6, Light Text #E8EAEB, and Muted Text #A7ADB1.
+- **Changed:** applied near-black backgrounds/navigation, graphite cards, dark-gray raised panels, red primary actions with deep-red hover, champagne-gold links and focus outlines, metallic-gray blended borders, and the specified text colors. Kept the depth chart neutral with a gold line-of-scrimmage accent.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves field geometry, position spacing, saved data, and calculations. Status feedback remains distinct; print retains white paper and dark text.
+
 ## 2026-09-20 — Make the depth chart field neutral
 - **Asked for:** "Make the field on the depth chart a nuetral color where you can still see the lines and names"
 - **Changed:** replaced the green field with neutral charcoal #252A30 and increased yard-line contrast. Retained subtle field stripes, light yard numbers and hash marks, and separate name cards.
