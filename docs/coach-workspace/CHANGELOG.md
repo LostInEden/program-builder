@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Give the offense more room for routes
+- **Asked for:** Back the offense up some so there is space for routes.
+- **Changed:** Extended the diagram viewport by 12 field units downfield, placing the formation higher on the same board and leaving more room beyond the defense. Updated pointer coordinates, drawing overlays, field markings, and print view to use the expanded area.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Saved player positions, line-of-scrimmage alignment, and existing path coordinates are unchanged. The canvas layout and drawing interaction are retained.
+
 ## 2026-09-21 — Draw continuous multi-segment assignments
 - **Asked for:** Make drawing feel like one continuous football assignment: click bends with live preview, finish quickly, and edit the whole path afterward without redesigning the tool.
 - **Changed:** StudioCanvas now holds an unfinished path locally, adds unlimited click points, finishes with double-click or Enter, cancels with Escape, and undoes draft points before saved edits. Arrow, Line, Motion, and Block share this interaction. Added free-field starts and nearby-player snapping using existing anchors and points. Reset canvas history when changing diagrams or structures.

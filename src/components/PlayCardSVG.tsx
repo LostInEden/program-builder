@@ -6,13 +6,16 @@ import {
   defenseCanvasY,
   smoothPath,
   lineDash,
-  FIELD_H,
+  FIELD_H as BASE_FIELD_H,
   LOS_Y,
   YD,
   FIELD_PRESETS,
   ROUTE_COLORS,
 } from "@/lib/football";
 import { slotLabelOf, type Call, type Overrides } from "@/lib/store";
+
+// Show extra downfield space without rewriting saved player or path coordinates.
+const FIELD_H = BASE_FIELD_H + 12;
 
 const OFF = "#b91c1c";
 const DEF = "#0e7490";

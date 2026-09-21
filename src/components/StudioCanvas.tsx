@@ -20,7 +20,7 @@ import {
   defenseCanvasY,
   smoothPath,
   lineDash,
-  FIELD_H,
+  FIELD_H as BASE_FIELD_H,
   LOS_Y,
   YD,
   FIELD_PRESETS,
@@ -49,6 +49,9 @@ type Drag =
   | { type: "wp"; lineId: string; index: number; moved: boolean }
   | { type: "zone-move"; id: string; grab: Pt; moved: boolean }
   | { type: "zone-resize"; id: string; moved: boolean };
+
+// Show extra downfield space without rewriting saved player or path coordinates.
+const FIELD_H = BASE_FIELD_H + 12;
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const INK = ROUTE_COLORS[0];
