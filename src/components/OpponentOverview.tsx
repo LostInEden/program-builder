@@ -38,52 +38,58 @@ export default function OpponentOverview({ opponent: o }: { opponent: Opponent }
     if (players[0]) priorities.push({ title: `${players[0].jersey ? `#${players[0].jersey} ` : ""}${players[0].name}`,
       detail: `${players[0].pos || "Player"} · Coach-identified key player`, evidence: players[0].notes || "Listed among the opponent’s key players.", section: "players" });
     if (priorities.length < 3 && formation) priorities.push({ title: formation.name, detail: `Top formation${formation.snapsPct != null ? ` · ${formation.snapsPct}% of snaps` : ""}`, evidence: formation.notes || "From the opponent’s formation breakdown.", section: "formations" });
-    return { personnel, formation, run, pass, players, priorities: priorities.slice(0, 5), runRate: counted ? counted.runRate : o.runRate, usage: keyPlayerUsage(plays).slice(0, 3) };
+    return { firstDownRun: counted ? counted.firstDownRun : o.firstDownRun, downDistance: counted?.downDistance ?? o.downDistance, personnel, formation, run, pass, players, priorities: priorities.slice(0, 5), runRate: counted ? counted.runRate : o.runRate, usage: keyPlayerUsage(plays).slice(0, 3) };
   }, [o]);
   const scout = `/scouting?id=${encodeURIComponent(o.id)}`;
   const details = `/matchup?id=${encodeURIComponent(o.id)}&view=details`;
-  return <div className="flex flex-col gap-5 max-w-6xl mx-auto">
-    <section aria-labelledby="opponent-heading" className={`${card} p-5`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><p className={`${heading} text-gold`}>This week&apos;s opponent {o.isDemo && "· Demo data"}</p><h2 id="opponent-heading" className="mt-1 text-2xl font-extrabold">{o.name}</h2></div>
-        <Link href={details} className={secondary}>Edit Opponent Information</Link>
-      </div>
-      <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-        {[["Week", o.week ?? "Not set"], ["Record", o.record || "Not entered"], ["Offensive style", o.offensiveStyle || "Not entered"], ["Tempo", o.tempo || "Not entered"]].map(([label, value]) => <div key={label}><dt className="text-dim text-xs">{label}</dt><dd className="mt-1 font-semibold">{value}</dd></div>)}
-      </dl>
-    </section>
-
-    <section aria-labelledby="priorities-heading" className={`${card} border-t-4 border-t-grass p-5 sm:p-6`}>
-      <p className={`${heading} text-gold`}>What matters this week?</p>
-      <h2 id="priorities-heading" className="mt-1 text-2xl font-extrabold">Game Plan Priorities</h2>
-      <p className="mt-1 text-sm text-dim">Prepare for these tendencies, concepts, and threats.</p>
-      <ol className="mt-4 divide-y divide-line">
-        {summary.priorities.map((p, i) => <li key={`${p.section}-${p.title}`} className="flex gap-4 py-4">
-          <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-grass text-white font-bold">{i + 1}</span>
-          <div className="min-w-0 flex-1"><h3 className="font-bold text-lg break-words">{p.title}</h3><p className="text-sm text-dim mt-0.5">{p.detail}</p>
-            <details className="mt-2 text-sm"><summary className="cursor-pointer text-gold font-semibold w-fit">View Evidence</summary><div className="mt-2 rounded-lg bg-panel p-3"><p>{p.evidence}</p><Link className="inline-block mt-2 text-gold hover:underline" href={`${scout}#${p.section}`}>Open scout details →</Link></div></details>
-          </div>
+  const rate = (value: number | null | undefined) => value == null ? "Not available" : `${value}% run · ${100 - value}% pass`;
+  const rows = (items: [string, string][]) => <dl className="mt-3 divide-y divide-line/60 text-sm">{items.map(([label, value]) => <div key={label} className="grid grid-cols-[minmax(100px,0.8fr)_minmax(0,1.2fr)] gap-3 py-2"><dt className="text-dim">{label}</dt><dd className="font-semibold break-words">{value}</dd></div>)}</dl>;
+  const more = "mt-auto pt-3 inline-block text-sm font-semibold text-gold hover:underline";
+  return <div className="flex flex-col gap-4">
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+      <div><span className="font-bold">{o.name}</span><span className="text-dim"> · Week {o.week ?? "—"} · {o.record || "Record not entered"}</span>{o.isDemo && <span className="ml-2 text-gold text-xs">DEMO DATA</span>}</div>
+      <Link href={details} className="text-gold font-semibold hover:underline">Edit Opponent Information</Link>
+    </div>
+    <section aria-labelledby="priorities-heading" className={`${card} border-t-4 border-t-grass p-5`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 id="priorities-heading" className="text-xl font-extrabold">Game Plan Priorities</h2><p className="text-xs text-gold font-semibold">What matters this week?</p></div>
+      <ol className={`mt-4 grid gap-3 sm:grid-cols-2 ${summary.priorities.length > 3 ? "xl:grid-cols-5" : "md:grid-cols-3"}`}>
+        {summary.priorities.map((p, i) => <li key={`${p.section}-${p.title}`} className="min-w-0 rounded-lg border border-line bg-pitch/40 p-4">
+          <div className="flex items-start gap-2"><span className="grid size-6 shrink-0 place-items-center rounded bg-grass text-white text-xs font-bold">{i + 1}</span><h3 className="font-bold break-words">{p.title}</h3></div>
+          <p className="text-sm text-dim mt-2">{p.detail}</p>
+          <details className="mt-3 text-sm"><summary className="cursor-pointer text-gold font-semibold w-fit">View Evidence</summary><div className="mt-2 rounded-lg bg-panel p-3"><p>{p.evidence}</p><Link className="inline-block mt-2 text-gold hover:underline" href={`${scout}#${p.section}`}>Open scout details →</Link></div></details>
         </li>)}
       </ol>
-      {summary.priorities.length < 3 && <p className="text-sm text-dim py-4">{summary.priorities.length ? "More scouting data is needed to identify additional priorities." : "Upload a report or add scouting details to identify this week’s priorities."} <Link className="text-gold hover:underline" href={details}>Add scouting details →</Link></p>}
+      {summary.priorities.length < 3 && <p className="text-sm text-dim mt-3">{summary.priorities.length ? "More scouting data is needed to identify additional priorities." : "Upload a report or add scouting details to identify this week’s priorities."} <Link className="text-gold hover:underline" href={details}>Add scouting details →</Link></p>}
     </section>
 
-    <section aria-labelledby="quick-heading" className={`${card} p-5`}>
-      <div className="flex justify-between gap-3 items-center"><h2 id="quick-heading" className={heading}>Quick Tendencies</h2><Link href={scout} className="text-sm font-semibold text-gold hover:underline">View Full Scout →</Link></div>
-      <dl className="mt-4 grid grid-cols-2 lg:grid-cols-5 gap-5 text-sm">
-        {[["Run / Pass", summary.runRate != null ? `${summary.runRate}% / ${100 - summary.runRate}%` : "Not available"], ["Top personnel", summary.personnel?.group ?? "Not available"], ["Top formation", summary.formation?.name ?? "Not available"], ["Top run concept", summary.run?.name ?? "Not available"], ["Top pass concept", summary.pass?.name ?? "Not available"]].map(([label, value]) => <div key={label}><dt className="text-xs text-dim">{label}</dt><dd className="font-bold mt-1">{value}</dd></div>)}
-      </dl>
-      <p className="mt-4 text-xs text-dim">{o.plays?.length ? `From ${o.plays.length} uploaded snaps; untagged information is not inferred.` : "From saved scouting entries."}</p>
-    </section>
-
-    <section aria-labelledby="players-heading" className={`${card} p-5`}>
-      <h2 id="players-heading" className={heading}>Key Players</h2>
-      <div className="mt-3 flex flex-wrap gap-3">
-        {summary.players.slice(0, 3).map(p => <Link key={p.id} href={`${scout}#players`} className="rounded-lg bg-panel px-4 py-3 text-sm font-semibold hover:outline hover:outline-gold">{p.jersey && <span className="text-gold mr-2">#{p.jersey}</span>}{p.name || "Unnamed player"}{p.pos && <span className="text-dim"> — {p.pos}</span>}</Link>)}
-        {!summary.players.length && summary.usage.map(p => <Link key={p.player} href={`${scout}#players`} className="rounded-lg bg-panel px-4 py-3 text-sm font-semibold">{p.player} <span className="text-dim">· {p.touches} tagged touches</span></Link>)}
-        {!summary.players.length && !summary.usage.length && <p className="text-sm text-dim">No key players identified yet.</p>}
-      </div>
-    </section>
-    <div className="flex flex-wrap justify-end gap-3 pt-1 pb-3"><Link href={scout} className={secondary}>View Full Scout</Link><Link href={`/gameplan?id=${encodeURIComponent(o.id)}`} className="rounded-lg bg-grass px-5 py-2 text-sm font-bold text-white hover:bg-grass-deep">Build Game Plan →</Link></div>
+    <div className="grid md:grid-cols-2 gap-4">
+      <section aria-labelledby="identity-heading" className={`${card} p-5 min-w-0`}>
+        <h2 id="identity-heading" className={heading}>Offensive Identity</h2>
+        {rows([["Run / Pass", rate(summary.runRate)], ["Top Personnel", summary.personnel?.group ?? "Not available"], ["Top Formation", summary.formation?.name ?? "Not available"], ["Offensive Style", o.offensiveStyle || "Not entered"], ["Tempo", o.tempo || "Not entered"]])}
+      </section>
+      <section aria-labelledby="players-heading" className={`${card} p-5 min-w-0 flex flex-col`}>
+        <h2 id="players-heading" className={heading}>Key Players</h2>
+        <div className="mt-3 divide-y divide-line/60">
+          {summary.players.slice(0, 3).map(p => <Link key={p.id} href={`${scout}#players`} className="block py-3 text-sm font-semibold hover:text-gold">{p.jersey && <span className="text-gold mr-2">#{p.jersey} </span>}{p.name || "Unnamed player"}{p.pos && <span className="text-dim"> — {p.pos}</span>}</Link>)}
+          {!summary.players.length && summary.usage.map(p => <Link key={p.player} href={`${scout}#players`} className="block py-3 text-sm font-semibold">{p.player} <span className="text-dim">· {p.touches} tagged touches</span></Link>)}
+          {!summary.players.length && !summary.usage.length && <p className="text-sm text-dim py-3">No key players identified yet.</p>}
+        </div>
+        <Link href={`${scout}#players`} className={more}>View All Players →</Link>
+      </section>
+      <section aria-labelledby="what-heading" className={`${card} p-5 min-w-0 flex flex-col`}>
+        <h2 id="what-heading" className={heading}>What They Do</h2>
+        {rows([["Top Run", summary.run?.name ?? "Not available"], ["Top Pass", summary.pass?.name ?? "Not available"], ["Top Formation", summary.formation?.name ?? "Not available"], ["Top Personnel", summary.personnel?.group ?? "Not available"]])}
+        <Link href={`${scout}#plays`} className={more}>View Tendencies →</Link>
+      </section>
+      <section aria-labelledby="when-heading" className={`${card} p-5 min-w-0 flex flex-col`}>
+        <h2 id="when-heading" className={heading}>When They Do It</h2>
+        {rows([["1st Down", rate(summary.firstDownRun)], ["3rd Down · 7+", rate(summary.downDistance["3rd"]["Long (7+)"])], ["Red Zone", o.redZone.trim() ? (o.redZone.length > 105 ? `${o.redZone.slice(0, 102)}…` : o.redZone) : "Not entered"], ["Short Yardage · 3rd & 1–3", rate(summary.downDistance["3rd"]["Short (1-3)"])]])}
+        <Link href={`${details}#situations`} className={more}>View Situations →</Link>
+      </section>
+    </div>
+    <div className="flex flex-wrap items-center justify-between gap-3 pt-1 pb-3">
+      <p className="text-xs text-dim">{o.plays?.length ? `From ${o.plays.length} uploaded snaps and saved scouting notes.` : "From saved scouting entries."}</p>
+      <div className="flex flex-wrap gap-3"><Link href={scout} className={secondary}>View Full Scout</Link><Link href={`/gameplan?id=${encodeURIComponent(o.id)}`} className="rounded-lg bg-grass px-5 py-2 text-sm font-bold text-white hover:bg-grass-deep">Build Game Plan →</Link></div>
+    </div>
   </div>;
 }

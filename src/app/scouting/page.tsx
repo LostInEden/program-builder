@@ -72,6 +72,7 @@ function ScoutingInner() {
               {opponents.map((x) => <option key={x.id} value={x.id}>{x.name}{x.week ? ` (Wk ${x.week})` : ""}{x.isDemo ? " · demo" : ""}</option>)}
             </select>
           )}
+          {o && <Link href={`/matchup?id=${o.id}&view=details#situations`} className="text-sm font-semibold text-gold hover:underline">Full Down &amp; Distance / Situations</Link>}
           {o && <><Link href={`/matchup?id=${o.id}`} className="text-sm font-semibold text-gold hover:underline">Overview</Link><Link href={`/matchup?id=${o.id}&view=details`} className="rounded-lg border border-line px-3 py-2 text-sm font-semibold hover:border-gold">Opponent Details / Edit Scout</Link></>}
           {o && (
             <>

@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Restore the side-by-side opponent dashboard
+- **Asked for:** Keep a categorized coaching dashboard with full-width priorities, Offensive Identity beside Key Players, and What They Do beside When They Do It.
+- **Changed:** Reworked the overview into compact paired cards with horizontal priority tiles, restored Build Game Plan in the top controls, and added direct player, tendency, and situation links. Moved opponent identification into a compact line above the cards.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Dark theme, backend, models, storage, and scouting calculations unchanged. Situation summaries use existing first-down and explicitly labeled third-down distance splits; red-zone text remains a saved coach note. Full scouting and editing tools are retained; cards stack only on small screens.
+
 ## 2026-09-20 — Simplify the Opponent Matchup overview
 - **Asked for:** A coach-scannable overview with a compact opponent header, prominent Game Plan Priorities, Quick Tendencies, Key Players, and clear Full Scout / Build Game Plan actions.
 - **Changed:** Added a four-section overview using existing scouting calculations and saved entries, with up to five supported priorities and expandable evidence. Kept the red, gold, and graphite theme and added honest missing-data states.

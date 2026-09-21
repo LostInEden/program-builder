@@ -177,9 +177,9 @@ function MatchupInner() {
               <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim">
                 <Upload size={15} /> Upload Report
               </button>
-              {showDetails && <button onClick={createPlan} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">
+              {showDetails ? <button onClick={createPlan} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">
                 <Send size={15} /> {plan ? "Regenerate Game Plan" : "Create Game Plan"}
-              </button>}
+              </button> : <Link href={`/gameplan?id=${o.id}`} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep"><Send size={15} /> Build Game Plan</Link>}
             </>
           )}
         </div>
@@ -321,7 +321,7 @@ function MatchupInner() {
                 </div>
               </div>
 
-              <div className={`${card} lg:col-start-3 lg:row-start-2 flex flex-col`}>
+              <div id="situations" className={`${card} scroll-mt-28 lg:col-start-3 lg:row-start-2 flex flex-col`}>
                 <div className={cardHead}>Down &amp; Distance Profile</div>
                 <div className="p-3 flex-1 flex flex-col justify-center">
                   <div className="grid grid-cols-[76px_repeat(4,1fr)] gap-1.5 text-center">
