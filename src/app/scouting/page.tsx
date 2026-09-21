@@ -22,7 +22,7 @@ const cardHead = "display uppercase text-xs font-bold tracking-[0.15em] text-ink
 /** One of the five headings. Renders nothing when it has nothing real (Q44). */
 function Section({ n, title, note, children }: { n: number; title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section className="print-section flex flex-col gap-3">
+    <section id={({ Personnel: "personnel", "Top Formations": "formations", "Top Plays": "plays", "Best Players": "players", "Key Tendencies / Tells": "tells" } as Record<string, string>)[title]} className="print-section scroll-mt-24 flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline gap-2">
         <span className="grid size-6 shrink-0 place-items-center rounded-full bg-navy text-white text-[11px] font-extrabold">{n}</span>
         <h2 className="text-xl font-extrabold tracking-tight">{title}</h2>
@@ -72,6 +72,7 @@ function ScoutingInner() {
               {opponents.map((x) => <option key={x.id} value={x.id}>{x.name}{x.week ? ` (Wk ${x.week})` : ""}{x.isDemo ? " · demo" : ""}</option>)}
             </select>
           )}
+          {o && <><Link href={`/matchup?id=${o.id}`} className="text-sm font-semibold text-gold hover:underline">Overview</Link><Link href={`/matchup?id=${o.id}&view=details`} className="rounded-lg border border-line px-3 py-2 text-sm font-semibold hover:border-gold">Opponent Details / Edit Scout</Link></>}
           {o && (
             <>
               <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim">

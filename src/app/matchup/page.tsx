@@ -12,6 +12,7 @@ import {
   useStore, useHydrated, initialsOf, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
 } from "@/lib/store";
 import { AI_LABEL } from "@/lib/ai";
+import OpponentOverview from "@/components/OpponentOverview";
 import TendencyImport from "@/components/TendencyImport";
 import { TopTellsCard } from "@/components/TendencyReport";
 import UnknownTerms from "@/components/UnknownTerms";
@@ -90,6 +91,7 @@ function MatchupInner() {
   // "Ask about this" on a game plan item lands here with the question ready to
   // send — answer first, evidence second, conversation whenever he wants it (Q29).
   const askParam = sp.get("ask");
+  const showDetails = sp.get("view") === "details" || !!askParam;
   // The chat talks about whoever he looked at last.
   useEffect(() => {
     if (o) setLastOpponent(o.id);
@@ -118,7 +120,7 @@ function MatchupInner() {
         signatureConcept: d.signatureConcept ?? "", signatureRate: d.signatureRate ?? null,
         downDistance: d.downDistance ?? o.downDistance }
     : o;
-  const go = (id: string) => router.push(`/matchup?id=${id}`);
+  const go = (id: string) => router.push(`/matchup?id=${id}${showDetails ? "&view=details" : ""}`);
   const week = o?.week ? seasonSchedule.find((w) => w.week === o.week) : undefined;
   const nextWeek = seasonSchedule.find((w) => w.opponent && !w.result);
 
@@ -158,12 +160,12 @@ function MatchupInner() {
     <div className="px-4 sm:px-6 py-6 sm:py-8 max-w-[1600px] mx-auto">
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Opponent Matchup</h1>
-          <p className="text-dim mt-0.5">Scouting Report = What they do. Game Plan = What we&apos;re going to do about it.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight">{showDetails ? "Opponent Details" : "Opponent Matchup"}</h1>
+          <p className="text-dim mt-0.5">{showDetails ? "Scouting entries, opponent information, and staff tools." : "Your opponent at a glance."}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {opponents.length > 0 && (
-            <select value={o?.id ?? ""} onChange={(e) => go(e.target.value)} className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold">
+            <select aria-label="Select opponent" value={o?.id ?? ""} onChange={(e) => go(e.target.value)} className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold">
               {opponents.map((x) => <option key={x.id} value={x.id}>{x.name}{x.week ? ` (Wk ${x.week})` : ""}{x.isDemo ? " · demo" : ""}</option>)}
             </select>
           )}
@@ -175,21 +177,22 @@ function MatchupInner() {
               <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim">
                 <Upload size={15} /> Upload Report
               </button>
-              <button onClick={createPlan} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">
+              {showDetails && <button onClick={createPlan} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">
                 <Send size={15} /> {plan ? "Regenerate Game Plan" : "Create Game Plan"}
-              </button>
+              </button>}
             </>
           )}
         </div>
       </div>
 
+      {showDetails && o && <Link href={`/matchup?id=${o.id}`} className="inline-block mb-4 text-sm font-semibold text-gold hover:underline">← Back to Overview</Link>}
       {!o ? (
         <div className={`${card} px-6 py-14 text-center`}>
           <div className="text-lg font-bold mb-1">No opponents yet</div>
           <p className="text-sm text-dim max-w-md mx-auto mb-4">Add the opponent, then upload a play-by-play report or fill in what you know from film.</p>
           <button onClick={addOpp} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white hover:bg-grass-deep"><Plus size={15} /> Add Opponent</button>
         </div>
-      ) : (
+      ) : !showDetails ? <OpponentOverview opponent={o} /> : (
         <motion.div key={o.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
           {o.isDemo && (
             <div className="rounded-lg border border-ember/40 bg-ember/5 px-4 py-2.5 text-sm flex items-center gap-3">

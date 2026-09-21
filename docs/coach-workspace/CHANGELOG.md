@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Simplify the Opponent Matchup overview
+- **Asked for:** A coach-scannable overview with a compact opponent header, prominent Game Plan Priorities, Quick Tendencies, Key Players, and clear Full Scout / Build Game Plan actions.
+- **Changed:** Added a four-section overview using existing scouting calculations and saved entries, with up to five supported priorities and expandable evidence. Kept the red, gold, and graphite theme and added honest missing-data states.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** No backend, data-model, storage, or calculation changes. Priorities summarize existing actionable tells, frequent concepts, and coach-identified players; insufficient data is never padded with invented priorities.
+
+## 2026-09-20 — Preserve detailed opponent scouting outside the overview
+- **Asked for:** Keep detailed scouting and editing functionality available without cluttering the overview.
+- **Changed:** Preserved the previous detailed workspace at matchup?view=details, linked from Edit Opponent Information and Full Scout. Full Scout evidence links open the appropriate analysis section; opponent selection and question deep links remain supported.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Secondary opponent information, personnel tables, down-and-distance matrix, notes, schedule, chat, and existing editing controls remain available. Build Game Plan opens the existing game-plan workflow without automatically regenerating a saved plan. Previous overview remains recoverable in Git at 2e594c6.
+
 ## 2026-09-20 — Apply CounterScheme red, gold, and graphite
 - **Asked for:** Near Black #121212, Graphite #252729, Dark Gray #36393C, Counter Red #C62828, Deep Red #8F1D22, Champagne Gold #BFA46F, Metallic Gray #9DA3A6, Light Text #E8EAEB, and Muted Text #A7ADB1.
 - **Changed:** applied near-black backgrounds/navigation, graphite cards, dark-gray raised panels, red primary actions with deep-red hover, champagne-gold links and focus outlines, metallic-gray blended borders, and the specified text colors. Kept the depth chart neutral with a gold line-of-scrimmage accent.
