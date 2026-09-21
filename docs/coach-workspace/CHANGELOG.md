@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Drag the offensive line as a group
+- **Asked for:** Make it where the offensive line is grouped together for dragging.
+- **Changed:** Dragging an offensive lineman in Select mode moves the offensive line as one group, preserving splits and relative depths. Shift-drag adjusts an individual lineman. Group movement is clamped together at the field limits and is one undo action.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Uses existing Offensive Line type, falling back to LT/LG/C/RG/RT labels for older presets without a type. Explicit non-line types stay independent. Existing player-attached paths follow their anchors. No model or storage changes. Local browser checks verified five-player movement, preserved spacing at the sideline, and single-step undo; live diagrams were not edited.
+
 ## 2026-09-21 — Widen the hashes and remove vertical marks
 - **Asked for:** The hashes are a lot wider in high school — no vertical hashes needed.
 - **Changed:** Spread the diagram hash rows to 25% and 75% of board width and rendered horizontal ticks only, including the print view.

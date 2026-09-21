@@ -42,7 +42,7 @@ type Tool = "select" | "line" | "route" | "motion" | "block" | "text" | "zone" |
 type Pt = [number, number];
 type DraftPath = { anchor: string; points: Pt[] };
 type Drag =
-  | { type: "off"; id: string; moved: boolean }
+  | { type: "off"; id: string; grab: Pt; members: { id: string; x: number; y: number }[]; moved: boolean }
   | { type: "def"; slot: number; moved: boolean }
   | { type: "text"; id: string; moved: boolean }
   | { type: "start"; lineId: string; moved: boolean }
@@ -52,6 +52,10 @@ type Drag =
 
 // Show extra downfield space without rewriting saved player or path coordinates.
 const FIELD_H = BASE_FIELD_H + 12;
+
+// Explicit position type wins; older presets only have position labels.
+const isOffensiveLineman = (m: { ptype?: string; label: string }) =>
+  m.ptype ? m.ptype === "Offensive Line" : ["LT", "LG", "C", "RG", "RT"].includes(m.label.trim().toUpperCase());
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const INK = ROUTE_COLORS[0];
@@ -335,11 +339,18 @@ export default function StudioCanvas({
     if (pending || extendId || zoneStart) setHover(toCanvas(e));
     const d = dragRef.current;
     if (!d) return;
-    d.moved = true;
     const [x, y] = toCanvas(e);
+    if (d.type === "off" && !d.moved && Math.hypot(x - d.grab[0], y - d.grab[1]) < 0.25) return;
+    d.moved = true;
     if (d.type === "off") {
+      // Clamp the translation once for the group so splits never collapse at an edge.
+      const dx = Math.max(1 - Math.min(...d.members.map((m) => m.x)), Math.min(99 - Math.max(...d.members.map((m) => m.x)), x - d.grab[0]));
+      const dy = Math.max(4 - Math.min(...d.members.map((m) => m.y)), Math.min(LOS_Y - 1.2 - Math.max(...d.members.map((m) => m.y)), y - d.grab[1]));
       updateCall(call.id, {
-        offLook: call.offLook.map((m) => (m.id === d.id ? { ...m, x, y: Math.max(4, Math.min(LOS_Y - 1.2, y)) } : m)),
+        offLook: call.offLook.map((m) => {
+          const origin = d.members.find((member) => member.id === m.id);
+          return origin ? { ...m, x: origin.x + dx, y: origin.y + dy } : m;
+        }),
       });
     } else if (d.type === "def") {
       const slot = structure.slots[d.slot];
@@ -420,8 +431,14 @@ export default function StudioCanvas({
     if (tool !== "select") return;
     (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
     snapshot();
-    dragRef.current =
-      kind === "off" ? { type: "off", id, moved: false } : kind === "def" ? { type: "def", slot: slot!, moved: false } : { type: "text", id, moved: false };
+    if (kind === "off") {
+      const marker = call.offLook.find((m) => m.id === id);
+      const groupLine = marker && isOffensiveLineman(marker) && !e.shiftKey;
+      const members = call.offLook.filter((m) => groupLine ? isOffensiveLineman(m) : m.id === id).map(({ id, x, y }) => ({ id, x, y }));
+      dragRef.current = { type: "off", id, grab: toCanvas(e), members, moved: false };
+    } else {
+      dragRef.current = kind === "def" ? { type: "def", slot: slot!, moved: false } : { type: "text", id, moved: false };
+    }
   };
 
   const deleteSelection = () => {
@@ -787,6 +804,7 @@ export default function StudioCanvas({
           return (
             <span
               key={o.id}
+              title={isOffensiveLineman(o) ? "Drag to move the offensive line · Shift-drag to move only this player" : undefined}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
               className={`group absolute -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
