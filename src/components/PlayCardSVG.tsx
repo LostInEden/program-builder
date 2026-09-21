@@ -104,7 +104,7 @@ export default function PlayCardSVG({
       {call.lines.map((l) => {
         const a = anchorPos(l.anchor);
         if (!a) return null;
-        const pts: [number, number][] = [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as [number, number])];
+        const pts: [number, number][] = l.anchor === "free" ? l.points : [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as [number, number])];
         if (pts.length < 2) return null;
         const color = l.color ?? (l.anchor.startsWith("def:") ? DEF : OFF);
         const showArrow = l.showArrow ?? l.kind !== "block";

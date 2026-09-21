@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Draw continuous multi-segment assignments
+- **Asked for:** Make drawing feel like one continuous football assignment: click bends with live preview, finish quickly, and edit the whole path afterward without redesigning the tool.
+- **Changed:** StudioCanvas now holds an unfinished path locally, adds unlimited click points, finishes with double-click or Enter, cancels with Escape, and undoes draft points before saved edits. Arrow, Line, Motion, and Block share this interaction. Added free-field starts and nearby-player snapping using existing anchors and points. Reset canvas history when changing diagrams or structures.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Coach explicitly authorized the canvas behavior change. No store/model changes or migration. One finished assignment is one existing DrawLine. Existing player-relative paths remain attached when players move; free starts use absolute points with the existing free anchor. Print rendering now handles those free points without a spurious segment to the origin. New semantic categories remain REQUESTS.md #1 engineering work.
+
+## 2026-09-21 — Refine path editing and stroke readability
+- **Asked for:** Thin clean paths, smaller arrowheads, editable starts/bends/endpoints, and control over straight versus curved paths without changing the visual layout.
+- **Changed:** Reduced path strokes and arrowheads; masked paths around player labels; added a reachable start handle, retained endpoint/midpoint editing and bend removal, and stopped midpoint insertion from automatically enabling curves. Dragging an attached start detaches that path while preserving its other vertices.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Layout, field, player styling, navigation, colors, and My Scheme unchanged. TypeScript and production build checked; local browser checks cover multi-bend Enter/double-click completion, motion/block styles, draft cancellation, whole-path undo/redo/delete, point insertion/removal/dragging, attached-player movement, persistence, and print rendering. Live user diagrams were not edited during tests.
+
 ## 2026-09-21 — Enlarge and simplify the existing diagram workspace
 - **Asked for:** Adjust the existing StudioCanvas into a larger, clearer coaching board with compact controls.
 - **Changed:** Expanded the board area, collapsed saved diagrams and secondary inputs, reduced the inspector and toolbar, and improved dark position/text contrast on the light field. Defender labels now show positions rather than athlete tooltips or roster names.

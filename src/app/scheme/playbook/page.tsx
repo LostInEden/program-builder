@@ -217,6 +217,7 @@ export default function PlaybookPage() {
               </div></details>
 
               <StudioCanvas
+                key={`${call.id}:${group.structureId}`}
                 call={call}
                 structureId={group.structureId}
                 groupSlots={groupSlots}

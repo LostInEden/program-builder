@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   MousePointer2,
   Minus,
@@ -40,10 +40,12 @@ export type Selection =
 
 type Tool = "select" | "line" | "route" | "motion" | "block" | "text" | "zone" | "player";
 type Pt = [number, number];
+type DraftPath = { anchor: string; points: Pt[] };
 type Drag =
   | { type: "off"; id: string; moved: boolean }
   | { type: "def"; slot: number; moved: boolean }
   | { type: "text"; id: string; moved: boolean }
+  | { type: "start"; lineId: string; moved: boolean }
   | { type: "wp"; lineId: string; index: number; moved: boolean }
   | { type: "zone-move"; id: string; grab: Pt; moved: boolean }
   | { type: "zone-resize"; id: string; moved: boolean };
@@ -102,18 +104,26 @@ export default function StudioCanvas({
   const texts = call.texts ?? [];
 
   const fieldRef = useRef<HTMLDivElement>(null);
+  const pathMaskId = useId();
+  const [fieldWidth, setFieldWidth] = useState(1000);
+  useEffect(() => {
+    const field = fieldRef.current;
+    if (!field) return;
+    const observer = new ResizeObserver(() => setFieldWidth(field.getBoundingClientRect().width));
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, []);
   const [tool, setTool] = useState<Tool>("select");
   const [color, setColor] = useState(INK);
   const [style, setStyle] = useState<LineStyle>("solid");
-  // New drawing model: click a player = arm ("pending"); the next field click
-  // draws a COMPLETE line with its arrow and selects it. A small + button at
-  // the endpoint arms one extension segment at a time.
-  const [pending, setPending] = useState<string | null>(null); // armed anchor
+  // Draft points stay local until the entire assignment is finished.
+  const [draft, setDraft] = useState<DraftPath | null>(null);
+  const pending = draft?.anchor ?? null;
+  const cancelDraft = () => { setDraft(null); setHover(null); };
   const [extendId, setExtendId] = useState<string | null>(null); // line armed for one more point
   const [hover, setHover] = useState<Pt | null>(null);
   const [zoneStart, setZoneStart] = useState<Pt | null>(null);
   const dragRef = useRef<Drag | null>(null);
-  const pendingFromDownRef = useRef(false); // pointerdown-on-player → drag-release draws
   const clickConsumedRef = useRef(false); // pointerup did work — swallow the synthetic click that follows
   const extendDragRef = useRef<string | null>(null); // + button pressed; click = arm, drag = live-extend
   type Snap = Pick<Call, "offLook" | "lines" | "zones" | "defOffsets"> & { texts: NonNullable<Call["texts"]> };
@@ -133,16 +143,23 @@ export default function StudioCanvas({
     if (undoStack.current.length > 60) undoStack.current.shift();
   };
   const undo = () => {
+    if (draft) {
+      const minimum = draft.anchor === "free" ? 1 : 0;
+      if (draft.points.length > minimum) setDraft({ ...draft, points: draft.points.slice(0, -1) });
+      else cancelDraft();
+      return;
+    }
     const prev = undoStack.current.pop();
     if (prev) {
       redoStack.current.push(snap());
       updateCall(call.id, prev);
     }
     onSelect(null);
-    setPending(null);
+    cancelDraft();
     setExtendId(null);
   };
   const redo = () => {
+    if (draft) return;
     const next = redoStack.current.pop();
     if (next) {
       undoStack.current.push(snap());
@@ -186,29 +203,49 @@ export default function StudioCanvas({
   const isDrawTool = tool === "line" || tool === "route" || tool === "motion" || tool === "block";
   const toolKind = (): LineKind => (tool === "motion" ? "motion" : tool === "block" ? "block" : "route");
 
-  // Draw one complete line from the armed player to the clicked point.
-  const drawLineTo = (pt: Pt) => {
-    if (!pending) return;
-    const a = anchorPos(pending);
-    if (!a) return;
+  const startPath = (pt: Pt, anchor?: string) => {
+    if (!anchor) {
+      const r = fieldRef.current!.getBoundingClientRect();
+      const candidates = [
+        ...call.offLook.map((m) => ({ anchor: `off:${m.id}`, pos: [m.x, m.y] as Pt })),
+        ...structure.slots.map((_, i) => ({ anchor: `def:${i}`, pos: defPos(i) })),
+      ];
+      const nearest = candidates.map((c) => ({ ...c, distance: Math.hypot((c.pos[0] - pt[0]) * r.width / 100, (c.pos[1] - pt[1]) * r.height / FIELD_H) }))
+        .sort((a, b) => a.distance - b.distance)[0];
+      if (nearest?.distance <= 26) anchor = nearest.anchor;
+    }
+    setDraft({ anchor: anchor ?? "free", points: anchor ? [] : [pt] });
+    setHover(pt);
+    setExtendId(null);
+    onSelect(null);
+  };
+  const appendPoint = (pt: Pt) => {
+    if (!draft) return;
+    const last = draft.points.at(-1) ?? anchorPos(draft.anchor);
+    if (last && Math.hypot(pt[0] - last[0], pt[1] - last[1]) < 0.25) return;
+    setDraft({ ...draft, points: [...draft.points, pt] });
+    setHover(pt);
+  };
+  const finishPath = (includeCursor = false) => {
+    if (!draft) return;
+    const a = anchorPos(draft.anchor);
+    const points = [...draft.points];
+    const last = points.at(-1) ?? a;
+    if (includeCursor && hover && last && Math.hypot(hover[0] - last[0], hover[1] - last[1]) >= 0.25) points.push(hover);
+    if (!a || points.length < (draft.anchor === "free" ? 2 : 1)) return;
     snapshot();
     const id = uid();
     updateCall(call.id, {
-      lines: [
-        ...call.lines,
-        {
-          id,
-          anchor: pending,
-          kind: toolKind(),
-          points: [[pt[0] - a[0], pt[1] - a[1]]],
-          color: color === INK ? undefined : color,
-          style: tool === "motion" ? "dashed" : style,
-          showArrow: tool !== "block" && tool !== "line",
-        },
-      ],
+      lines: [...call.lines, {
+        id, anchor: draft.anchor, kind: toolKind(),
+        points: points.map(([x, y]) => [x - a[0], y - a[1]] as Pt),
+        color: color === INK ? undefined : color,
+        style: tool === "motion" ? "dashed" : style,
+        showArrow: tool !== "block" && tool !== "line",
+      }],
     });
-    setPending(null);
-    setHover(null);
+    cancelDraft();
+    setTool("select");
     onSelect({ kind: "line", id });
   };
 
@@ -249,6 +286,7 @@ export default function StudioCanvas({
   };
 
   const onFieldPointerDown = (e: React.PointerEvent) => {
+    clickConsumedRef.current = false;
     if (tool === "zone" && isFieldTarget(e)) setZoneStart(toCanvas(e));
   };
   const onFieldClick = (e: React.MouseEvent) => {
@@ -257,7 +295,12 @@ export default function StudioCanvas({
       return;
     }
     const onField = isFieldTarget(e);
-    if (pending && onField) return drawLineTo(toCanvas(e));
+    if (isDrawTool && onField) {
+      if (e.detail > 1) return; // the first click already placed the double-click endpoint
+      if (draft) appendPoint(toCanvas(e));
+      else startPath(toCanvas(e));
+      return;
+    }
     if (extendId && onField) return extendLineTo(toCanvas(e));
     if (tool === "text" && onField) {
       const [x, y] = toCanvas(e);
@@ -282,7 +325,7 @@ export default function StudioCanvas({
       setTool("select");
       onSelect(null);
       setExtendId(null);
-      setPending(null);
+      cancelDraft();
     }
   };
   const onFieldPointerMove = (e: React.PointerEvent) => {
@@ -302,6 +345,14 @@ export default function StudioCanvas({
       });
     } else if (d.type === "text") {
       updateCall(call.id, { texts: texts.map((t) => (t.id === d.id ? { ...t, x, y } : t)) });
+    } else if (d.type === "start") {
+      updateCall(call.id, { lines: call.lines.map((l) => {
+        if (l.id !== d.lineId) return l;
+        const a = anchorPos(l.anchor);
+        if (!a) return l;
+        const rest = l.anchor === "free" ? l.points.slice(1) : l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as Pt);
+        return { ...l, anchor: "free", points: [[x, y] as Pt, ...rest] };
+      }) });
     } else if (d.type === "wp") {
       const line = call.lines.find((l) => l.id === d.lineId);
       const a = line && anchorPos(line.anchor);
@@ -321,18 +372,6 @@ export default function StudioCanvas({
     }
   };
   const onFieldPointerUp = (e: React.PointerEvent) => {
-    // press-drag-release drawing: released far from the armed player → draw now
-    if (pending && pendingFromDownRef.current) {
-      pendingFromDownRef.current = false;
-      const a = anchorPos(pending);
-      const pt = toCanvas(e);
-      if (a && Math.hypot(pt[0] - a[0], pt[1] - a[1]) > 3) {
-        drawLineTo(pt);
-        clickConsumedRef.current = true;
-        return;
-      }
-      // plain click on the player → stays armed for click-to-place
-    }
     if (zoneStart) {
       const [x, y] = toCanvas(e);
       const rx = Math.abs(x - zoneStart[0]) / 2;
@@ -352,12 +391,12 @@ export default function StudioCanvas({
     }
     const d = dragRef.current;
     if (d && !d.moved) {
+      undoStack.current.pop(); // selection alone is not an edit
       if (d.type === "off") onSelect({ kind: "off", id: d.id });
       else if (d.type === "def") onSelect({ kind: "def", slot: d.slot });
       else if (d.type === "text") onSelect({ kind: "text", id: d.id });
       else if (d.type === "wp" && extendDragRef.current === d.lineId) {
         // + tapped without dragging: nothing changed — drop the snapshot, arm extend
-        undoStack.current.pop();
         setExtendId(d.lineId);
       }
     }
@@ -368,24 +407,11 @@ export default function StudioCanvas({
   const beginMarkerDrag = (e: React.PointerEvent, kind: "off" | "def" | "text", id: string, slot?: number) => {
     e.preventDefault();
     e.stopPropagation();
+    clickConsumedRef.current = false;
     if (isDrawTool && kind !== "text") {
       const anchor = kind === "off" ? `off:${id}` : `def:${slot}`;
-      // Block tool, second player clicked: draw the block INTO that player —
-      // T-bar in front of them, aimed from the blocker's direction.
-      if (tool === "block" && pending && pending !== anchor) {
-        if (blockBetween(pending, anchor)) {
-          setPending(null);
-          pendingFromDownRef.current = false;
-          setHover(null);
-          return;
-        }
-      }
-      // arm this player — a release after dragging draws immediately (press-drag-release),
-      // a plain click leaves it armed for the click-to-place model
-      (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
-      setPending(anchor);
-      setExtendId(null);
-      pendingFromDownRef.current = true;
+      if (draft) appendPoint(toCanvas(e));
+      else startPath(toCanvas(e), anchor);
       return;
     }
     if (tool !== "select") return;
@@ -416,18 +442,21 @@ export default function StudioCanvas({
       if (tag === "input" || tag === "textarea" || tag === "select") return;
       const toolByKey = TOOLS.find((t) => t.key === e.key || t.alias === e.key.toLowerCase());
       if (toolByKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        setPending(null);
+        cancelDraft();
         setExtendId(null);
         setTool(toolByKey.id);
         return;
       }
-      if (e.key === "Escape") {
-        setPending(null);
+      if (e.key === "Enter" && draft) {
+        e.preventDefault();
+        finishPath(true);
+      } else if (e.key === "Escape") {
+        cancelDraft();
         setExtendId(null);
         setZoneStart(null);
         setHover(null);
         onSelect(null);
-      } else if ((e.key === "Delete" || e.key === "Backspace") && selection && selection.kind !== "def") deleteSelection();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && !draft && selection && selection.kind !== "def") { e.preventDefault(); deleteSelection(); }
       else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && e.shiftKey) { e.preventDefault(); redo(); }
       else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
     };
@@ -472,7 +501,7 @@ export default function StudioCanvas({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <p className="mb-2 text-xs text-dim">Drag positions to align · Choose Arrow, then a player and destination · Select an object to edit</p>
+      <p className="mb-2 text-xs text-dim">Click a player or field to start · Click bends · Double-click the endpoint or press Enter to finish · Esc cancels</p>
       <div
         ref={fieldRef}
         onPointerDown={onFieldPointerDown}
@@ -487,14 +516,25 @@ export default function StudioCanvas({
           setZoneStart(null);
         }}
         onClick={onFieldClick}
+        onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
         className={`relative mx-auto aspect-4/3 max-h-full w-full max-w-full overflow-hidden rounded-xl border border-line bg-[#f8fafd] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
-        <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+        <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
+            <mask id={pathMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={FIELD_H}>
+              <rect width="100" height={FIELD_H} fill="white" />
+              {structure.slots.map((_, i) => {
+                const [x, y] = defPos(i);
+                const halfWidth = (labelFor(i).length * 6 + 3) * 100 / fieldWidth;
+                const halfHeight = 11 * 100 / fieldWidth;
+                return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
+              })}
+              {call.offLook.map((m) => <circle key={m.id} cx={m.x} cy={m.y} r={21 * 100 / fieldWidth} fill="black" />)}
+            </mask>
             {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
-              <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
                 <path d="M0,0 L6,3 L0,6 z" fill={c} />
               </marker>
             ))}
@@ -525,7 +565,7 @@ export default function StudioCanvas({
                 fill={z.id === selZoneId ? "rgba(245,158,11,0.12)" : z.side === "def" ? "rgba(56,189,248,0.08)" : "rgba(248,113,113,0.08)"}
                 stroke={z.id === selZoneId ? "#f59e0b" : z.side === "def" ? "rgba(56,189,248,0.55)" : "rgba(248,113,113,0.55)"}
                 strokeWidth="0.3" strokeDasharray="1.4 1"
-                style={{ pointerEvents: "all", cursor: tool === "select" ? "move" : undefined }}
+                style={{ pointerEvents: tool === "select" ? "all" : "none", cursor: "move" }}
                 onPointerDown={(e) => {
                   if (tool !== "select") return;
                   e.stopPropagation();
@@ -548,9 +588,16 @@ export default function StudioCanvas({
           {call.lines.map((l) => {
             const a = anchorPos(l.anchor);
             if (!a) return null;
-            const pts: Pt[] = [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as Pt)];
+            const pts: Pt[] = l.anchor === "free" ? l.points : [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as Pt)];
             if (pts.length < 2) return null;
             const selected = l.id === selLineId;
+            // Keep the attached start handle just outside the player so it is reachable.
+            const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
+            const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
+            const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : 22) * 100 / fieldWidth;
+            const halfHeight = 22 * 100 / fieldWidth;
+            const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
+            const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l, selected);
             const rawColor = legacy(l.color) ?? (l.anchor.startsWith("def:") ? DEF_INK : INK);
             const d = l.smooth ? smoothPath(pts) : pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
@@ -572,7 +619,7 @@ export default function StudioCanvas({
                   .map(([x1, y1], i) => ({
                     x: (x1 + pts[i + 1][0]) / 2,
                     y: (y1 + pts[i + 1][1]) / 2,
-                    insertAt: i,
+                    insertAt: l.anchor === "free" ? i + 1 : i,
                     len: Math.hypot(pts[i + 1][0] - x1, pts[i + 1][1] - y1),
                   }))
                   .filter((m) => m.len > 4.5)
@@ -581,7 +628,7 @@ export default function StudioCanvas({
               <g key={l.id}>
                 <path
                   d={d} fill="none" stroke="transparent" strokeWidth={l.kind === "block" ? 4.5 : 3}
-                  style={{ pointerEvents: "stroke", cursor: tool === "select" ? "pointer" : undefined }}
+                  style={{ pointerEvents: tool === "select" ? "stroke" : "none", cursor: "pointer" }}
                   onClick={(e) => {
                     if (tool !== "select") return;
                     e.stopPropagation();
@@ -593,7 +640,7 @@ export default function StudioCanvas({
                 <circle
                   cx={pts[pts.length - 1][0]} cy={pts[pts.length - 1][1]} r={l.kind === "block" ? 3 : 2.2}
                   fill="transparent"
-                  style={{ pointerEvents: "all", cursor: tool === "select" ? "pointer" : undefined }}
+                  style={{ pointerEvents: tool === "select" ? "all" : "none", cursor: "pointer" }}
                   onClick={(e) => {
                     if (tool !== "select") return;
                     e.stopPropagation();
@@ -602,34 +649,40 @@ export default function StudioCanvas({
                   }}
                 />
                 <path
-                  d={d} fill="none" stroke={c} strokeWidth={selected ? 0.6 : 0.48}
+                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={c} strokeWidth={selected ? 0.32 : 0.25}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
                   markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
                   style={{ pointerEvents: "none" }}
                 />
-                {bar && <line x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={c} strokeWidth={selected ? 0.7 : 0.55} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
-                {selected && (
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={c} strokeWidth={selected ? 0.35 : 0.28} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
+                {selected && tool === "select" && (
                   <>
-                    {/* waypoint handles (filled) */}
-                    {pts.slice(1).map(([x, y], i) =>
-                      i === l.points.length - 1 && !extendId ? null : ( // tip is the + button
+                    <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
+                      style={{ pointerEvents: "all", cursor: "grab" }}
+                      onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "start", lineId: l.id, moved: false }; }}>
+                      <title>Drag start (detaches from player)</title>
+                    </circle>
+                    {/* waypoint handles (filled), stored indices differ for free paths */}
+                    {pts.slice(1).map(([x, y], vertexIndex) => {
+                      const i = l.anchor === "free" ? vertexIndex + 1 : vertexIndex;
+                      return vertexIndex === pts.length - 2 && !extendId ? null : ( // tip is the + button
                       <circle
                         key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
                         style={{ pointerEvents: "all", cursor: "grab" }}
-                        onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
+                        onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
                         onDoubleClick={(e) => {
                           e.stopPropagation();
                           snapshot();
                           const remaining = l.points.filter((_, j) => j !== i);
                           updateCall(call.id, {
-                            lines: remaining.length
+                            lines: remaining.length >= (l.anchor === "free" ? 2 : 1)
                               ? call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: remaining } : x2))
                               : call.lines.filter((x2) => x2.id !== l.id),
                           });
-                          if (!remaining.length) onSelect(null);
+                          if (remaining.length < (l.anchor === "free" ? 2 : 1)) onSelect(null);
                         }}
                       />
-                    ))}
+                    ); })}
                     {/* midpoint bend handles (hollow) — drag to bend like Excalidraw */}
                     {midpoints.map((m, i) => (
                       <circle
@@ -637,13 +690,14 @@ export default function StudioCanvas({
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
+                          e.currentTarget.setPointerCapture(e.pointerId);
                           snapshot();
                           const newPts = [...l.points];
                           newPts.splice(m.insertAt, 0, [m.x - a[0], m.y - a[1]]);
                           updateCall(call.id, {
-                            lines: call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: newPts, smooth: true } : x2)),
+                            lines: call.lines.map((x2) => (x2.id === l.id ? { ...x2, points: newPts } : x2)),
                           });
-                          dragRef.current = { type: "wp", lineId: l.id, index: m.insertAt, moved: false };
+                          dragRef.current = { type: "wp", lineId: l.id, index: m.insertAt, moved: true };
                         }}
                       />
                     ))}
@@ -653,8 +707,26 @@ export default function StudioCanvas({
             );
           })}
 
-          {/* aim ghost: armed player/extension → cursor */}
-          {ghostFrom && hover && (
+          {/* The unfinished assignment is one continuous preview, never a saved partial line. */}
+          {draft && (() => {
+            const a = anchorPos(draft.anchor);
+            if (!a) return null;
+            const pts = [...(draft.anchor === "free" ? [] : [a]), ...draft.points, ...(hover ? [hover] : [])];
+            if (pts.length < 2) return null;
+            const c = color === INK && draft.anchor.startsWith("def:") ? DEF_INK : color;
+            const end = pts.at(-1)!;
+            const prev = pts.at(-2)!;
+            const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
+            const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
+            return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={c} strokeWidth="0.25" strokeLinejoin="round" strokeLinecap="round"
+                strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
+                markerEnd={tool !== "block" && tool !== "line" ? `url(#sarr-${c.slice(1)})` : undefined} />
+              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={c} strokeWidth="0.28" />}
+              {draft.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.5" fill={c} />)}
+            </g>;
+          })()}
+          {extendId && ghostFrom && hover && (
             <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={INK} strokeOpacity="0.35" strokeWidth="0.35" strokeDasharray="0.9 0.9" />
           )}
           {zoneStart && hover && (
@@ -689,7 +761,7 @@ export default function StudioCanvas({
             <button
               key={`d${i}`}
               onPointerDown={(e) => beginMarkerDrag(e, "def", `${i}`, i)}
-              onDoubleClick={(e) => { e.stopPropagation(); if (tool === "select") blockTo(i); }}
+              onDoubleClick={(e) => { if (!draft) { e.stopPropagation(); if (tool === "select") blockTo(i); } }}
               title={`${labelFor(i)} · drag to align`}
               className="group absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
@@ -749,7 +821,7 @@ export default function StudioCanvas({
         {TOOLS.map((t) => (
           <button
             key={t.id}
-            onClick={() => { setPending(null); setExtendId(null); setTool(t.id); }}
+            onClick={() => { cancelDraft(); setExtendId(null); setTool(t.id); }}
             title={`${t.label} (${t.key})`}
             className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition ${
               tool === t.id ? "bg-grass/15 text-grass ring-1 ring-grass/40" : "text-dim hover:bg-slate-100 hover:text-ink"
@@ -809,11 +881,7 @@ export default function StudioCanvas({
       </div>
       {(pending || extendId) && (
         <p className="mx-auto mt-1.5 text-xs font-medium text-grass">
-          {pending && tool === "block"
-            ? "Now click the player to block — the wall lands in front of them. (Or click the field to place it manually.)"
-            : pending
-              ? "Click the field to draw the line — it finishes where you click. Esc cancels."
-              : "Click the field to add one segment. Esc cancels."}
+          {pending ? "Click to add bends. Double-click the endpoint or press Enter to finish. Esc cancels. Undo removes the last bend." : "Click the field to add one segment. Esc cancels."}
         </p>
       )}
     </div>
