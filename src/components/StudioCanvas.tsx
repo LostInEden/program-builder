@@ -554,14 +554,11 @@ export default function StudioCanvas({
               )}
             </g>
           ))}
-          {/* NFHS: hashes divide the 160-foot field into thirds. */}
-          {[100 / 3, 200 / 3].map((x) =>
-            Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => {
-              const fiveYard = Math.abs((y - LOS_Y) / (5 * YD) - Math.round((y - LOS_Y) / (5 * YD))) < 0.001;
-              return fiveYard
-                ? <line key={`${x}-${y}`} x1={x} x2={x} y1={y - YD / 3} y2={y + YD / 3} stroke="rgba(15,28,46,0.32)" strokeWidth="0.22" />
-                : <line key={`${x}-${y}`} x1={x - 0.625} x2={x + 0.625} y1={y} y2={y} stroke="rgba(15,28,46,0.32)" strokeWidth="0.22" />;
-            }),
+          {/* Coach-preferred wider hash spacing with horizontal ticks only. */}
+          {[25, 75].map((x) =>
+            Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => (
+              <line key={`${x}-${y}`} x1={x - 0.625} x2={x + 0.625} y1={y} y2={y} stroke="rgba(15,28,46,0.32)" strokeWidth="0.22" />
+            )),
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(15,28,46,0.32)" strokeWidth="0.8" />)}

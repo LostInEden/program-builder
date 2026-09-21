@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Widen the hashes and remove vertical marks
+- **Asked for:** The hashes are a lot wider in high school — no vertical hashes needed.
+- **Changed:** Spread the diagram hash rows to 25% and 75% of board width and rendered horizontal ticks only, including the print view.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Coach-requested visual spacing, not a regulation-scale field. Sidelines, route space, and saved drawings remain unchanged.
+
 ## 2026-09-21 — Add high school hashes and sideline boundaries
 - **Asked for:** Put high school hash marks on the diagram and have the sidelines be the ends on the sides.
 - **Changed:** Positioned hash rows at one-third and two-thirds of the field width, replaced faint triangles with clear yard ticks and five-yard hash marks, and drew sidelines at both outer board edges. Applied the same markings to printed diagrams.
