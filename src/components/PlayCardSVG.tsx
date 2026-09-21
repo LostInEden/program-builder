@@ -83,8 +83,8 @@ export default function PlayCardSVG({
           <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#9ca3af" : FAINT} strokeWidth={yl.goal ? 0.5 : 0.22} />
           {yl.label && (
             <>
-              <text x="7" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
-              <text x="93" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
+              <text x="11" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
+              <text x="89" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
             </>
           )}
         </g>

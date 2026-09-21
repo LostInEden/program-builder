@@ -179,11 +179,11 @@ const om = (label: string, x: number, y: number, i: number): OffMarker => ({
 // OL is labeled from the OFFENSE's perspective (they face our defense at the
 // bottom, so their right tackle appears on our left).
 const line = (): OffMarker[] => [
-  om("RT", 38, 39, 1),
-  om("RG", 44, 39, 2),
+  om("RT", 42, 39, 1),
+  om("RG", 46, 39, 2),
   om("C", 50, 39, 3),
-  om("LG", 56, 39, 4),
-  om("LT", 62, 39, 5),
+  om("LG", 54, 39, 4),
+  om("LT", 58, 39, 5),
 ];
 
 export const offensivePresets: Record<string, OffMarker[]> = {

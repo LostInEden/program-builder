@@ -441,6 +441,19 @@ export default function StudioCanvas({
     }
   };
 
+  const tightenLine = () => {
+    const linemen = call.offLook.filter(isOffensiveLineman).sort((a, b) => a.x - b.x);
+    if (linemen.length < 2) return;
+    const center = linemen.find((m) => m.label.trim().toUpperCase() === "C") ?? linemen[Math.floor(linemen.length / 2)];
+    const centerIndex = linemen.indexOf(center);
+    const left = Math.max(1, Math.min(99 - (linemen.length - 1) * 4, center.x - centerIndex * 4));
+    snapshot();
+    updateCall(call.id, { offLook: call.offLook.map((m) => {
+      const index = linemen.findIndex((lineman) => lineman.id === m.id);
+      return index < 0 ? m : { ...m, x: left + index * 4 };
+    }) });
+  };
+
   const deleteSelection = () => {
     if (!selection) return;
     snapshot();
@@ -565,8 +578,8 @@ export default function StudioCanvas({
               <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "rgba(15,28,46,0.4)" : "rgba(15,28,46,0.08)"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
-                  <text x="5.5" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 5.5 ${yl.y})`}>{yl.label}</text>
-                  <text x="94.5" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 94.5 ${yl.y})`}>{yl.label}</text>
+                  <text x="11" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 11 ${yl.y})`}>{yl.label}</text>
+                  <text x="89" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 89 ${yl.y})`}>{yl.label}</text>
                 </>
               )}
             </g>
@@ -855,6 +868,10 @@ export default function StudioCanvas({
             {t.label}
           </button>
         ))}
+        <button onClick={tightenLine} disabled={!!draft || call.offLook.filter(isOffensiveLineman).length < 2}
+          title="Tighten offensive line splits around the center" className="rounded-lg px-2 py-1.5 text-[11px] font-semibold text-dim hover:text-ink disabled:opacity-30">
+          Tighten splits
+        </button>
         <span className="mx-1 h-8 w-px bg-line" />
         {ROUTE_COLORS.map((c) => (
           <button

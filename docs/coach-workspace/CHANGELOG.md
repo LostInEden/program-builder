@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Widen the space outside the yard numbers
+- **Asked for:** The field needs to be a little wider outside the numbers.
+- **Changed:** Moved the yard numbers inward to 11% and 89% of the board width, opening wider visual lanes between the numbers and sidelines in the studio and print view.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Sidelines and hash rows stay in place. This changes the field markings, not saved player or route coordinates.
+
+## 2026-09-21 — Tighten offensive line splits
+- **Asked for:** Linemen splits are too far apart.
+- **Changed:** Reduced default offensive line splits from six to four field units. Added an undoable Tighten splits action for existing diagrams, preserving line order, center position where possible, and individual depths.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Coach explicitly requested spacing changes. Updated formation preset coordinates only; no data-model migration or bulk rewrite of saved diagrams. Group dragging and player-relative paths remain intact.
+
 ## 2026-09-21 — Make offensive markers more compact for boundary formations
 - **Asked for:** Either the offensive players need to be smaller or the field wider; I can't draw a formation into the boundary.
 - **Changed:** Reduced offensive markers from 36px to 28px with compact readable labels and thinner borders. Reduced their route-clearance masks and start-handle offsets to match. Scaled offensive symbols down in printed diagrams too.
