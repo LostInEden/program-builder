@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Apply the specified CounterScheme palette
+- **Asked for:** Primary Navy #0B1F33, Slate #263746, Light Cool Gray #F3F5F7, White #FFFFFF, Electric Blue #2F80ED, Charcoal #17212B, Secondary Gray #667685, Border Gray #DCE2E7, Success Green #2E8B57, Warning Amber #E5A11A, and Alert Red #C94A4A.
+- **Changed:** applied the supplied colors to shared theme tokens: navy header/navigation, slate secondary navigation and hover states, light gray pages, white cards and tables, blue actions, charcoal headings, gray labels and borders, and coordinated success/warning/alert indicators. Removed the previous dark-surface overrides and glow effects.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Pale status backgrounds use tints of the specified colors. Navigation retains light text for readability; field layout, player spacing, saved data, and calculations are unchanged.
+
 ## 2026-09-20 — Black theme with glowing royal blue
 - **Asked for:** "make the color theme black with a glowing royal blue"
 - **Changed:** replaced the shared dark-blue/grey palette with black backgrounds and near-black cards, royal-blue buttons and accents, brighter blue links, and subtle static glows on navigation, active tabs, primary buttons, and keyboard focus. Dropdowns now use the shared panel color.

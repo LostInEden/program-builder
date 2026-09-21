@@ -1,84 +1,96 @@
 @import "tailwindcss";
 
-/* CounterScheme black and glowing royal-blue theme.
-   Historical token names stay shared across every workspace. */
+/* CounterScheme's approved palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #050608;        /* page background */
-  --color-panel: #10141c;
-  --color-card: #0c1017;         /* surfaces */
-  --color-line: #293750;         /* hairline borders */
-  --color-ink: #f1f5ff;          /* primary text */
-  --color-dim: #aebbd1;          /* secondary text */
-  --color-grass: #2458e6;        /* royal-blue accent */
-  --color-grass-deep: #1945c9;
-  --color-navy: #101c38;         /* dark chips (position boxes, logo bar) */
-  --color-sky: #0284c7;
-  --color-ember: #d97706;
+  --color-pitch: #F3F5F7;
+  --color-panel: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-line: #DCE2E7;
+  --color-ink: #17212B;
+  --color-dim: #667685;
+  --color-grass: #2F80ED;
+  --color-grass-deep: #263746;
+  --color-navy: #0B1F33;
+  --color-slate-brand: #263746;
+  --color-sky: #2F80ED;
+  --color-ember: #E5A11A;
+  --color-success: #2E8B57;
+  --color-alert: #C94A4A;
   --color-mind: #7c3aed;
+  --color-slate-50: #F3F5F7;
+  --color-slate-100: #F3F5F7;
+  --color-slate-200: #DCE2E7;
+  --color-emerald-400: #2E8B57;
+  --color-emerald-500: #2E8B57;
+  --color-emerald-600: #2E8B57;
+  --color-emerald-700: #2E8B57;
+  --color-emerald-50: color-mix(in srgb, #2E8B57 8%, white);
+  --color-emerald-200: color-mix(in srgb, #2E8B57 30%, white);
+  --color-emerald-300: color-mix(in srgb, #2E8B57 55%, white);
+  --color-emerald-800: color-mix(in srgb, #2E8B57 70%, #17212B);
+  --color-green-400: #2E8B57;
+  --color-green-500: #2E8B57;
+  --color-green-600: #2E8B57;
+  --color-green-700: #2E8B57;
+  --color-green-50: color-mix(in srgb, #2E8B57 8%, white);
+  --color-green-200: color-mix(in srgb, #2E8B57 30%, white);
+  --color-green-300: color-mix(in srgb, #2E8B57 55%, white);
+  --color-green-800: color-mix(in srgb, #2E8B57 70%, #17212B);
+  --color-amber-400: #E5A11A;
+  --color-amber-500: #E5A11A;
+  --color-amber-600: #E5A11A;
+  --color-amber-700: #E5A11A;
+  --color-amber-50: color-mix(in srgb, #E5A11A 8%, white);
+  --color-amber-200: color-mix(in srgb, #E5A11A 30%, white);
+  --color-amber-300: color-mix(in srgb, #E5A11A 55%, white);
+  --color-amber-800: color-mix(in srgb, #E5A11A 70%, #17212B);
+  --color-yellow-400: #E5A11A;
+  --color-yellow-500: #E5A11A;
+  --color-yellow-600: #E5A11A;
+  --color-yellow-700: #E5A11A;
+  --color-yellow-50: color-mix(in srgb, #E5A11A 8%, white);
+  --color-yellow-200: color-mix(in srgb, #E5A11A 30%, white);
+  --color-yellow-300: color-mix(in srgb, #E5A11A 55%, white);
+  --color-yellow-800: color-mix(in srgb, #E5A11A 70%, #17212B);
+  --color-red-400: #C94A4A;
+  --color-red-500: #C94A4A;
+  --color-red-600: #C94A4A;
+  --color-red-700: #C94A4A;
+  --color-red-50: color-mix(in srgb, #C94A4A 8%, white);
+  --color-red-200: color-mix(in srgb, #C94A4A 30%, white);
+  --color-red-300: color-mix(in srgb, #C94A4A 55%, white);
+  --color-red-800: color-mix(in srgb, #C94A4A 70%, #17212B);
   --font-display: var(--font-inter), "Segoe UI", sans-serif;
   --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
 
-html {
-  color-scheme: dark;
-}
-
+html { color-scheme: light; }
 body {
   background-color: var(--color-pitch);
   color: var(--color-ink);
   font-family: var(--font-body);
 }
+.stadium-bg { background: var(--color-pitch); }
 
-/* Shared black page background and royal-blue navigation, desktop and phone. */
-.stadium-bg {
-  background: radial-gradient(ellipse at 50% 0%, rgba(36, 88, 230, 0.09), transparent 55%), var(--color-pitch);
-}
-
+/* Dark navigation stays readable above the light content surfaces. */
 .theme-navigation {
-  --color-ink: #f1f5ff;
-  --color-dim: #b4c2dd;
-  --color-grass: #719aff;
-  --color-line: #263960;
-  --color-navy: #0d1730;
-  --color-ember: #ffd18a;
-  --color-slate-50: #101a2e;
-  --color-slate-100: #15254a;
-  --color-slate-200: #253b68;
-  background-color: #070a10;
-  color: var(--color-ink);
+  --color-ink: #FFFFFF;
+  --color-dim: #DCE2E7;
+  --color-panel: #263746;
+  --color-line: #263746;
+  --color-slate-50: #263746;
+  --color-slate-100: #263746;
+  --color-slate-200: #263746;
+  background-color: #0B1F33;
+  color: #FFFFFF;
 }
+.theme-navigation .text-navy { color: #FFFFFF; }
+.theme-navigation .bg-white { background-color: #263746; }
 
-/* Existing light surface utilities share the dark palette on screen.
-   Keep text-white intact for filled buttons and preserve paper styling. */
 @media screen {
-  :root {
-    --color-slate-50: #10141c;
-    --color-slate-100: #182239;
-    --color-slate-200: #293750;
-  }
-  .bg-white { background-color: var(--color-panel); }
-  .text-navy { color: var(--color-ink); }
-  .text-grass { color: #82a8ff; }
-
-  /* Static, restrained glow keeps labels crisp and avoids animated distraction. */
-  .theme-navigation {
-    box-shadow: 0 1px 0 rgba(65, 105, 225, 0.5), 0 5px 22px rgba(36, 88, 230, 0.16);
-  }
-  :is(button, a).bg-grass {
-    box-shadow: 0 0 14px rgba(36, 88, 230, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  }
-  :is(button, a).bg-grass:hover {
-    box-shadow: 0 0 22px rgba(36, 88, 230, 0.55);
-  }
-  .theme-navigation .border-b-grass {
-    border-bottom-color: #719aff;
-    box-shadow: inset 0 -5px 10px -7px #719aff;
-    text-shadow: 0 0 12px rgba(65, 105, 225, 0.65);
-  }
   :is(button, a, input, select, textarea):focus-visible {
-    outline: 2px solid #82a8ff;
+    outline: 2px solid #2F80ED;
     outline-offset: 3px;
-    box-shadow: 0 0 16px rgba(36, 88, 230, 0.4);
   }
 }
 
@@ -100,7 +112,7 @@ body {
 }
 
 ::selection {
-  background: rgba(36, 88, 230, 0.4);
+  background: rgba(47, 128, 237, 0.22);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -118,7 +130,7 @@ input[type="number"] {
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: dark;
+  color-scheme: light;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -128,17 +140,17 @@ select {
 }
 select option {
   background-color: var(--color-panel);
-  color: #f1f5ff;
+  color: var(--color-ink);
 }
 select optgroup {
   background-color: var(--color-panel);
-  color: #aebbd1;
+  color: var(--color-dim);
   font-style: normal;
   font-weight: 600;
 }
 
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #304879; border-radius: 8px; }
+*::-webkit-scrollbar-thumb { background: #667685; border-radius: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* ---- Paper (Q44) ---------------------------------------------------------
@@ -150,10 +162,10 @@ select optgroup {
   :root {
     --color-pitch: #ffffff;
     --color-panel: #ffffff;
-    --color-ink: #0f1c2e;
-    --color-dim: #46566b;
+    --color-ink: #17212B;
+    --color-dim: #667685;
     --color-card: #ffffff;
-    --color-line: #cbd5e1;
+    --color-line: #DCE2E7;
   }
   @page {
     margin: 0.5in;

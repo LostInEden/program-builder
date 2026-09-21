@@ -39,7 +39,7 @@ function SectionTabsInner() {
   const tabClass = "flex items-center gap-1.5 border-b-2 border-transparent px-2 xl:px-3 h-11 text-[13px] font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grass";
 
   return (
-    <nav ref={nav} aria-label="Main navigation" className="hidden min-[900px]:flex items-center border-t border-line px-4 bg-navy/30"
+    <nav ref={nav} aria-label="Main navigation" className="hidden min-[900px]:flex items-center border-t border-line px-4 bg-slate-brand"
       onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(null); }}
       onKeyDown={(event) => {
         if (event.key === "Escape" && visibleOpen) {
