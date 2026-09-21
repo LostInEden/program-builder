@@ -113,10 +113,14 @@ export default function StudioCanvas({
   const fieldRef = useRef<HTMLDivElement>(null);
   const pathMaskId = useId();
   const [fieldWidth, setFieldWidth] = useState(1000);
+  const [fieldHeight, setFieldHeight] = useState(FIELD_H * 10);
   useEffect(() => {
     const field = fieldRef.current;
     if (!field) return;
-    const observer = new ResizeObserver(() => setFieldWidth(field.getBoundingClientRect().width));
+    const observer = new ResizeObserver(([entry]) => {
+      setFieldWidth(entry.contentRect.width);
+      setFieldHeight(entry.contentRect.height);
+    });
     observer.observe(field);
     return () => observer.disconnect();
   }, []);
@@ -536,11 +540,12 @@ export default function StudioCanvas({
         }}
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
-        className={`relative mx-auto aspect-[1.85/1] [container-type:inline-size] max-h-full w-full max-w-full overflow-hidden rounded-sm border border-[#B8B8B8] bg-[#F1F1F1] touch-none select-none ${
+        style={{ aspectRatio: `100 / ${FIELD_H}` }}
+        className={`relative mx-auto shrink-0 [container-type:inline-size] w-full max-w-full overflow-hidden rounded-sm border border-[#B8B8B8] bg-[#F1F1F1] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
-        <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
+        <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
             <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
               <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#DCDCDC" strokeWidth="0.12" />
@@ -550,10 +555,10 @@ export default function StudioCanvas({
               {structure.slots.map((_, i) => {
                 const [x, y] = defPos(i);
                 const halfWidth = (labelFor(i).length * 6 + 3) * 100 / fieldWidth;
-                const halfHeight = 11 * FIELD_H * 1.85 / fieldWidth;
+                const halfHeight = 11 * FIELD_H / fieldHeight;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
-              {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 2) * 100 / fieldWidth} ry={(offenseRadius + 2) * FIELD_H * 1.85 / fieldWidth} fill="black" />)}
+              {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 2) * 100 / fieldWidth} ry={(offenseRadius + 2) * FIELD_H / fieldHeight} fill="black" />)}
             </mask>
             {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
@@ -621,7 +626,7 @@ export default function StudioCanvas({
             const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
             const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
             const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : offenseRadius + 3) * 100 / fieldWidth;
-            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * FIELD_H * 1.85 / fieldWidth;
+            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * FIELD_H / fieldHeight;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l, selected);

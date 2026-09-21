@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Prevent vertically compressed diagrams
+- **Asked for:** The plays look smashed down at times; check the draw diagram again.
+- **Changed:** Matched the board's aspect ratio to its 100-by-87 drawing coordinates, disabled flex shrinking of the field, and preserved SVG proportions. Player clearance and start handles now use the measured board height rather than the former fixed wide ratio.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** The board retains its width and gains the height needed to display routes and alignments without vertical distortion. Saved coordinates, symbols, closer line splits, and drawing tools remain unchanged.
+
 ## 2026-09-21 — Remove split control and enlarge offensive symbols
 - **Asked for:** Take off Tighten splits, just keep the linemen closer, and make offensive players a little larger because the diagram feels too far away.
 - **Changed:** Removed the Tighten splits button and handler. Enlarged proportional offensive symbols from 2.4% to 3.1% of board width, with 24–36px bounds, and matched route clearance and printed symbols.
