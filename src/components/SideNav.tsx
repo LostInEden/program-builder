@@ -31,7 +31,6 @@ export const SECTIONS: Section[] = [
     label: "My Team",
     icon: Users,
     match: ["/team"],
-    badge: (s) => (s.players ? String(s.players) : null),
     children: [
       { href: "/team?view=depth", label: "Depth Chart" },
       { href: "/team?view=roster", label: "Roster" },

@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Remove My Team player-count badge
+- **Asked for:** Take the player count off beside My Team.
+- **Changed:** Removed the roster-count badge from the shared My Team navigation entry.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Roster data and player counts elsewhere are unchanged.
+
 ## 2026-09-21 — Guided Build Plan and coach-approved Final Plan
 - **Asked for:** A digital staff meeting where CounterScheme brings opponent priorities and the coach decides the answer, with Build Plan and Final Plan views.
 - **Changed:** Shared the existing matchup priority presentation with Game Plan; added per-priority evidence, saved-scheme suggestions, Accept Answer, Modify, editable decision cards, and populated-only Final Plan categories. Added Plan / Call Sheet / Practice Script navigation and preserved the prior planning workspace.
