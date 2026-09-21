@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Remove split control and enlarge offensive symbols
+- **Asked for:** Take off Tighten splits, just keep the linemen closer, and make offensive players a little larger because the diagram feels too far away.
+- **Changed:** Removed the Tighten splits button and handler. Enlarged proportional offensive symbols from 2.4% to 3.1% of board width, with 24–36px bounds, and matched route clearance and printed symbols.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** The closer four-unit default splits and the spacing already applied to the coach's open diagram are retained. Group dragging and the wide field remain intact; no bulk changes to saved diagrams.
+
 ## 2026-09-21 — Match the supplied coaching-board reference
 - **Asked for:** Field and icons need to look like the supplied screenshot.
 - **Changed:** Widened the studio board to a 1.85:1 ratio; added a faint gray grid, outlined yard numbers, clearer yard lines, blue-violet line of scrimmage, and horizontal hashes positioned like the reference. Offensive icons are proportional outlined circles, a square center, and triangles for players typed Tight End (or legacy TE labels). Labels default off and remain available through Show Label; hover identifies each player. Updated printed offensive symbols too.

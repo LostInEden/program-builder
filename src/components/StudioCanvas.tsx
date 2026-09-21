@@ -441,19 +441,6 @@ export default function StudioCanvas({
     }
   };
 
-  const tightenLine = () => {
-    const linemen = call.offLook.filter(isOffensiveLineman).sort((a, b) => a.x - b.x);
-    if (linemen.length < 2) return;
-    const center = linemen.find((m) => m.label.trim().toUpperCase() === "C") ?? linemen[Math.floor(linemen.length / 2)];
-    const centerIndex = linemen.indexOf(center);
-    const left = Math.max(1, Math.min(99 - (linemen.length - 1) * 4, center.x - centerIndex * 4));
-    snapshot();
-    updateCall(call.id, { offLook: call.offLook.map((m) => {
-      const index = linemen.findIndex((lineman) => lineman.id === m.id);
-      return index < 0 ? m : { ...m, x: left + index * 4 };
-    }) });
-  };
-
   const deleteSelection = () => {
     if (!selection) return;
     snapshot();
@@ -529,7 +516,7 @@ export default function StudioCanvas({
       ? lineEnd(call.lines.find((l) => l.id === extendId) ?? { anchor: "", points: [] })
       : null;
 
-  const offenseRadius = Math.max(18, Math.min(28, fieldWidth * 0.024)) / 2;
+  const offenseRadius = Math.max(24, Math.min(36, fieldWidth * 0.031)) / 2;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -634,7 +621,7 @@ export default function StudioCanvas({
             const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
             const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
             const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : offenseRadius + 3) * 100 / fieldWidth;
-            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * 100 / fieldWidth;
+            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * FIELD_H * 1.85 / fieldWidth;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l, selected);
@@ -822,7 +809,7 @@ export default function StudioCanvas({
               key={o.id}
               title={`${o.label}${o.ptype ? ` · ${o.ptype}` : ""}${isOffensiveLineman(o) ? " · Drag the line together; Shift-drag this player" : " · Drag to align"}`}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
-              className={`group absolute aspect-square w-[2.4cqw] min-w-[18px] max-w-[28px] -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
+              className={`group absolute aspect-square w-[3.1cqw] min-w-[24px] max-w-[36px] -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
@@ -876,10 +863,6 @@ export default function StudioCanvas({
             {t.label}
           </button>
         ))}
-        <button onClick={tightenLine} disabled={!!draft || call.offLook.filter(isOffensiveLineman).length < 2}
-          title="Tighten offensive line splits around the center" className="rounded-lg px-2 py-1.5 text-[11px] font-semibold text-dim hover:text-ink disabled:opacity-30">
-          Tighten splits
-        </button>
         <span className="mx-1 h-8 w-px bg-line" />
         {ROUTE_COLORS.map((c) => (
           <button
