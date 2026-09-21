@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Add high school hashes and sideline boundaries
+- **Asked for:** Put high school hash marks on the diagram and have the sidelines be the ends on the sides.
+- **Changed:** Positioned hash rows at one-third and two-thirds of the field width, replaced faint triangles with clear yard ticks and five-yard hash marks, and drew sidelines at both outer board edges. Applied the same markings to printed diagrams.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** NFHS field reference: https://nsaa-static.s3.amazonaws.com/textfile/fbl/fbfield.pdf. Existing formation coordinates, saved paths, drawing interaction, and route space remain unchanged.
+
 ## 2026-09-21 — Give the offense more room for routes
 - **Asked for:** Back the offense up some so there is space for routes.
 - **Changed:** Extended the diagram viewport by 12 field units downfield, placing the formation higher on the same board and leaving more room beyond the defense. Updated pointer coordinates, drawing overlays, field markings, and print view to use the expanded area.
