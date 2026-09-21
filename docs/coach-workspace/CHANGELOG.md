@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Apply the charcoal and muted-blue palette
+- **Asked for:** Main Background #292E33, Sidebar #1C2126, Cards #353B42, Raised Panels #40474F, Accent #4C8DBB, Primary Text #F2F4F5, Secondary Text #AEB7BF, Borders #505860.
+- **Changed:** applied the eight supplied colors to the shared theme, navigation, cards, raised panels, controls, text, and dividers. Restored dark native controls and adjusted legacy white surfaces and status indicators for dark backgrounds.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves field layout, position spacing, saved data, and calculations. Print keeps white paper and dark text; the glow remains removed.
+
 ## 2026-09-20 — Apply the specified CounterScheme palette
 - **Asked for:** Primary Navy #0B1F33, Slate #263746, Light Cool Gray #F3F5F7, White #FFFFFF, Electric Blue #2F80ED, Charcoal #17212B, Secondary Gray #667685, Border Gray #DCE2E7, Success Green #2E8B57, Warning Amber #E5A11A, and Alert Red #C94A4A.
 - **Changed:** applied the supplied colors to shared theme tokens: navy header/navigation, slate secondary navigation and hover states, light gray pages, white cards and tables, blue actions, charcoal headings, gray labels and borders, and coordinated success/warning/alert indicators. Removed the previous dark-surface overrides and glow effects.

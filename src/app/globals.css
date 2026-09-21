@@ -1,25 +1,25 @@
 @import "tailwindcss";
 
-/* CounterScheme's approved palette. Historical token names remain shared. */
+/* CounterScheme's charcoal and muted-blue palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #F3F5F7;
-  --color-panel: #FFFFFF;
-  --color-card: #FFFFFF;
-  --color-line: #DCE2E7;
-  --color-ink: #17212B;
-  --color-dim: #667685;
-  --color-grass: #2F80ED;
-  --color-grass-deep: #263746;
-  --color-navy: #0B1F33;
-  --color-slate-brand: #263746;
-  --color-sky: #2F80ED;
+  --color-pitch: #292E33;
+  --color-panel: #40474F;
+  --color-card: #353B42;
+  --color-line: #505860;
+  --color-ink: #F2F4F5;
+  --color-dim: #AEB7BF;
+  --color-grass: #4C8DBB;
+  --color-grass-deep: #40474F;
+  --color-navy: #1C2126;
+  --color-slate-brand: #353B42;
+  --color-sky: #4C8DBB;
   --color-ember: #E5A11A;
   --color-success: #2E8B57;
   --color-alert: #C94A4A;
   --color-mind: #7c3aed;
-  --color-slate-50: #F3F5F7;
-  --color-slate-100: #F3F5F7;
-  --color-slate-200: #DCE2E7;
+  --color-slate-50: #40474F;
+  --color-slate-100: #40474F;
+  --color-slate-200: #505860;
   --color-emerald-400: #2E8B57;
   --color-emerald-500: #2E8B57;
   --color-emerald-600: #2E8B57;
@@ -64,7 +64,7 @@
   --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
 
-html { color-scheme: light; }
+html { color-scheme: dark; }
 body {
   background-color: var(--color-pitch);
   color: var(--color-ink);
@@ -72,24 +72,36 @@ body {
 }
 .stadium-bg { background: var(--color-pitch); }
 
-/* Dark navigation stays readable above the light content surfaces. */
+/* Charcoal navigation with raised dropdown panels. */
 .theme-navigation {
-  --color-ink: #FFFFFF;
-  --color-dim: #DCE2E7;
-  --color-panel: #263746;
-  --color-line: #263746;
-  --color-slate-50: #263746;
-  --color-slate-100: #263746;
-  --color-slate-200: #263746;
-  background-color: #0B1F33;
+  --color-ink: #F2F4F5;
+  --color-dim: #AEB7BF;
+  --color-panel: #40474F;
+  --color-line: #505860;
+  --color-slate-50: #40474F;
+  --color-slate-100: #40474F;
+  --color-slate-200: #40474F;
+  background-color: #1C2126;
   color: #FFFFFF;
 }
 .theme-navigation .text-navy { color: #FFFFFF; }
-.theme-navigation .bg-white { background-color: #263746; }
+.theme-navigation .bg-white { background-color: #40474F; }
 
 @media screen {
+  .bg-white { background-color: var(--color-card); }
+  .text-navy { color: var(--color-ink); }
+  :root {
+    --color-emerald-50: color-mix(in srgb, #2E8B57 18%, #353B42);
+    --color-green-50: color-mix(in srgb, #2E8B57 18%, #353B42);
+    --color-amber-50: color-mix(in srgb, #E5A11A 14%, #353B42);
+    --color-yellow-50: color-mix(in srgb, #E5A11A 14%, #353B42);
+    --color-red-50: color-mix(in srgb, #C94A4A 18%, #353B42);
+  }
+  :is(.text-emerald-600, .text-emerald-700, .text-green-600, .text-green-700) { color: #8AD1A8; }
+  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #EDC574; }
+  :is(.text-red-500, .text-red-600, .text-red-700) { color: #EE9696; }
   :is(button, a, input, select, textarea):focus-visible {
-    outline: 2px solid #2F80ED;
+    outline: 2px solid #4C8DBB;
     outline-offset: 3px;
   }
 }
@@ -112,7 +124,7 @@ body {
 }
 
 ::selection {
-  background: rgba(47, 128, 237, 0.22);
+  background: rgba(76, 141, 187, 0.3);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -130,7 +142,7 @@ input[type="number"] {
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: light;
+  color-scheme: dark;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
