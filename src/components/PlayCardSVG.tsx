@@ -17,8 +17,8 @@ import { slotLabelOf, type Call, type Overrides } from "@/lib/store";
 // Show extra downfield space without rewriting saved player or path coordinates.
 const FIELD_H = BASE_FIELD_H + 12;
 
-const OFF = "#b91c1c";
-const DEF = "#0e7490";
+const OFF = "#17212B";
+const DEF = "#505050";
 const INKC = "#1f2937";
 const FAINT = "#d1d5db";
 
@@ -83,14 +83,14 @@ export default function PlayCardSVG({
           <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#9ca3af" : FAINT} strokeWidth={yl.goal ? 0.5 : 0.22} />
           {yl.label && (
             <>
-              <text x="11" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
-              <text x="89" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
+              <text x="14" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
+              <text x="86" y={yl.y + 1.2} fontSize="3" fill="#9ca3af" textAnchor="middle">{yl.label}</text>
             </>
           )}
         </g>
       ))}
       {/* Coach-preferred wider hash spacing with horizontal ticks only. */}
-          {[25, 75].map((x) =>
+          {[100 / 3, 200 / 3].map((x) =>
             Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => (
               <line key={`${x}-${y}`} x1={x - 0.625} x2={x + 0.625} y1={y} y2={y} stroke="#9ca3af" strokeWidth="0.22" />
             )),
@@ -160,15 +160,18 @@ export default function PlayCardSVG({
       ))}
 
       {call.offLook.map((o) => {
-        const isCenter = o.label.toUpperCase() === "C";
+        const isCenter = o.label.toUpperCase() === "C" && (!o.ptype || o.ptype === "Offensive Line");
+        const isTightEnd = o.ptype === "Tight End" || (!o.ptype && o.label.toUpperCase() === "TE");
         return (
           <g key={o.id}>
-            {isCenter ? (
+            {isTightEnd ? (
+              <path d={`M${o.x},${o.y - 1.55} L${o.x + 1.55},${o.y + 1.5} H${o.x - 1.55} Z`} fill="#fff" stroke={OFF} strokeWidth="0.25" />
+            ) : isCenter ? (
               <rect x={o.x - 1.5} y={o.y - 1.5} width="3" height="3" fill="#fff" stroke={OFF} strokeWidth="0.35" />
             ) : (
               <circle cx={o.x} cy={o.y} r="1.55" fill="#fff" stroke={OFF} strokeWidth="0.35" />
             )}
-            <text x={o.x} y={o.y + 0.6} textAnchor="middle" fontSize="1.5" fontWeight="700" fill={OFF}>{o.label}</text>
+            {o.showLabel === true && <text x={o.x} y={o.y + 0.6} textAnchor="middle" fontSize="1.5" fontWeight="700" fill={OFF}>{o.label}</text>}
           </g>
         );
       })}

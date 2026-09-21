@@ -293,7 +293,7 @@ export default function PlaybookPage() {
               <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
                 <input
                   type="checkbox"
-                  checked={selOff.showLabel ?? true}
+                  checked={selOff.showLabel ?? false}
                   onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, showLabel: e.target.checked } : m)) })}
                 />
                 Show Label

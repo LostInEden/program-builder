@@ -59,7 +59,7 @@ const isOffensiveLineman = (m: { ptype?: string; label: string }) =>
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const INK = ROUTE_COLORS[0];
-const DEF_INK = "#5b6b7c";
+const DEF_INK = "#17212B";
 // legacy stored colors from the light-theme build
 const legacy = (c?: string) =>
   c === "#111827" || c === "#6b7280" || c === "#e9efe9" || c === "#9aa59b"
@@ -529,8 +529,7 @@ export default function StudioCanvas({
       ? lineEnd(call.lines.find((l) => l.id === extendId) ?? { anchor: "", points: [] })
       : null;
 
-  const markerBase =
-    "grid min-w-7 h-7 px-0.5 place-items-center rounded-full border-[1.5px] border-[#17212B] text-[11px] font-bold text-[#17212B] select-none bg-[#FFFFFF]";
+  const offenseRadius = Math.max(18, Math.min(28, fieldWidth * 0.024)) / 2;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -550,21 +549,24 @@ export default function StudioCanvas({
         }}
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
-        className={`relative mx-auto aspect-4/3 max-h-full w-full max-w-full overflow-hidden rounded-xl border border-line bg-[#f8fafd] touch-none select-none ${
+        className={`relative mx-auto aspect-[1.85/1] [container-type:inline-size] max-h-full w-full max-w-full overflow-hidden rounded-sm border border-[#B8B8B8] bg-[#F1F1F1] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
         <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="none" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
+            <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
+              <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#DCDCDC" strokeWidth="0.12" />
+            </pattern>
             <mask id={pathMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={FIELD_H}>
               <rect width="100" height={FIELD_H} fill="white" />
               {structure.slots.map((_, i) => {
                 const [x, y] = defPos(i);
                 const halfWidth = (labelFor(i).length * 6 + 3) * 100 / fieldWidth;
-                const halfHeight = 11 * 100 / fieldWidth;
+                const halfHeight = 11 * FIELD_H * 1.85 / fieldWidth;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
-              {call.offLook.map((m) => <circle key={m.id} cx={m.x} cy={m.y} r={16 * 100 / fieldWidth} fill="black" />)}
+              {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 2) * 100 / fieldWidth} ry={(offenseRadius + 2) * FIELD_H * 1.85 / fieldWidth} fill="black" />)}
             </mask>
             {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
@@ -573,26 +575,27 @@ export default function StudioCanvas({
             ))}
           </defs>
 
+          <rect width="100" height={FIELD_H} fill={`url(#${pathMaskId}-grid)`} />
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "rgba(15,28,46,0.4)" : "rgba(15,28,46,0.08)"} strokeWidth={yl.goal ? 0.5 : 0.24} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#888888" : "#B3B3B3"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
-                  <text x="11" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 11 ${yl.y})`}>{yl.label}</text>
-                  <text x="89" y={yl.y} fontSize="4.6" fill="rgba(15,28,46,0.12)" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 89 ${yl.y})`}>{yl.label}</text>
+                  <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#BDBDBD" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
+                  <text x="86" y={yl.y} fontSize="6" fill="none" stroke="#BDBDBD" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 86 ${yl.y})`}>{yl.label}</text>
                 </>
               )}
             </g>
           ))}
-          {/* Coach-preferred wider hash spacing with horizontal ticks only. */}
-          {[25, 75].map((x) =>
+          {/* Horizontal hash marks positioned like the reference board. */}
+          {[100 / 3, 200 / 3].map((x) =>
             Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => (
               <line key={`${x}-${y}`} x1={x - 0.625} x2={x + 0.625} y1={y} y2={y} stroke="rgba(15,28,46,0.32)" strokeWidth="0.22" />
             )),
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(15,28,46,0.32)" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#505860" strokeWidth="0.4" strokeOpacity="0.8" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#7770ED" strokeWidth="0.4" />
 
           {call.zones.map((z) => (
             <g key={z.id}>
@@ -630,8 +633,8 @@ export default function StudioCanvas({
             // Keep the attached start handle just outside the player so it is reachable.
             const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
             const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
-            const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : 17) * 100 / fieldWidth;
-            const halfHeight = (defIndex !== null ? 22 : 17) * 100 / fieldWidth;
+            const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : offenseRadius + 3) * 100 / fieldWidth;
+            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * 100 / fieldWidth;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l, selected);
@@ -817,15 +820,20 @@ export default function StudioCanvas({
           return (
             <span
               key={o.id}
-              title={isOffensiveLineman(o) ? "Drag to move the offensive line · Shift-drag to move only this player" : undefined}
+              title={`${o.label}${o.ptype ? ` · ${o.ptype}` : ""}${isOffensiveLineman(o) ? " · Drag the line together; Shift-drag this player" : " · Drag to align"}`}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
-              className={`group absolute -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
+              className={`group absolute aspect-square w-[2.4cqw] min-w-[18px] max-w-[28px] -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <span className={`${markerBase} ${sel || armed ? "ring-2 ring-[#8F1D22]" : ""}`}>
-                {(o.showLabel ?? true) ? o.label : ""}
-              </span>
+              <svg viewBox="0 0 40 40" className={`pointer-events-none h-full w-full ${sel || armed ? "ring-2 ring-[#8F1D22] rounded-sm" : ""}`}>
+                {o.ptype === "Tight End" || (!o.ptype && o.label.toUpperCase() === "TE") ? (
+                  <path d="M20 3 L37 36 H3 Z" fill="#F1F1F1" stroke="#17212B" strokeWidth="2" />
+                ) : o.label.toUpperCase() === "C" && (!o.ptype || o.ptype === "Offensive Line") ? (
+                  <rect x="3" y="3" width="34" height="34" fill="#F1F1F1" stroke="#17212B" strokeWidth="2" />
+                ) : <circle cx="20" cy="20" r="17" fill="#F1F1F1" stroke="#17212B" strokeWidth="2" />}
+                {o.showLabel === true && <text x="20" y="24" fontSize="13" textAnchor="middle" fontWeight="700" fill="#17212B">{o.label}</text>}
+              </svg>
             </span>
           );
         })}

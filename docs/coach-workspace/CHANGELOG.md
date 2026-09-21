@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Match the supplied coaching-board reference
+- **Asked for:** Field and icons need to look like the supplied screenshot.
+- **Changed:** Widened the studio board to a 1.85:1 ratio; added a faint gray grid, outlined yard numbers, clearer yard lines, blue-violet line of scrimmage, and horizontal hashes positioned like the reference. Offensive icons are proportional outlined circles, a square center, and triangles for players typed Tight End (or legacy TE labels). Labels default off and remain available through Show Label; hover identifies each player. Updated printed offensive symbols too.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** No saved coordinates, identity fields, or routes were rewritten. Existing explicit label choices remain honored. Updated masking and start handles for the wider aspect ratio. Local browser checks verified tight-end symbol selection, tighter splits, and player-anchored multi-point drawing. The reference is used for visual direction only; no third-party code or branding was copied.
+
 ## 2026-09-21 — Widen the space outside the yard numbers
 - **Asked for:** The field needs to be a little wider outside the numbers.
 - **Changed:** Moved the yard numbers inward to 11% and 89% of the board width, opening wider visual lanes between the numbers and sidelines in the studio and print view.
