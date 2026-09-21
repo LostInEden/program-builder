@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Level and widen the safeties
+- **Asked for:** "Even the safeties up and spread them out a little bit"
+- **Changed:** aligned both safety cards at the same depth and widened their horizontal positions to 35% and 65% of the shared depth chart field.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Display only; other position spacing, field layout, saved assignments, and defensive structure data are unchanged.
+
 ## 2026-09-20 — Give depth chart names room between positions
 - **Asked for:** "space out the positions slightly so the names dont overlap and cover other positions"
 - **Changed:** increased the vertical gaps between defensive levels, spread crowded linebacker rows, and kept name cards at a consistent width. Narrow screens can scroll the field horizontally rather than squeezing positions together; full player names are available on hover.

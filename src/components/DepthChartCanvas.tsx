@@ -60,6 +60,9 @@ export default function DepthChartCanvas({
   };
   const leftFor = (i: number) => {
     const slot = structure.slots[i];
+    if (slot.concept === "Strong safety" || slot.concept === "Free safety") {
+      return slot.x < 50 ? 35 : 65;
+    }
     const r = xRank.get(i);
     // Spread crowded linebacker rows without letting custom inside spacing collide.
     if (slot.level === "second" && r && r.count >= 3) {
@@ -112,6 +115,7 @@ export default function DepthChartCanvas({
         const ids = slots[i] ?? [];
         const selected = selectedSlot === i;
         const label = slotLabelOf(overrides, structureId, i);
+        const isSafety = slot.concept === "Strong safety" || slot.concept === "Free safety";
         return (
           <motion.button
             key={i}
@@ -123,7 +127,7 @@ export default function DepthChartCanvas({
             className={`absolute -translate-x-1/2 -translate-y-full flex flex-col items-center ${
               onSlotClick ? "cursor-pointer" : "cursor-default"
             }`}
-            style={{ left: `clamp(68px, ${leftFor(i)}%, calc(100% - 68px))`, top: `${topFor(slot.level, slot.y)}%` }}
+            style={{ left: `clamp(68px, ${leftFor(i)}%, calc(100% - 68px))`, top: `${isSafety ? 42 : topFor(slot.level, slot.y)}%` }}
           >
             <span
               className={`display relative z-10 rounded-[4px] px-2.5 py-[3px] text-[10.5px] font-bold tracking-wide text-white transition-colors ${
