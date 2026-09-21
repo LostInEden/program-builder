@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Simplify My Scheme overview
+- **Asked for:** Simplify My Scheme to Defensive Identity, Your Defense, and Core Rules without losing information.
+- **Changed:** Replaced the overview lists with a concise identity section and 2x2 category summaries. Moved the existing teaching, uploads, confirmation, and activity workflow into an expandable Scheme tools & review panel; preserved terminology, reference, Self Scout, and Defensive Analysis links.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Counts show confirmed active items with back-pocket counts separately. Base designations and philosophy reuse existing data. Core Rules explicitly states that system-wide rules are not separately designated; see REQUESTS.md #5. No persisted data or engine changes.
+
+## 2026-09-21 — Make scheme categories consistent card libraries
+- **Asked for:** Use the same visual card layout for Fronts, Coverages, Pressures, and Adjustments, with details one level deeper.
+- **Changed:** Added shared SchemeConceptCard and SchemeTabs components. Category pages show cards with status, designation, summary, and diagram empty state; opening a card shows saved rules, responsibilities, checks, notes, and an Edit Scheme Item action using the existing editor. Preserved add, filter, confirm, remove, and coverage import functionality.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Concept-to-diagram links do not exist yet. Cards honestly say No diagram linked; no drawings are guessed or generated. Automatic previews and diagram editing remain engineering request #1.
+
+## 2026-09-21 — Separate Play Art from My Scheme navigation
+- **Asked for:** Keep My Scheme focused on its defensive components and make Play Art a separate main section.
+- **Changed:** Promoted the existing Play Art page into main navigation; My Scheme now offers Overview, Fronts, Coverages, Pressures, and Adjustments. Corrected category highlighting and prevented Play Art from highlighting My Scheme.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing URLs and saved drawings are unchanged. Combining components in Play Art remains engineering request #2.
+
 ## 2026-09-21 — Add Play Art under My Scheme
 - **Asked for:** Add a Play Art tab under My Scheme that presents the drawing tool with offensive formation, defensive front, offensive play call, and defensive coverage fields.
 - **Changed:** Added Play Art to the shared My Scheme navigation, opening the existing diagram workspace. Renamed its heading and placed four labeled text fields directly above the board.

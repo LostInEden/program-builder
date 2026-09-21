@@ -14,6 +14,12 @@ Entry format:
 
 ---
 
+## #5 — 2026-09-21 — Designate global defensive core rules
+- **Coach asked:** Show actual system-wide Strength, Run Fit, Trips, Motion, Unbalanced, and Personnel rules in a concise Core Rules summary without duplicating scheme definitions.
+- **Why it's not front-end:** There is no persisted global defensive-rule designation. Existing Concept responsibilities and adjustment trigger/action/result fields are scoped to individual concepts. The existing strengthRule supports offensive formation recognition and must not be relabeled as the defense's global strength rule. Engineering should define explicit references or scope for existing rules, preserve structured knowledge, and support editing without duplicating or guessing rules from prose.
+- **Where it would show up:** My Scheme Overview → Core Rules → View / Edit Rules. The frontend currently explains the missing designation and links to saved checks and terminology. Do not promote situational adjustments into universal rules automatically.
+- **Status:** Open
+
 ## #4 — 2026-09-21 — Connect conversational staff-meeting AI
 - **Coach asked:** CounterScheme should discuss a game-plan priority naturally, compare football options, ask useful questions, and evaluate ideas against My Scheme, My Team, opponent evidence, and earlier decisions.
 - **Why it's not front-end:** The provider registry currently contains only the local rules/template engine. A real conversational provider requires a server-side integration, credentials, grounded prompts, conversation context handling, and validation of scheme/personnel claims. No remote model or credentials are configured in this workspace. The guided UI and persisted coach approval workflow are implemented; local replies do not satisfy unrestricted football reasoning.
@@ -45,3 +51,9 @@ Entry format:
 - **Status:** Open
 
 - **2026-09-21 drawing-interaction update:** The coach explicitly authorized continuous-path behavior in StudioCanvas. Multi-point drafting, player/free starts, snapping, finish/cancel, point editing, thinner paths, and legacy-format persistence are implemented using the existing route/block/motion/pitch types. Dedicated blitz, slant/stunt, coverage/drop, and run-fit semantic values still require coordinated model and consumer changes; none were silently mapped into new stored categories. This does not complete the other #1 follow-up requirements.
+
+### #1 / #2 follow-up — 2026-09-21 — Visual scheme libraries and separate Play Art
+- **Coach asked:** Automatically show each Front, Coverage, Pressure, and Adjustment diagram in consistent category cards; select existing components in Play Art to draw complete calls without changing permanent scheme definitions.
+- **Why it's not front-end:** Concept-to-Call references are still missing; Play Art defFront/defCoverage are free text, not associations. Use stable IDs and diagram structure/defender identities, with legacy-safe migration and no name matching. Reuse PlayCardSVG for read-only previews and StudioCanvas for editing; do not mount a writable canvas as a preview. Combining components needs explicit coordinate/anchor merging and assignment-conflict handling. Drawing edits must be isolated from permanent components.
+- **Where it would show up:** Shared SchemeConceptCard and scheme item details, then the existing Play Art workspace. The new category UI displays honest No diagram linked states until engineering supplies associations. No second drawing system is requested.
+- **Status:** Open

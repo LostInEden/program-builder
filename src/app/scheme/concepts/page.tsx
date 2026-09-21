@@ -1,13 +1,15 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, X, ChevronRight, Star, BookOpen, Download, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Plus, X, BookOpen, Download, ArrowRight, CheckCircle2 } from "lucide-react";
 import {
   useStore, useHydrated, ADJUSTMENT_CATEGORIES, PRESSURE_GROUPS,
   type Concept, type ConceptKind, type ConceptStatus, type Responsibility,
 } from "@/lib/store";
+import SchemeTabs from "@/components/SchemeTabs";
+import SchemeConceptCard from "@/components/SchemeConceptCard";
 import { COVERAGES } from "@/lib/coverages";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
@@ -21,16 +23,17 @@ function ConceptsInner() {
   const hydrated = useHydrated();
   const router = useRouter();
   const sp = useSearchParams();
-  const kindParam = (sp.get("kind") as ConceptKind | null) ?? "front";
+  const rawKind = sp.get("kind");
+  const kindParam: ConceptKind = rawKind && Object.hasOwn(KIND_LABEL, rawKind) ? rawKind as ConceptKind : "front";
   const cat = sp.get("cat");
   const id = sp.get("id");
   const isNew = sp.get("new") === "1";
 
   const { concepts, addConcept, updateConcept, removeConcept, confirmConcept } = useStore();
-  const [newKind, setNewKind] = useState<ConceptKind>(kindParam);
+  const newKind = kindParam;
   const [newName, setNewName] = useState("");
 
-  useEffect(() => setNewKind(kindParam), [kindParam]);
+
 
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
 
@@ -38,7 +41,7 @@ function ConceptsInner() {
     .filter((c) => c.kind === kindParam)
     .filter((c) => !cat || (kindParam === "adjustment" ? (cat === "Situational" ? c.category === "Situational Rules" || c.category === "Special Situations" : c.category === cat) : c.group === cat))
     .sort((a, b) => Number(!!b.isBase) - Number(!!a.isBase) || a.name.localeCompare(b.name));
-  const selected = concepts.find((c) => c.id === id) ?? null;
+  const selected = concepts.find((c) => c.id === id && c.kind === kindParam) ?? null;
   const go = (q: string) => router.push(`/scheme/concepts?${q}`);
 
   const create = () => {
@@ -58,48 +61,23 @@ function ConceptsInner() {
       <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
         <ArrowLeft size={15} /> My Scheme
       </Link>
-      <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Scheme Library</h1>
-          <p className="text-dim mt-0.5">Your fronts, coverages, pressures, and adjustments — all in one place.</p>
-        </div>
-        <div className="flex flex-wrap gap-1 rounded-lg border border-line bg-white p-1">
-          {(Object.keys(KIND_LABEL) as ConceptKind[]).map((k) => (
-            <button
-              key={k}
-              onClick={() => go(`kind=${k}`)}
-              className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${kindParam === k && !isNew ? "bg-grass text-white" : "text-dim hover:text-ink"}`}
-            >
-              {KIND_LABEL[k]}
-            </button>
-          ))}
-        </div>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div><h1 className="text-3xl font-extrabold tracking-tight">{KIND_LABEL[kindParam]}</h1><p className="mt-1 text-sm text-dim">Your saved {KIND_LABEL[kindParam].toLowerCase()}. Open a card for its rules and coaching notes.</p></div>
+        <button onClick={() => go(`kind=${kindParam}${cat ? `&cat=${encodeURIComponent(cat)}` : ""}&new=1`)} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white"><Plus size={16} /> Add {KIND_LABEL[kindParam].replace(/s$/, '')}</button>
       </div>
-
-      <div className="grid gap-5 lg:grid-cols-[300px_1fr] items-start">
-        {/* list */}
-        <div className="flex flex-col gap-3">
-          <div className={`${card} p-3`}>
-            <div className="display uppercase text-[10px] font-bold tracking-[0.15em] text-dim mb-2">New {KIND_LABEL[newKind].replace(/s$/, "")}</div>
-            <div className="flex gap-1.5">
-              <select value={newKind} onChange={(e) => setNewKind(e.target.value as ConceptKind)} className={`${input} w-28`}>
-                {(Object.keys(KIND_LABEL) as ConceptKind[]).map((k) => (
-                  <option key={k} value={k}>{KIND_LABEL[k].replace(/s$/, "")}</option>
-                ))}
-              </select>
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && create()}
-                placeholder="Name"
-                className={`${input} flex-1 min-w-0`}
-                autoFocus={isNew}
-              />
-              <button onClick={create} className="grid size-9 shrink-0 place-items-center rounded-lg bg-grass text-white hover:bg-grass-deep" aria-label="Add">
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
+      <SchemeTabs active={kindParam} />
+      {isNew && <div className={`${card} mb-5 p-4`}>
+        <label className="text-sm font-semibold" htmlFor="new-concept-name">New {KIND_LABEL[newKind].replace(/s$/, '')}</label>
+        <div className="mt-2 flex gap-2">
+          <input id="new-concept-name" value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && create()} placeholder="Name" className={`${input} min-w-0 flex-1`} autoFocus />
+          <button onClick={create} disabled={!newName.trim()} className="rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Add</button>
+          <button onClick={() => go(`kind=${kindParam}`)} className="px-3 text-sm text-dim">Cancel</button>
+        </div>
+      </div>}
+      {selected ? <>
+        <button onClick={() => go(`kind=${kindParam}${cat ? `&cat=${encodeURIComponent(cat)}` : ''}`)} className="mb-4 text-sm font-semibold text-grass">← All {KIND_LABEL[kindParam]}</button>
+        <ConceptDetails key={selected.id} c={selected} onChange={(p) => updateConcept(selected.id, p)} onRemove={() => { removeConcept(selected.id); go(`kind=${kindParam}`); }} onConfirm={() => confirmConcept(selected.id)} />
+      </> : <div className="space-y-4">
 
           {(kindParam === "adjustment" || kindParam === "pressure") && (
             <div className="flex flex-wrap gap-1.5">
@@ -112,35 +90,37 @@ function ConceptsInner() {
             </div>
           )}
 
-          <div className={`${card} overflow-hidden`}>
-            {list.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => go(`kind=${kindParam}${cat ? `&cat=${encodeURIComponent(cat)}` : ""}&id=${c.id}`)}
-                className={`flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm border-b border-line/60 last:border-0 transition ${
-                  selected?.id === c.id ? "bg-grass/10 text-grass font-bold" : "hover:bg-slate-50 font-semibold"
-                }`}
-              >
-                {c.isBase && <Star size={12} className="fill-amber-400 text-amber-400 shrink-0" />}
-                <span className="truncate">{c.kind === "adjustment" && c.trigger ? `${c.trigger} = ${c.result}` : c.name}</span>
-                {c.status === "backPocket" && <span className="rounded-full border border-line px-1.5 py-0.5 text-[10px] font-bold text-dim shrink-0">back pocket</span>}
-                {!c.confirmed &&<span className="ml-auto rounded-full bg-ember/10 px-1.5 py-0.5 text-[10px] font-bold text-ember shrink-0">confirm</span>}
-                <ChevronRight size={14} className="ml-auto text-dim shrink-0" />
-              </button>
-            ))}
-            {list.length === 0 && <div className="px-4 py-6 text-center text-sm text-dim">Nothing here yet.</div>}
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {list.map(c => <SchemeConceptCard key={c.id} concept={c} href={`/scheme/concepts?kind=${kindParam}${cat ? `&cat=${encodeURIComponent(cat)}` : ''}&id=${encodeURIComponent(c.id)}`} />)}
           </div>
-        </div>
+          {list.length === 0 && <div className={`${card} p-8 text-center text-sm text-dim`}>No {KIND_LABEL[kindParam].toLowerCase()} in this view. Add one or choose another category.</div>}
+      </div>}
 
-        {/* editor */}
-        {selected ? (
-          <Editor key={selected.id} c={selected} onChange={(p) => updateConcept(selected.id, p)} onRemove={() => { removeConcept(selected.id); go(`kind=${kindParam}`); }} onConfirm={() => confirmConcept(selected.id)} />
-        ) : (
-          <div className={`${card} px-6 py-14 text-center text-dim text-sm`}>Select a concept to edit it, or add a new one.</div>
-        )}
-      </div>
     </div>
   );
+}
+
+function ConceptDetails(props: Parameters<typeof Editor>[0]) {
+  const { c } = props;
+  const [editing, setEditing] = useState(false);
+  return <div>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-2xl font-extrabold">{c.name}</h2>
+      <button onClick={() => setEditing(!editing)} className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-grass">{editing ? 'Done Editing' : 'Edit Scheme Item'}</button>
+    </div>
+    {editing ? <Editor {...props} /> : <div className="grid gap-4">
+      <div className={`${card} p-5`}>
+        <p className="text-sm text-dim">{c.confirmed ? (c.status === 'backPocket' ? 'Back pocket' : 'Active') : 'Needs confirmation'}{c.isBase ? ` · Base ${c.kind}` : ''}{c.category || c.group ? ` · ${c.category || c.group}` : ''}</p>
+        {!c.confirmed && <button onClick={props.onConfirm} className="mt-3 rounded-lg bg-grass px-3 py-2 text-sm font-bold text-white">Confirm Scheme Item</button>}
+        <p className="mt-3 whitespace-pre-wrap">{c.summary || 'No summary saved.'}</p>
+        {c.kind === 'adjustment' && <dl className="mt-4 grid gap-3 sm:grid-cols-3">{[['Trigger', c.trigger], ['Action', c.action], ['Result', c.result]].map(([label, value]) => <div key={label}><dt className="text-xs text-dim">{label}</dt><dd className="mt-1 whitespace-pre-wrap font-semibold">{value || 'Not set'}</dd></div>)}</dl>}
+      </div>
+      <div className={`${card} p-5`}><h3 className="font-bold">Diagram</h3><p className="mt-2 text-sm text-dim">No diagram linked to this scheme item.</p><Link href="/scheme/playbook" className="mt-3 inline-block text-sm font-semibold text-grass">Open Play Art →</Link></div>
+      <div className={`${card} p-5`}><h3 className="mb-3 font-bold">Responsibilities & Rules</h3>{c.responsibilities.length ? <dl className="divide-y divide-line">{c.responsibilities.map(r => <div key={r.id} className="grid gap-1 py-3 sm:grid-cols-[120px_1fr]"><dt className="font-semibold">{r.role}</dt><dd className="whitespace-pre-wrap text-sm leading-relaxed text-dim">{r.job}</dd></div>)}</dl> : <p className="text-sm text-dim">No responsibilities saved.</p>}</div>
+      {c.libraryId && <div className={`${card} p-5`}><h3 className="font-bold">Coverage Reference</h3><p className="mt-2 text-sm text-dim">{COVERAGES.find(x => x.id === c.libraryId)?.name || c.libraryId}</p><Link href="/scheme/coverages" className="mt-2 inline-block text-sm text-grass">Open Coverage Reference →</Link></div>}
+      <div className={`${card} p-5`}><h3 className="font-bold">Coaching Notes</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-dim">{c.notes || 'No notes saved.'}</p></div>
+    </div>}
+  </div>;
 }
 
 function Editor({ c, onChange, onRemove, onConfirm }: { c: Concept; onChange: (p: Partial<Concept>) => void; onRemove: () => void; onConfirm: () => void }) {

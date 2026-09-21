@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {
-  Home, Users, Shield, Binoculars, ClipboardList, ShieldCheck, Settings,
+  Home, Users, Shield, Binoculars, ClipboardList, ShieldCheck, Settings, PencilRuler,
 } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
 
@@ -41,15 +41,16 @@ export const SECTIONS: Section[] = [
     href: "/scheme",
     label: "My Scheme",
     icon: Shield,
-    match: ["/scheme", "/analysis"],
+    match: ["/scheme"],
     badge: (s) => (s.pending ? `${s.pending} to confirm` : null),
     children: [
-      { href: "/scheme/concepts?kind=front", label: "Scheme Library" },
-      { href: "/scheme/playbook", label: "Play Art" },
-      { href: "/analysis", label: "Defensive Analysis" },
-      { href: "/scheme/self-scout", label: "Self scout" },
+      { href: "/scheme/concepts?kind=front", label: "Fronts" },
+      { href: "/scheme/concepts?kind=coverage", label: "Coverages" },
+      { href: "/scheme/concepts?kind=pressure", label: "Pressures" },
+      { href: "/scheme/concepts?kind=adjustment", label: "Adjustments" },
     ],
   },
+  { href: "/scheme/playbook", label: "Play Art", icon: PencilRuler, match: ["/scheme/playbook"] },
   {
     href: "/matchup",
     label: "Opponent Matchup",
@@ -78,6 +79,7 @@ export const SECTIONS: Section[] = [
 ];
 
 function inSection(pathname: string, sec: Section) {
+  if (sec.href === "/scheme" && pathname.startsWith("/scheme/playbook")) return false;
   return sec.match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(m + "/")));
 }
 
