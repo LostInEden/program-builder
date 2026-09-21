@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Add Play Art under My Scheme
+- **Asked for:** Add a Play Art tab under My Scheme that presents the drawing tool with offensive formation, defensive front, offensive play call, and defensive coverage fields.
+- **Changed:** Added Play Art to the shared My Scheme navigation, opening the existing diagram workspace. Renamed its heading and placed four labeled text fields directly above the board.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Reused offForm and offConcept for offensive descriptions; added optional defFront and defCoverage to existing Call records so all four descriptions save with each diagram. Coach explicitly requested these fields. Existing drawings remain compatible without migration; typed descriptions do not automatically alter alignments or assignments.
+
 ## 2026-09-21 — Prevent vertically compressed diagrams
 - **Asked for:** The plays look smashed down at times; check the draw diagram again.
 - **Changed:** Matched the board's aspect ratio to its 100-by-87 drawing coordinates, disabled flex shrinking of the field, and preserved SVG proportions. Player clearance and start handles now use the measured board height rather than the former fixed wide ratio.

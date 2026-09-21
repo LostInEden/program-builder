@@ -56,7 +56,7 @@ export default function PlaybookPage() {
       </Link>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="display text-2xl font-bold">Diagram Tool</h1>
+        <h1 className="display text-2xl font-bold">Play Art</h1>
         <Link
           href="/scheme/playbook/print"
           className="display rounded-full border border-line px-4 py-1.5 text-xs font-semibold text-dim transition hover:text-ink hover:border-dim"
@@ -195,26 +195,25 @@ export default function PlaybookPage() {
                 </div>
               </div>
 
-              <details className="mb-3 rounded-lg border border-line px-3 py-2"><summary className="text-xs text-dim cursor-pointer">Formation name &amp; concept · {call.offForm || "Not named"}</summary><div className="mt-2 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs text-dim mb-1">Offensive formation</label>
-                  <input
-                    value={call.offForm}
-                    onChange={(e) => updateCall(call.id, { offForm: e.target.value })}
-                    placeholder="Trips Right"
-                    className="w-full rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-dim mb-1">Run / pass concept</label>
-                  <input
-                    value={call.offConcept}
-                    onChange={(e) => updateCall(call.id, { offConcept: e.target.value })}
-                    placeholder="Inside zone"
-                    className="w-full rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm"
-                  />
-                </div>
-              </div></details>
+              <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {([
+                  ["offForm", "Offensive formation", "Trips Right"],
+                  ["defFront", "Defensive front", "Over"],
+                  ["offConcept", "Offensive play call", "Inside Zone"],
+                  ["defCoverage", "Defensive coverage", "Cover 3"],
+                ] as const).map(([field, label, placeholder]) => (
+                  <div key={field}>
+                    <label htmlFor={`play-art-${field}`} className="block text-xs text-dim mb-1">{label}</label>
+                    <input
+                      id={`play-art-${field}`}
+                      value={call[field] ?? ""}
+                      onChange={(e) => updateCall(call.id, { [field]: e.target.value })}
+                      placeholder={placeholder}
+                      className="w-full rounded-lg border border-line bg-slate-50 px-3 py-2 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
 
               <StudioCanvas
                 key={`${call.id}:${group.structureId}`}

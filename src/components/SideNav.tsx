@@ -45,6 +45,7 @@ export const SECTIONS: Section[] = [
     badge: (s) => (s.pending ? `${s.pending} to confirm` : null),
     children: [
       { href: "/scheme/concepts?kind=front", label: "Scheme Library" },
+      { href: "/scheme/playbook", label: "Play Art" },
       { href: "/analysis", label: "Defensive Analysis" },
       { href: "/scheme/self-scout", label: "Self scout" },
     ],

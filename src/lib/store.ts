@@ -397,6 +397,8 @@ export type Call = {
   name: string;
   offForm: string;
   offConcept: string;
+  defFront?: string; // coach-entered diagram description
+  defCoverage?: string; // coach-entered diagram description
   offLook: OffMarker[]; // editable offensive look for this call
   fieldPreset?: "midfield" | "redzone" | "goalline" | "backedup";
   lines: DrawLine[]; // drawn routes / blocks / motions (both sides)
