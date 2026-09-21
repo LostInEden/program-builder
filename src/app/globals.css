@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
-/* CounterScheme dark-blue and charcoal-grey theme.
+/* CounterScheme black and glowing royal-blue theme.
    Historical token names stay shared across every workspace. */
 @theme {
-  --color-pitch: #17283e;        /* page background */
-  --color-panel: #34465b;
-  --color-card: #293b50;         /* surfaces */
-  --color-line: #526176;         /* hairline borders */
-  --color-ink: #edf2f8;          /* primary text */
-  --color-dim: #bdc9d7;          /* secondary text */
-  --color-grass: #39658f;        /* muted blue accent */
-  --color-grass-deep: #305579;
-  --color-navy: #1d3048;         /* dark chips (position boxes, logo bar) */
+  --color-pitch: #050608;        /* page background */
+  --color-panel: #10141c;
+  --color-card: #0c1017;         /* surfaces */
+  --color-line: #293750;         /* hairline borders */
+  --color-ink: #f1f5ff;          /* primary text */
+  --color-dim: #aebbd1;          /* secondary text */
+  --color-grass: #2458e6;        /* royal-blue accent */
+  --color-grass-deep: #1945c9;
+  --color-navy: #101c38;         /* dark chips (position boxes, logo bar) */
   --color-sky: #0284c7;
   --color-ember: #d97706;
   --color-mind: #7c3aed;
@@ -29,22 +29,22 @@ body {
   font-family: var(--font-body);
 }
 
-/* Shared page background and grey navigation, desktop and phone. */
+/* Shared black page background and royal-blue navigation, desktop and phone. */
 .stadium-bg {
-  background: var(--color-pitch);
+  background: radial-gradient(ellipse at 50% 0%, rgba(36, 88, 230, 0.09), transparent 55%), var(--color-pitch);
 }
 
 .theme-navigation {
-  --color-ink: #f1f3f5;
-  --color-dim: #c5cbd3;
-  --color-grass: #d0e4ff;
-  --color-line: #555d68;
-  --color-navy: #282e37;
+  --color-ink: #f1f5ff;
+  --color-dim: #b4c2dd;
+  --color-grass: #719aff;
+  --color-line: #263960;
+  --color-navy: #0d1730;
   --color-ember: #ffd18a;
-  --color-slate-50: #454d58;
-  --color-slate-100: #505966;
-  --color-slate-200: #606a78;
-  background-color: #383e47;
+  --color-slate-50: #101a2e;
+  --color-slate-100: #15254a;
+  --color-slate-200: #253b68;
+  background-color: #070a10;
   color: var(--color-ink);
 }
 
@@ -52,13 +52,34 @@ body {
    Keep text-white intact for filled buttons and preserve paper styling. */
 @media screen {
   :root {
-    --color-slate-50: #34465b;
-    --color-slate-100: #3b4e64;
-    --color-slate-200: #526176;
+    --color-slate-50: #10141c;
+    --color-slate-100: #182239;
+    --color-slate-200: #293750;
   }
   .bg-white { background-color: var(--color-panel); }
   .text-navy { color: var(--color-ink); }
-  .text-grass { color: #a9cff5; }
+  .text-grass { color: #82a8ff; }
+
+  /* Static, restrained glow keeps labels crisp and avoids animated distraction. */
+  .theme-navigation {
+    box-shadow: 0 1px 0 rgba(65, 105, 225, 0.5), 0 5px 22px rgba(36, 88, 230, 0.16);
+  }
+  :is(button, a).bg-grass {
+    box-shadow: 0 0 14px rgba(36, 88, 230, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  :is(button, a).bg-grass:hover {
+    box-shadow: 0 0 22px rgba(36, 88, 230, 0.55);
+  }
+  .theme-navigation .border-b-grass {
+    border-bottom-color: #719aff;
+    box-shadow: inset 0 -5px 10px -7px #719aff;
+    text-shadow: 0 0 12px rgba(65, 105, 225, 0.65);
+  }
+  :is(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid #82a8ff;
+    outline-offset: 3px;
+    box-shadow: 0 0 16px rgba(36, 88, 230, 0.4);
+  }
 }
 
 /* Historically the condensed-uppercase heading face; now just the UI face.
@@ -79,7 +100,7 @@ body {
 }
 
 ::selection {
-  background: rgba(53, 93, 135, 0.25);
+  background: rgba(36, 88, 230, 0.4);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -107,17 +128,17 @@ select {
 }
 select option {
   background-color: var(--color-panel);
-  color: #edf2f8;
+  color: #f1f5ff;
 }
 select optgroup {
   background-color: var(--color-panel);
-  color: #bdc9d7;
+  color: #aebbd1;
   font-style: normal;
   font-weight: 600;
 }
 
 *::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-thumb { background: #69788c; border-radius: 8px; }
+*::-webkit-scrollbar-thumb { background: #304879; border-radius: 8px; }
 *::-webkit-scrollbar-track { background: transparent; }
 
 /* ---- Paper (Q44) ---------------------------------------------------------

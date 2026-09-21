@@ -62,7 +62,7 @@ function SectionTabsInner() {
                   onClick={() => { setOpenedAt(location); setOpen(expanded ? null : section.href); }}>
                   {label}<ChevronDown size={14} className={expanded ? "rotate-180" : ""} />
                 </button>
-                {expanded && <div id={`section-menu-${index}`} className="absolute left-0 top-full z-50 mt-0 w-60 rounded-b-lg border border-line bg-[#353e49] p-2 shadow-xl">
+                {expanded && <div id={`section-menu-${index}`} className="absolute left-0 top-full z-50 mt-0 w-60 rounded-b-lg border border-line bg-panel p-2 shadow-xl">
                   {[{ href: section.href, label: "Overview" }, ...section.children].map((child) => <Link
                     key={child.href} href={child.href} aria-current={current(child.href) ? "page" : undefined}
                     onClick={() => setOpen(null)}

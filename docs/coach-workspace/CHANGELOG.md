@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-20 — Black theme with glowing royal blue
+- **Asked for:** "make the color theme black with a glowing royal blue"
+- **Changed:** replaced the shared dark-blue/grey palette with black backgrounds and near-black cards, royal-blue buttons and accents, brighter blue links, and subtle static glows on navigation, active tabs, primary buttons, and keyboard focus. Dropdowns now use the shared panel color.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Theme styling only; field markings, position spacing, saved data, and calculations are unchanged. Print retains white paper and no glow; status colors remain distinct.
+
 ## 2026-09-20 — Level and widen the safeties
 - **Asked for:** "Even the safeties up and spread them out a little bit"
 - **Changed:** aligned both safety cards at the same depth and widened their horizontal positions to 35% and 65% of the shared depth chart field.
