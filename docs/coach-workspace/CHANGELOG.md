@@ -15,6 +15,41 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Add one contextual editor for every Play Art player
+- **Asked for:** Click any offensive or defensive player for a small nearby editor.
+- **Changed:** Added a shared on-field player menu for labels, preset colors, fill, symbols, and deletion. Kept player metadata and assignment notes in the secondary menu.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Defender removal is per play and supports Undo; it does not remove team depth-chart slots.
+
+## 2026-09-22 — Save player labels, colors, shading, and symbols
+- **Asked for:** Allow optional 0–2 character labels, eight preset colors, outline/shaded/filled states, and circle/square/triangle symbols.
+- **Changed:** Added optional saved appearance properties for offense and defense, readable contrasting labels, and shared glyph rendering for the editor and print view.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing diagrams retain their default styling. Customizations survive reload and duplication; player coordinates remain unchanged.
+
+## 2026-09-22 — Add persistent drawing colors and editable route styles
+- **Asked for:** Keep the selected drawing color until it changes and allow existing drawings to be restyled.
+- **Changed:** Added a compact new-drawing palette and thickness selector, plus a contextual drawing editor for color, type, line style, thickness, curve, and none/end/both arrow styles.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** New drawing defaults do not recolor existing paths. All route styling persists with the play and renders in print.
+
+## 2026-09-22 — Support colored free drawing in Play Art
+- **Asked for:** Apply drawing colors to free drawing as well as routes and assignments.
+- **Changed:** Added a Free draw tool that records pointer strokes in football coordinates using the same saved color, thickness, style, and editing controls.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Free draw remains selected after a stroke. Defaults remain clean and neutral.
+
+## 2026-09-22 — Keep the canvas stationary while drawing
+- **Asked for:** Keep the drawing board responsive and usable without scrolling.
+- **Changed:** Moved temporary drawing instructions out of the layout flow so starting a path does not resize the canvas.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves pointer alignment and the fitted viewport while constructing routes.
+
 ## 2026-09-22 — Reduce defensive letters by twenty percent
 - **Asked for:** Defenders 20% smaller.
 - **Changed:** Reduced defensive font size from 2.3 to 1.84 field units.

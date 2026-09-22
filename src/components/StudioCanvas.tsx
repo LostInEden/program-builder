@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import {
   MousePointer2,
+  Pencil,
   Minus,
   ArrowUpRight,
   MoveRight,
@@ -27,8 +28,13 @@ import {
   ROUTE_COLORS,
   type LineKind,
   type LineStyle,
+  type PlayerAppearance,
+  type DrawLine,
 } from "@/lib/football";
 import { useStore, type Call, type Player } from "@/lib/store";
+
+import { ART_COLORS, arrowStyleOf, ColorChoices, offenseSymbol, PlayerGlyph, shortLabel, thicknessFactor } from "./PlayArtStyle";
+import PlayArtObjectMenu from "./PlayArtObjectMenu";
 
 export type Selection =
   | { kind: "off"; id: string }
@@ -38,7 +44,7 @@ export type Selection =
   | { kind: "text"; id: string }
   | null;
 
-type Tool = "select" | "line" | "route" | "motion" | "block" | "text" | "zone" | "player";
+type Tool = "select" | "line" | "route" | "motion" | "block" | "text" | "zone" | "player" | "freehand";
 type Pt = [number, number];
 type DraftPath = { anchor: string; points: Pt[] };
 type Drag =
@@ -92,6 +98,7 @@ const TOOLS: { id: Tool; icon: typeof MousePointer2; label: string; key: string;
   { id: "block", icon: RectangleHorizontal, label: "Block", key: "5", alias: "b" },
   { id: "text", icon: Type, label: "Text", key: "6", alias: "t" },
   { id: "zone", icon: Circle, label: "Zone", key: "7", alias: "z" },
+  { id: "freehand", icon: Pencil, label: "Free draw", key: "9", alias: "f" },
   { id: "player", icon: UserPlus, label: "Add Offense", key: "8", alias: "p" },
 ];
 
@@ -119,6 +126,8 @@ export default function StudioCanvas({
   const updateCall = useStore((s) => s.updateCall);
   const structure = getStructure(structureId);
   const texts = call.texts ?? [];
+  const defAppearance = (i: number) => call.defAppearance?.[i] ?? {};
+  const defLabel = (i: number) => shortLabel(defAppearance(i).displayLabel ?? labelFor(i));
 
   const defPos = (i: number): Pt => {
     const slot = structure.slots[i];
@@ -132,7 +141,7 @@ export default function StudioCanvas({
     }
     if (anchor.startsWith("def:")) {
       const i = Number(anchor.slice(4));
-      return structure.slots[i] ? defPos(i) : null;
+      return structure.slots[i] && !defAppearance(i).hidden ? defPos(i) : null;
     }
     return [0, 0];
   };
@@ -180,18 +189,20 @@ export default function StudioCanvas({
   const fit = () => { setFitSize(workingSize()); setZoom(1); setPan([0, 0]); setPanMode(false); };
   const [tool, setTool] = useState<Tool>("select");
   const [color, setColor] = useState(INK);
+  const [thickness, setThickness] = useState<DrawLine["thickness"]>("normal");
   const [style, setStyle] = useState<LineStyle>("solid");
   // Draft points stay local until the entire assignment is finished.
   const [draft, setDraft] = useState<DraftPath | null>(null);
   const pending = draft?.anchor ?? null;
-  const cancelDraft = () => { setDraft(null); setHover(null); };
+  const freehandPoints = useRef<Pt[] | null>(null);
+  const cancelDraft = () => { freehandPoints.current = null; setDraft(null); setHover(null); };
   const [extendId, setExtendId] = useState<string | null>(null); // line armed for one more point
   const [hover, setHover] = useState<Pt | null>(null);
   const [zoneStart, setZoneStart] = useState<Pt | null>(null);
   const dragRef = useRef<Drag | null>(null);
   const clickConsumedRef = useRef(false); // pointerup did work — swallow the synthetic click that follows
   const extendDragRef = useRef<string | null>(null); // + button pressed; click = arm, drag = live-extend
-  type Snap = Pick<Call, "offLook" | "lines" | "zones" | "defOffsets"> & { texts: NonNullable<Call["texts"]> };
+  type Snap = Pick<Call, "offLook" | "lines" | "zones" | "defOffsets" | "defAppearance"> & { texts: NonNullable<Call["texts"]> };
   const undoStack = useRef<Snap[]>([]);
   const redoStack = useRef<Snap[]>([]);
 
@@ -200,6 +211,7 @@ export default function StudioCanvas({
     lines: call.lines.map((l) => ({ ...l, points: l.points.map((p) => [...p] as Pt) })),
     zones: call.zones.map((z) => ({ ...z })),
     defOffsets: { ...call.defOffsets },
+    defAppearance: Object.fromEntries(Object.entries(call.defAppearance ?? {}).map(([k,v]) => [k, { ...v }])),
     texts: texts.map((t) => ({ ...t })),
   });
   const snapshot = () => {
@@ -239,8 +251,7 @@ export default function StudioCanvas({
       Math.min(FIELD_H - 1, Math.max(1, cameraTop + ((e.clientY - r.top) / r.height) * viewHeight)),
     ];
   };
-  const colorOf = (l: { anchor: string; color?: string }, selected: boolean) => {
-    if (selected) return "#f59e0b";
+  const colorOf = (l: { anchor: string; color?: string }) => {
     return legacy(l.color) ?? (l.anchor.startsWith("def:") ? DEF_INK : INK);
   };
   // clicks on empty field land on the SVG layer, not the container
@@ -257,7 +268,7 @@ export default function StudioCanvas({
       const r = fieldRef.current!.getBoundingClientRect();
       const candidates = [
         ...call.offLook.map((m) => ({ anchor: `off:${m.id}`, pos: [m.x, m.y] as Pt })),
-        ...structure.slots.map((_, i) => ({ anchor: `def:${i}`, pos: defPos(i) })),
+        ...structure.slots.flatMap((_, i) => defAppearance(i).hidden ? [] : [{ anchor: `def:${i}`, pos: defPos(i) }]),
       ];
       const nearest = candidates.map((c) => ({ ...c, distance: Math.hypot((c.pos[0] - pt[0]) * r.width / viewWidth, (c.pos[1] - pt[1]) * r.height / viewHeight) }))
         .sort((a, b) => a.distance - b.distance)[0];
@@ -289,6 +300,8 @@ export default function StudioCanvas({
         id, anchor: draft.anchor, kind: toolKind(),
         points: points.map(([x, y]) => [x - a[0], y - a[1]] as Pt),
         color: color === INK ? undefined : color,
+        thickness,
+        drawingType: tool === "line" ? "line" : "route",
         style: tool === "motion" ? "dashed" : style,
         showArrow: tool !== "block" && tool !== "line",
       }],
@@ -323,7 +336,7 @@ export default function StudioCanvas({
     snapshot();
     const id = uid();
     updateCall(call.id, {
-      lines: [...call.lines, { id, anchor: fromAnchor, kind: "block", points: [[dx * k, dy * k]], style: "solid", showArrow: false }],
+      lines: [...call.lines, { id, anchor: fromAnchor, kind: "block", color: color === INK ? undefined : color, thickness, points: [[dx * k, dy * k]], style: "solid", showArrow: false }],
     });
     onSelect({ kind: "line", id });
     return true;
@@ -342,6 +355,12 @@ export default function StudioCanvas({
       return;
     }
     clickConsumedRef.current = false;
+    if (tool === "freehand" && isFieldTarget(e)) {
+      e.currentTarget.setPointerCapture(e.pointerId);
+      freehandPoints.current = [toCanvas(e)];
+      setDraft({ anchor: "free", points: freehandPoints.current });
+      return;
+    }
     if (tool === "zone" && isFieldTarget(e)) setZoneStart(toCanvas(e));
   };
   const onFieldClick = (e: React.MouseEvent) => {
@@ -385,6 +404,14 @@ export default function StudioCanvas({
     if (panDrag.current) {
       const drag = panDrag.current;
       setPan([Math.max(-100, Math.min(100, drag.origin[0] - (e.clientX - drag.x) / scale)), Math.max(-FIELD_H, Math.min(FIELD_H, drag.origin[1] - (e.clientY - drag.y) / scale))]);
+      return;
+    }
+    if (freehandPoints.current) {
+      const pt = toCanvas(e), last = freehandPoints.current.at(-1)!;
+      if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) > 0.3) {
+        freehandPoints.current.push(pt);
+        setDraft({ anchor: "free", points: [...freehandPoints.current] });
+      }
       return;
     }
     if (pending || extendId || zoneStart) setHover(toCanvas(e));
@@ -438,6 +465,11 @@ export default function StudioCanvas({
   };
   const onFieldPointerUp = (e: React.PointerEvent) => {
     if (panDrag.current) { panDrag.current = null; clickConsumedRef.current = true; return; }
+    if (freehandPoints.current) {
+      const points = [...freehandPoints.current, toCanvas(e)];
+      if (points.length > 2) { snapshot(); updateCall(call.id, { lines: [...call.lines, { id: uid(), anchor: "free", points, kind: "route", drawingType: "freehand", color: color === INK ? undefined : color, thickness, style, showArrow: false }] }); }
+      cancelDraft(); clickConsumedRef.current = true; return;
+    }
     if (zoneStart) {
       const [x, y] = toCanvas(e);
       const rx = Math.abs(x - zoneStart[0]) / 2;
@@ -504,6 +536,10 @@ export default function StudioCanvas({
         offLook: call.offLook.filter((m) => m.id !== selection.id),
         lines: call.lines.filter((l) => l.anchor !== `off:${selection.id}`),
       });
+    if (selection.kind === "def") updateCall(call.id, {
+      defAppearance: { ...call.defAppearance, [selection.slot]: { ...defAppearance(selection.slot), hidden: true } },
+      lines: call.lines.filter(l => l.anchor !== `def:${selection.slot}`),
+    });
     onSelect(null);
     setExtendId(null);
   };
@@ -569,6 +605,17 @@ export default function StudioCanvas({
       ? lineEnd(call.lines.find((l) => l.id === extendId) ?? { anchor: "", points: [] })
       : null;
 
+  const selectedOff = selection?.kind === "off" ? call.offLook.find(o => o.id === selection.id) : undefined;
+  const selectedDef = selection?.kind === "def" ? selection.slot : undefined;
+  const menuPlayer = selectedOff ? { appearance: selectedOff, label: selectedOff.showLabel ? selectedOff.displayLabel ?? selectedOff.label : "", symbol: offenseSymbol(selectedOff) } :
+    selectedDef !== undefined ? { appearance: defAppearance(selectedDef), label: defLabel(selectedDef), symbol: defAppearance(selectedDef).symbol ?? "letters" as const } : undefined;
+  const menuPoint: Pt | null = selectedOff ? [selectedOff.x, selectedOff.y] : selectedDef !== undefined ? defPos(selectedDef) : selLineObj ? lineEnd(selLineObj) : null;
+  const patchPlayer = (patch: PlayerAppearance) => {
+    snapshot();
+    if (selectedOff) updateCall(call.id, { offLook: call.offLook.map(o => o.id === selectedOff.id ? { ...o, ...patch, ...(patch.displayLabel !== undefined ? { showLabel: !!patch.displayLabel } : {}) } : o) });
+    if (selectedDef !== undefined) updateCall(call.id, { defAppearance: { ...call.defAppearance, [selectedDef]: { ...defAppearance(selectedDef), ...patch, ...(patch.displayLabel === "" && !defAppearance(selectedDef).symbol ? { symbol: "circle" as const } : {}) } } });
+  };
+  const patchLine = (patch: Partial<DrawLine>) => { if (selLineObj) { snapshot(); updateCall(call.id, { lines: call.lines.map(l => l.id === selLineObj.id ? { ...l, ...patch } : l) }); } };
   const offenseRadius = PLAYER_SIZE * scale / 2;
 
   return (
@@ -592,6 +639,7 @@ export default function StudioCanvas({
         onPointerLeave={() => setHover(null)}
         onPointerCancel={() => {
           panDrag.current = null;
+          cancelDraft();
           // iOS fires this on system gestures / palm rejection — abort the drag
           // and restore the pre-gesture state so nothing is half-moved.
           if (dragRef.current?.moved) undo();
@@ -613,14 +661,15 @@ export default function StudioCanvas({
             <mask id={pathMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={FIELD_H}>
               <rect width="100" height={FIELD_H} fill="white" />
               {structure.slots.map((_, i) => {
+                if (defAppearance(i).hidden) return null;
                 const [x, y] = defPos(i);
-                const halfWidth = (labelFor(i).length * DEF_FONT_SIZE * 0.35 + 0.3) * scale * viewWidth / fieldWidth;
-                const halfHeight = DEF_FONT_SIZE * 0.5 * scale * viewHeight / fieldHeight;
+                const halfWidth = (defAppearance(i).symbol && defAppearance(i).symbol !== "letters" ? PLAYER_SIZE / 2 : defLabel(i).length * DEF_FONT_SIZE * 0.35 + 0.3) * scale * viewWidth / fieldWidth;
+                const halfHeight = (defAppearance(i).symbol && defAppearance(i).symbol !== "letters" ? PLAYER_SIZE / 2 : DEF_FONT_SIZE * 0.5) * scale * viewHeight / fieldHeight;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
               {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 0.2 * scale) * viewWidth / fieldWidth} ry={(offenseRadius + 0.2 * scale) * viewHeight / fieldHeight} fill="black" />)}
             </mask>
-            {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
+            {[...new Set([...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), DEF_INK, "#f59e0b"])].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
                 <path d="M0,0 L6,3 L0,6 z" fill={fieldColor(c)} />
               </marker>
@@ -690,10 +739,11 @@ export default function StudioCanvas({
             const halfHeight = (defIndex !== null ? 2.2 * scale : offenseRadius + 0.3 * scale) * viewHeight / fieldHeight;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
-            const c = colorOf(l, selected);
+            const c = colorOf(l);
             const rawColor = legacy(l.color) ?? (l.anchor.startsWith("def:") ? DEF_INK : INK);
             const d = l.smooth ? smoothPath(pts) : pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
-            const showArrow = l.showArrow ?? l.kind !== "block";
+            const arrows = arrowStyleOf(l);
+            const showArrow = arrows !== "none";
             let bar = null;
             if (l.kind === "block") {
               const [ax, ay] = pts[pts.length - 2];
@@ -741,12 +791,13 @@ export default function StudioCanvas({
                   }}
                 />
                 <path
-                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1)}
+                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1)}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
-                  markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
+                  markerStart={arrows === "both" ? `url(#sarr-${rawColor.slice(1)})` : undefined}
+                  markerEnd={showArrow ? `url(#sarr-${rawColor.slice(1)})` : undefined}
                   style={{ pointerEvents: "none" }}
                 />
-                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.2 : 0.9)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.2 : 0.9)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
                     <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
@@ -811,10 +862,10 @@ export default function StudioCanvas({
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
             const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
             return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
-              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (tool === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(thickness) * (tool === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
                 strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
-                markerEnd={tool !== "block" && tool !== "line" ? `url(#sarr-${c.slice(1)})` : undefined} />
-              {tool === "block" && <line x1={end[0] - nx * BLOCK_BAR_HALF} y1={end[1] - ny * BLOCK_BAR_HALF} x2={end[0] + nx * BLOCK_BAR_HALF} y2={end[1] + ny * BLOCK_BAR_HALF} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * 0.9} />}
+                markerEnd={tool !== "block" && tool !== "line" && tool !== "freehand" ? `url(#sarr-${c.slice(1)})` : undefined} />
+              {tool === "block" && <line x1={end[0] - nx * BLOCK_BAR_HALF} y1={end[1] - ny * BLOCK_BAR_HALF} x2={end[0] + nx * BLOCK_BAR_HALF} y2={end[1] + ny * BLOCK_BAR_HALF} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(thickness) * 0.9} />}
               {draft.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.5" fill={fieldColor(c)} />)}
             </g>;
           })()}
@@ -845,50 +896,30 @@ export default function StudioCanvas({
           </span>
         ))}
 
-        {/* defense */}
+        {/* Every player uses the same selection and appearance workflow. */}
         {structure.slots.map((slot, i) => {
+          const appearance = defAppearance(i);
+          if (appearance.hidden) return null;
           const [x, y] = defPos(i);
-          const sel = selection?.kind === "def" && selection.slot === i;
-          const armed = pending === `def:${i}`;
-          return (
-            <button
-              key={`d${i}`}
-              onPointerDown={(e) => beginMarkerDrag(e, "def", `${i}`, i)}
-              onDoubleClick={(e) => { if (!draft) { e.stopPropagation(); if (tool === "select") blockTo(i); } }}
-              title={`${labelFor(i)} · drag to align`}
-              className="group absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ ...screenPosition(x, y) }}
-            >
-              <span style={{ width: 4 * scale, height: 4 * scale, fontSize: DEF_FONT_SIZE * scale }} className={`grid place-items-center font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
-                {labelFor(i)}
-              </span>
-            </button>
-          );
+          const selected = selection?.kind === "def" && selection.slot === i;
+          const symbol = appearance.symbol ?? "letters";
+          return <button key={`d${i}`} onPointerDown={e => beginMarkerDrag(e, "def", `${i}`, i)}
+            onDoubleClick={e => { if (!draft && tool === "select") { e.stopPropagation(); blockTo(i); } }}
+            title={`${defLabel(i) || "Defender"} · drag to align`} aria-label={`Defender ${defLabel(i) || i + 1}`}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 ${selected ? "ring-1 ring-gold rounded" : ""}`}
+            style={{ ...screenPosition(x, y), width: PLAYER_SIZE * scale, height: PLAYER_SIZE * scale }}>
+            {symbol === "letters" ? <span style={{ color: appearance.color ?? "#E8EAEB", fontSize: DEF_FONT_SIZE * scale, ...(appearance.color === "#000000" ? { textShadow: "0 0 2px white" } : {}) }} className="font-extrabold whitespace-nowrap">{defLabel(i)}</span> :
+              <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph appearance={appearance} label={defLabel(i)} symbol={symbol} /></svg>}
+          </button>;
         })}
-
-        {/* offense */}
-        {call.offLook.map((o) => {
-          const sel = selection?.kind === "off" && selection.id === o.id;
-          const armed = pending === `off:${o.id}`;
-          return (
-            <span
-              key={o.id}
-              title={`${o.label}${o.ptype ? ` · ${o.ptype}` : ""}${isOffensiveLineman(o) ? " · Drag the line together; Shift-drag this player" : " · Drag to align"}`}
-              onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
-              className={`group absolute aspect-square -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
-              style={{ ...screenPosition(o.x, o.y), width: PLAYER_SIZE * scale }}
-            >
-              <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <svg viewBox="0 0 40 40" className={`pointer-events-none h-full w-full ${sel || armed ? "ring-2 ring-[#BFA46F] rounded-sm" : ""}`}>
-                {o.ptype === "Tight End" || (!o.ptype && o.label.toUpperCase() === "TE") ? (
-                  <path d="M20 3 L37 36 H3 Z" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />
-                ) : o.label.toUpperCase() === "C" && (!o.ptype || o.ptype === "Offensive Line") ? (
-                  <rect x="3" y="3" width="34" height="34" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />
-                ) : <circle cx="20" cy="20" r="17" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />}
-                {o.showLabel === true && <text x="20" y="24" fontSize="13" textAnchor="middle" fontWeight="700" fill="#E8EAEB">{(o.displayLabel ?? o.label).slice(0, 2)}</text>}
-              </svg>
-            </span>
-          );
+        {call.offLook.map(o => {
+          const selected = selection?.kind === "off" && selection.id === o.id;
+          return <span key={o.id} title={`${o.label} · Drag to align`} role="button" aria-label={`Offensive player ${o.displayLabel || o.label}`}
+            onPointerDown={e => beginMarkerDrag(e, "off", o.id)}
+            className={`absolute aspect-square -translate-x-1/2 -translate-y-1/2 cursor-grab ${selected ? "ring-1 ring-gold rounded" : ""}`}
+            style={{ ...screenPosition(o.x, o.y), width: PLAYER_SIZE * scale }}>
+            <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} /></svg>
+          </span>;
         })}
 
         {/* + extend button at the end of the selected line */}
@@ -912,6 +943,11 @@ export default function StudioCanvas({
             <Plus size={13} />
           </button>
         )}
+        {tool === "select" && menuPoint && (menuPlayer || selLineObj) && !panMode && <PlayArtObjectMenu
+          key={selectedOff?.id ?? (selectedDef !== undefined ? `def:${selectedDef}` : selLineObj?.id)}
+          position={[(menuPoint[0] - cameraLeft) * scale, (menuPoint[1] - cameraTop) * scale]} bounds={[fieldWidth, fieldHeight]}
+          player={menuPlayer} line={selLineObj ?? undefined} onPlayerChange={patchPlayer} onLineChange={patchLine}
+          onDelete={deleteSelection} onClose={() => onSelect(null)} />}
       </div>
 
       {/* Floating toolbar */}
@@ -930,32 +966,16 @@ export default function StudioCanvas({
           </button>
         ))}
         <span className="mx-1 h-8 w-px bg-line" />
-        {ROUTE_COLORS.map((c) => (
-          <button
-            key={c}
-            onClick={() => {
-              setColor(c);
-              if (selLineId) {
-                snapshot();
-                updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLineId ? { ...l, color: c === INK ? undefined : c } : l)) });
-              }
-            }}
-            aria-label={`Color ${c}`}
-            className={`grid size-7 place-items-center rounded-full transition ${color === c ? "ring-2 ring-grass ring-offset-1 ring-offset-card" : ""}`}
-          >
-            <span className="size-4.5 rounded-full border border-line" style={{ backgroundColor: fieldColor(c) }} />
-          </button>
-        ))}
-        <span className="mx-1 h-8 w-px bg-line" />
+        <details className="relative">
+          <summary className="cursor-pointer rounded border border-line px-2 py-1 text-xs">Color <span style={{ color: fieldColor(color) }}>●</span></summary>
+          <div className="absolute bottom-full right-0 mb-2 w-72 rounded border border-line bg-card p-2 shadow-xl"><ColorChoices label="New drawing color" value={color === INK ? undefined : color} onChange={c => setColor(c ?? INK)} /></div>
+        </details>
+        <select aria-label="New drawing thickness" value={thickness} onChange={e => setThickness(e.target.value as DrawLine["thickness"])} className="rounded border border-line bg-card p-1 text-xs"><option value="thin">Thin</option><option value="normal">Normal</option><option value="thick">Thick</option></select>
         {STYLES.map((s) => (
           <button
             key={s.id}
             onClick={() => {
               setStyle(s.id);
-              if (selLineId) {
-                snapshot();
-                updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLineId ? { ...l, style: s.id } : l)) });
-              }
             }}
             title={s.label}
             className={`rounded-lg px-2.5 py-2 transition ${style === s.id && !selLineId ? "bg-grass/15 ring-1 ring-grass/40" : "hover:bg-slate-100"}`}
@@ -970,7 +990,7 @@ export default function StudioCanvas({
         <button onClick={redo} title="Redo (Ctrl+Shift+Z)" className="rounded-lg p-2 text-dim hover:bg-slate-100 hover:text-ink"><Redo2 size={16} /></button>
         <button
           onClick={deleteSelection}
-          disabled={!selection || selection.kind === "def"}
+          disabled={!selection}
           title="Delete selection"
           className="rounded-lg p-2 text-red-500 hover:bg-red-500/10 disabled:opacity-30"
         >
@@ -978,7 +998,7 @@ export default function StudioCanvas({
         </button>
       </div>
       {(pending || extendId) && (
-        <p className="mx-auto mt-1.5 text-xs font-medium text-grass">
+        <p className="pointer-events-none absolute left-2 top-10 z-10 max-w-[75%] rounded bg-card/90 px-2 py-1 text-[10px] font-medium text-grass">
           {pending ? "Click to add bends. Double-click the endpoint or press Enter to finish. Esc cancels. Undo removes the last bend." : "Click the field to add one segment. Esc cancels."}
         </p>
       )}

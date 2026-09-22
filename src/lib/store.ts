@@ -9,6 +9,7 @@ import {
   defaultPresetName,
   defenseCanvasY,
   type OffMarker,
+  type PlayerAppearance,
   type Concept as SlotConcept,
   type DrawLine,
   type Zone,
@@ -404,6 +405,7 @@ export type Call = {
   lines: DrawLine[]; // drawn routes / blocks / motions (both sides)
   zones: Zone[]; // coverage / responsibility areas
   texts?: { id: string; x: number; y: number; text: string }[]; // canvas annotations
+  defAppearance?: Record<number, PlayerAppearance>;
   defOffsets: Record<number, [number, number]>; // per-call defensive alignment nudges
   assignments: Record<number, string>; // slot index -> responsibility text
   notes: string;
@@ -1316,6 +1318,7 @@ export const useStore = create<Store>()(
               lines: c.lines.map((l) => ({ ...l, points: l.points.map((p) => [...p] as [number, number]) })),
               zones: c.zones.map((z) => ({ ...z })),
               defOffsets: { ...c.defOffsets },
+              defAppearance: Object.fromEntries(Object.entries(c.defAppearance ?? {}).map(([k, v]) => [k, { ...v }])),
             },
           ],
           activeCallId: nid,

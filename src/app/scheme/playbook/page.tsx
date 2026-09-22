@@ -3,14 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
+import { ArrowLeft, Plus, Copy, Trash2 } from "lucide-react";
 import { useStore, useHydrated, slotLabelOf, baseGroupFor, effectiveSlots, PRESET_PLAYS, type PlaybookSection } from "@/lib/store";
 import {
   getStructure,
   offensivePresets,
-  ROUTE_COLORS,
-  type LineKind,
-  type LineStyle,
 } from "@/lib/football";
 import { recognizeFormation, formationLabel } from "@/lib/recognize";
 import SchemeTabs from "@/components/SchemeTabs";
@@ -280,7 +277,7 @@ export default function PlaybookPage() {
         </div>
 
         {/* Inspector */}
-        <details key={selection ? JSON.stringify(selection) : "none"} open={!!selection} className="absolute bottom-14 right-3 z-20 max-h-[55dvh] w-72 max-w-[90vw] overflow-y-auto rounded-xl border border-line bg-card p-3 shadow-xl">
+        <details key={selection ? JSON.stringify(selection) : "none"} open={selection?.kind === "text" || selection?.kind === "zone"} className="absolute bottom-14 right-3 z-20 max-h-[55dvh] w-72 max-w-[90vw] overflow-y-auto rounded-xl border border-line bg-card p-3 shadow-xl">
           <summary className="cursor-pointer text-xs font-semibold">Selection & notes</summary>
           {call && selOff ? (
             <>
@@ -299,98 +296,12 @@ export default function PlaybookPage() {
                   {PTYPES.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
               </Field>
-              <div className="grid grid-cols-2 gap-2">
-                <Field label="Label (optional, 2 characters)">
-                  <input
-                    aria-label="Offensive player label"
-                    maxLength={2}
-                    placeholder="A, X, 12…"
-                    value={selOff.displayLabel ?? (selOff.showLabel ? selOff.label.slice(0, 2) : "")}
-                    onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, displayLabel: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2), showLabel: !!e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2) } : m)) })}
-                    className="w-full rounded-lg border border-line bg-slate-50 px-2.5 py-1.5 text-sm"
-                  />
-                </Field>
-                <Field label="Jersey">
-                  <input
-                    value={selOff.jersey ?? ""}
-                    onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, jersey: e.target.value } : m)) })}
-                    placeholder="—"
-                    className="w-full rounded-lg border border-line bg-slate-50 px-2.5 py-1.5 text-sm"
-                  />
-                </Field>
-              </div>
-              <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
-                <input
-                  type="checkbox"
-                  checked={selOff.showLabel ?? false}
-                  onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, showLabel: e.target.checked } : m)) })}
-                />
-                Show Label
-              </label>
-              <button
-                onClick={() => {
-                  updateCall(call.id, {
-                    offLook: call.offLook.filter((m) => m.id !== selOff.id),
-                    lines: call.lines.filter((l) => l.anchor !== `off:${selOff.id}`),
-                  });
-                  setSelection(null);
-                }}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-red-500/40 px-3 py-1.5 text-xs text-red-500 hover:bg-red-500/10"
-              >
-                <X size={13} /> Remove player
-              </button>
+              <Field label="Jersey">
+                <input value={selOff.jersey ?? ""} onChange={e => updateCall(call.id, { offLook: call.offLook.map(m => m.id === selOff.id ? { ...m, jersey: e.target.value } : m) })} className="w-full rounded border border-line bg-pitch p-1 text-sm" />
+              </Field>
             </>
           ) : call && selLine ? (
-            <>
-              <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">Line</div>
-              <Field label="Type">
-                <select
-                  value={selLine.kind}
-                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, kind: e.target.value as LineKind } : l)) })}
-                  className="w-full rounded-lg border border-line bg-slate-50 px-2.5 py-1.5 text-sm capitalize"
-                >
-                  {(["route", "block", "motion", "pitch"] as LineKind[]).map((k) => <option key={k} value={k}>{k}</option>)}
-                </select>
-              </Field>
-              <Field label="Color">
-                <div className="flex gap-1.5">
-                  {ROUTE_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, color: c === ROUTE_COLORS[0] ? undefined : c } : l)) })}
-                      className={`size-6 rounded-full border border-line ${(selLine.color ?? ROUTE_COLORS[0]) === c ? "ring-2 ring-grass ring-offset-1 ring-offset-card" : ""}`}
-                      style={{ backgroundColor: c }}
-                      aria-label={c}
-                    />
-                  ))}
-                </div>
-              </Field>
-              <Field label="Style">
-                <select
-                  value={selLine.style ?? "solid"}
-                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, style: e.target.value as LineStyle } : l)) })}
-                  className="w-full rounded-lg border border-line bg-slate-50 px-2.5 py-1.5 text-sm capitalize"
-                >
-                  {["solid", "dashed", "dotted"].map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </Field>
-              <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
-                <input
-                  type="checkbox"
-                  checked={selLine.showArrow ?? selLine.kind !== "block"}
-                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, showArrow: e.target.checked } : l)) })}
-                />
-                Show Arrow
-              </label>
-              <label className="mt-1 flex items-center gap-2 text-sm text-ink/85">
-                <input
-                  type="checkbox"
-                  checked={selLine.smooth ?? false}
-                  onChange={(e) => updateCall(call.id, { lines: call.lines.map((l) => (l.id === selLine.id ? { ...l, smooth: e.target.checked } : l)) })}
-                />
-                Curved
-              </label>
-            </>
+            <p className="text-xs text-dim">Use the small drawing menu on the field to edit this line.</p>
           ) : call && selDef !== null ? (
             <>
               <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">Assignment</div>

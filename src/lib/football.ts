@@ -159,7 +159,15 @@ export const defenseCanvasY = (slotY: number) => 38 + slotY * 0.45; // front ≈
 // renames, adds, or removes players. Coordinates are canvas space (offense
 // ABOVE the LOS, smaller y = deeper in the backfield).
 
-export type OffMarker = {
+export type PlayerAppearance = {
+  displayLabel?: string;
+  color?: string;
+  fill?: "outline" | "shaded" | "filled";
+  symbol?: "circle" | "square" | "triangle" | "letters";
+  hidden?: boolean;
+};
+
+export type OffMarker = PlayerAppearance & {
   id: string;
   label: string;
   x: number;
@@ -294,7 +302,10 @@ export type DrawLine = {
   smooth?: boolean; // render as a curved (Catmull-Rom) path
   color?: string; // overrides side default
   style?: LineStyle; // overrides kind default
-  showArrow?: boolean; // default: kind !== "block"
+  showArrow?: boolean; // legacy arrow setting
+  arrowStyle?: "none" | "end" | "both";
+  thickness?: "thin" | "normal" | "thick";
+  drawingType?: "line" | "route" | "freehand";
 };
 
 export type TextNote = { id: string; x: number; y: number; text: string };

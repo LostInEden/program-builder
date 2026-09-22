@@ -12,6 +12,7 @@ import {
   FIELD_PRESETS,
   ROUTE_COLORS,
 } from "@/lib/football";
+import { ART_COLORS, arrowStyleOf, offenseSymbol, PlayerGlyph, shortLabel, thicknessFactor } from "./PlayArtStyle";
 import { slotLabelOf, type Call, type Overrides } from "@/lib/store";
 
 // Show extra downfield space without rewriting saved player or path coordinates.
@@ -26,7 +27,6 @@ export default function PlayCardSVG({
   call,
   structureId,
   overrides,
-  defStyle,
 }: {
   call: Call;
   structureId: string;
@@ -48,7 +48,7 @@ export default function PlayCardSVG({
     }
     if (anchor.startsWith("def:")) {
       const i = Number(anchor.slice(4));
-      return structure.slots[i] ? defPos(i) : null;
+      return structure.slots[i] && !call.defAppearance?.[i]?.hidden ? defPos(i) : null;
     }
     return [0, 0];
   };
@@ -70,9 +70,10 @@ export default function PlayCardSVG({
 
   return (
     <svg viewBox={`0 0 100 ${FIELD_H}`} className="w-full h-auto rounded border border-gray-300 bg-white">
+      <rect width="100" height={FIELD_H} fill="#FFFFFF" />
       <defs>
-        {[OFF, DEF, ...ROUTE_COLORS, "#6b7280"].map((c) => (
-          <marker key={c} id={arrId(c)} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        {[...new Set([OFF, DEF, ...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), "#6b7280"])].map((c) => (
+          <marker key={c} id={arrId(c)} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
             <path d="M0,0 L6,3 L0,6 z" fill={c} />
           </marker>
         ))}
@@ -113,7 +114,8 @@ export default function PlayCardSVG({
         const pts: [number, number][] = l.anchor === "free" ? l.points : [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as [number, number])];
         if (pts.length < 2) return null;
         const color = l.color ?? (l.anchor.startsWith("def:") ? DEF : OFF);
-        const showArrow = l.showArrow ?? l.kind !== "block";
+        const arrows = arrowStyleOf(l);
+        const showArrow = arrows !== "none";
         const d = l.smooth ? smoothPath(pts) : pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
         let bar = null;
         if (l.kind === "block") {
@@ -122,59 +124,38 @@ export default function PlayCardSVG({
           const len = Math.hypot(bx - ax, by - ay) || 1;
           const nx = -(by - ay) / len;
           const ny = (bx - ax) / len;
-          bar = { x1: bx - nx * 1.6, y1: by - ny * 1.6, x2: bx + nx * 1.6, y2: by + ny * 1.6 };
+          bar = { x1: bx - nx * 1.1, y1: by - ny * 1.1, x2: bx + nx * 1.1, y2: by + ny * 1.1 };
         }
         return (
           <g key={l.id}>
             <path
-              d={d} fill="none" stroke={color} strokeWidth="0.5" strokeLinejoin="round" strokeLinecap="round"
+              d={d} fill="none" stroke={color} strokeWidth={3.1 * 0.09 * thicknessFactor(l.thickness) * (l.kind === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
               strokeDasharray={lineDash(l)}
+              markerStart={arrows === "both" ? `url(#${arrId(color)})` : undefined}
               markerEnd={showArrow ? `url(#${arrId(color)})` : undefined}
             />
-            {bar && <line {...bar} stroke={color} strokeWidth="0.5" strokeLinecap="round" />}
+            {bar && <line {...bar} stroke={color} strokeWidth={3.1 * 0.09 * thicknessFactor(l.thickness) * 0.9} strokeLinecap="round" />}
           </g>
         );
       })}
 
       {structure.slots.map((slot, i) => {
+        const appearance = call.defAppearance?.[i] ?? {};
+        if (appearance.hidden) return null;
         const [x, y] = defPos(i);
-        const label = slotLabelOf(overrides, structureId, i);
-        return defStyle === "triangles" ? (
-          <g key={`d${i}`}>
-            <polygon
-              points={`${x},${y - 2.1} ${x + 2},${y + 1.7} ${x - 2},${y + 1.7}`}
-              fill="#fff" stroke={DEF} strokeWidth="0.35"
-            />
-            <text x={x} y={y + 1.2} textAnchor="middle" fontSize="1.9" fontWeight="700" fill={DEF}>{label.slice(0, 2)}</text>
-          </g>
-        ) : (
-          <g key={`d${i}`}>
-            <circle cx={x} cy={y} r="2" fill="#fff" stroke={DEF} strokeWidth="0.35" />
-            <text x={x} y={y + 0.8} textAnchor="middle" fontSize="1.9" fontWeight="700" fill={DEF}>{label}</text>
-          </g>
-        );
+        const label = shortLabel(appearance.displayLabel ?? slotLabelOf(overrides, structureId, i));
+        const symbol = appearance.symbol ?? "letters";
+        return symbol === "letters" ? <text key={`d${i}`} x={x} y={y} dominantBaseline="middle" textAnchor="middle" fontSize="1.84" fontWeight="800" fill={appearance.color ?? DEF}>{label}</text> :
+          <svg key={`d${i}`} x={x - 1.55} y={y - 1.55} width="3.1" height="3.1" viewBox="0 0 40 40"><PlayerGlyph appearance={appearance} label={label} symbol={symbol} defaultColor={DEF} /></svg>;
       })}
 
       {(call.texts ?? []).map((t) => (
         <text key={t.id} x={t.x} y={t.y} textAnchor="middle" fontSize="2" fontWeight="600" fill="#4b5563">{t.text}</text>
       ))}
 
-      {call.offLook.map((o) => {
-        const isCenter = o.label.toUpperCase() === "C" && (!o.ptype || o.ptype === "Offensive Line");
-        const isTightEnd = o.ptype === "Tight End" || (!o.ptype && o.label.toUpperCase() === "TE");
-        return (
-          <g key={o.id}>
-            {isTightEnd ? (
-              <path d={`M${o.x},${o.y - 1.95} L${o.x + 1.95},${o.y + 1.9} H${o.x - 1.95} Z`} fill="#fff" stroke={OFF} strokeWidth="0.25" />
-            ) : isCenter ? (
-              <rect x={o.x - 1.9} y={o.y - 1.9} width="3.8" height="3.8" fill="#fff" stroke={OFF} strokeWidth="0.35" />
-            ) : (
-              <circle cx={o.x} cy={o.y} r="1.95" fill="#fff" stroke={OFF} strokeWidth="0.35" />
-            )}
-            {o.showLabel === true && <text x={o.x} y={o.y + 0.6} textAnchor="middle" fontSize="1.5" fontWeight="700" fill={OFF}>{(o.displayLabel ?? o.label).slice(0, 2)}</text>}
-          </g>
-        );
-      })}
+      {call.offLook.map(o => <svg key={o.id} x={o.x - 1.55} y={o.y - 1.55} width="3.1" height="3.1" viewBox="0 0 40 40">
+        <PlayerGlyph appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} defaultColor={OFF} />
+      </svg>)}
     </svg>
   );
 }

@@ -46,12 +46,12 @@ export default function PlaybookPrintPage() {
         if (!sectionCalls.length) return null;
         return (
           <section key={section} className="print-section mb-8">
-            <h2 className="display text-lg font-bold mb-3 rounded bg-white px-3 py-1.5 text-gray-900 print:bg-transparent">
+            <h2 style={{ backgroundColor: "#FFFFFF" }} className="display text-lg font-bold mb-3 rounded bg-white px-3 py-1.5 text-gray-900 print:bg-transparent">
               {section} — {group.name}
             </h2>
             <div className="grid grid-cols-2 gap-3">
               {sectionCalls.map((c) => (
-                <div key={c.id} className="print-card rounded bg-white p-2 text-gray-900">
+                <div key={c.id} style={{ backgroundColor: "#FFFFFF" }} className="print-card rounded bg-white p-2 text-gray-900">
                   <div className="flex items-baseline justify-between px-1 pb-1">
                     <span className="display text-sm font-bold">{c.name}</span>
                     <span className="text-[11px] text-gray-500">
