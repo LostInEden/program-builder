@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Fit the Play Art workspace below app navigation
+- **Asked for:** Make the drawing board use the available screen without page scrolling.
+- **Changed:** Restored CounterScheme navigation, measured its height, and allocated the remaining viewport to compact setup controls, the canvas, and drawing tools. Moved selection editing and secondary information into expandable panels.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Uses dynamic viewport height and responsive icon-only tool labels to preserve canvas space on smaller screens.
+
+## 2026-09-22 — Scale football geometry together with route space above the LOS
+- **Asked for:** Keep football locations consistent and place the line of scrimmage 65–70% down the canvas.
+- **Changed:** Added a uniform visual camera for field markings, players, routes, objects, and labels. The offense appears below the LOS, with 68% of the fitted canvas above it for route development.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Saved football coordinates and data models remain unchanged. Pointer coordinates are converted through the same camera used to render the field.
+
+## 2026-09-22 — Add Fit, zoom, and pan to Play Art
+- **Asked for:** Default to Fit to Screen and provide minus, percentage, plus, Fit, and panning when zoomed.
+- **Changed:** Added canvas-only zoom from 100% Fit to 400%, a Pan mode for dragging the zoomed view, and immediate Fit reset. Fit includes the saved play's drawing bounds.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Camera changes do not alter saved positions or route geometry. Selecting a drawing tool exits Pan mode.
+
 ## 2026-09-21 — Expand Play Art into a wide drawing workspace
 - **Asked for:** Make the screen fit like the supplied wide coaching-board screenshot.
 - **Changed:** Made Play Art a focused drawing workspace with three compact options menus across the top and the drawing tools under the field. Added a wide, uniformly scaled field window with a field-position control and Show full field option.

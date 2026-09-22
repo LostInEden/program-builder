@@ -115,35 +115,43 @@ export default function StudioCanvas({
   const structure = getStructure(structureId);
   const texts = call.texts ?? [];
 
-  const fieldRef = useRef<HTMLDivElement>(null);
-  const toolbarRef = useRef<HTMLDivElement>(null);
-  const [fullField, setFullField] = useState(false);
-  const [viewTop, setViewTop] = useState(24);
-  const viewHeight = fullField ? FIELD_H : 52;
-  const cameraTop = fullField ? 0 : viewTop;
-  const [fitWidth, setFitWidth] = useState<number>();
-  useEffect(() => {
-    const field = fieldRef.current;
-    const toolbar = toolbarRef.current;
-    if (!field || !toolbar) return;
-    const fit = () => {
-      // Use document position so scrolling never changes the diagram scale.
-      const workspace = field.closest("[data-play-art-workspace]");
-      const top = field.getBoundingClientRect().top + (workspace?.scrollTop ?? window.scrollY);
-      const height = Math.max(100, window.innerHeight - top - toolbar.getBoundingClientRect().height - 24);
-      setFitWidth(height * 100 / viewHeight);
+  const defPos = (i: number): Pt => {
+    const slot = structure.slots[i];
+    const off = call.defOffsets[i] ?? [0, 0];
+    return [slot.x + off[0], defenseCanvasY(slot.y) + off[1]];
+  };
+  const anchorPos = (anchor: string): Pt | null => {
+    if (anchor.startsWith("off:")) {
+      const m = call.offLook.find((x) => x.id === anchor.slice(4));
+      return m ? [m.x, m.y] : null;
+    }
+    if (anchor.startsWith("def:")) {
+      const i = Number(anchor.slice(4));
+      return structure.slots[i] ? defPos(i) : null;
+    }
+    return [0, 0];
+  };
+  const workingSize = () => {
+    const points: Pt[] = [...call.offLook.map(m => [m.x, m.y] as Pt), ...structure.slots.map((_, i) => defPos(i)), ...texts.map(t => [t.x, t.y] as Pt)];
+    for (const line of call.lines) {
+      const anchor = anchorPos(line.anchor);
+      if (anchor) points.push(...line.points.map(p => [anchor[0] + p[0], anchor[1] + p[1]] as Pt));
+    }
+    for (const zone of call.zones) points.push([zone.x - zone.rx, zone.y - zone.ry], [zone.x + zone.rx, zone.y + zone.ry]);
+    return {
+      width: Math.max(100, ...points.map(p => (Math.abs(p[0] - 50) + 3) * 2)),
+      height: Math.max(70, ...points.map(p => p[1] > LOS_Y ? (p[1] - LOS_Y + 3) / 0.68 : (LOS_Y - p[1] + 3) / 0.32)),
     };
-    const observer = new ResizeObserver(fit);
-    observer.observe(field.parentElement!);
-    observer.observe(toolbar);
-    window.addEventListener("resize", fit);
-    document.addEventListener("toggle", fit, true);
-    fit();
-    return () => { observer.disconnect(); window.removeEventListener("resize", fit); document.removeEventListener("toggle", fit, true); };
-  }, [viewHeight]);
-  const pathMaskId = useId();
+  };
+  const [fitSize, setFitSize] = useState(workingSize);
+  const fieldRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState<Pt>([0, 0]);
+  const [panMode, setPanMode] = useState(false);
+  const panDrag = useRef<{ x: number; y: number; origin: Pt } | null>(null);
   const [fieldWidth, setFieldWidth] = useState(1000);
-  const [fieldHeight, setFieldHeight] = useState(FIELD_H * 10);
+  const [fieldHeight, setFieldHeight] = useState(600);
+  const pathMaskId = useId();
   useEffect(() => {
     const field = fieldRef.current;
     if (!field) return;
@@ -154,6 +162,17 @@ export default function StudioCanvas({
     observer.observe(field);
     return () => observer.disconnect();
   }, []);
+  // One uniform camera scale for all football geometry. Saved coordinates never change.
+  const scale = Math.max(0.01, Math.min(fieldWidth / fitSize.width, fieldHeight / fitSize.height)) * zoom;
+  const viewWidth = fieldWidth / scale;
+  const viewHeight = fieldHeight / scale;
+  const cameraLeft = 50 - viewWidth / 2 + pan[0];
+  const cameraTop = LOS_Y + viewHeight * 0.68 + pan[1];
+  const screenPosition = (x: number, y: number) => ({
+    left: `${(x - cameraLeft) / viewWidth * 100}%`,
+    top: `${(cameraTop - y) / viewHeight * 100}%`,
+  });
+  const fit = () => { setFitSize(workingSize()); setZoom(1); setPan([0, 0]); setPanMode(false); };
   const [tool, setTool] = useState<Tool>("select");
   const [color, setColor] = useState(INK);
   const [style, setStyle] = useState<LineStyle>("solid");
@@ -208,27 +227,11 @@ export default function StudioCanvas({
     }
   };
 
-  const defPos = (i: number): Pt => {
-    const slot = structure.slots[i];
-    const off = call.defOffsets[i] ?? [0, 0];
-    return [slot.x + off[0], defenseCanvasY(slot.y) + off[1]];
-  };
-  const anchorPos = (anchor: string): Pt | null => {
-    if (anchor.startsWith("off:")) {
-      const m = call.offLook.find((x) => x.id === anchor.slice(4));
-      return m ? [m.x, m.y] : null;
-    }
-    if (anchor.startsWith("def:")) {
-      const i = Number(anchor.slice(4));
-      return structure.slots[i] ? defPos(i) : null;
-    }
-    return [0, 0];
-  };
   const toCanvas = (e: { clientX: number; clientY: number }): Pt => {
     const r = fieldRef.current!.getBoundingClientRect();
     return [
-      Math.min(99, Math.max(1, ((e.clientX - r.left) / r.width) * 100)),
-      Math.min(FIELD_H - 1, Math.max(1, cameraTop + ((e.clientY - r.top) / r.height) * viewHeight)),
+      Math.min(99, Math.max(1, cameraLeft + ((e.clientX - r.left) / r.width) * viewWidth)),
+      Math.min(FIELD_H - 1, Math.max(1, cameraTop - ((e.clientY - r.top) / r.height) * viewHeight)),
     ];
   };
   const colorOf = (l: { anchor: string; color?: string }, selected: boolean) => {
@@ -251,7 +254,7 @@ export default function StudioCanvas({
         ...call.offLook.map((m) => ({ anchor: `off:${m.id}`, pos: [m.x, m.y] as Pt })),
         ...structure.slots.map((_, i) => ({ anchor: `def:${i}`, pos: defPos(i) })),
       ];
-      const nearest = candidates.map((c) => ({ ...c, distance: Math.hypot((c.pos[0] - pt[0]) * r.width / 100, (c.pos[1] - pt[1]) * r.height / viewHeight) }))
+      const nearest = candidates.map((c) => ({ ...c, distance: Math.hypot((c.pos[0] - pt[0]) * r.width / viewWidth, (c.pos[1] - pt[1]) * r.height / viewHeight) }))
         .sort((a, b) => a.distance - b.distance)[0];
       if (nearest?.distance <= 26) anchor = nearest.anchor;
     }
@@ -326,6 +329,13 @@ export default function StudioCanvas({
   };
 
   const onFieldPointerDown = (e: React.PointerEvent) => {
+    if (panMode && zoom > 1) {
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      panDrag.current = { x: e.clientX, y: e.clientY, origin: pan };
+      clickConsumedRef.current = true;
+      return;
+    }
     clickConsumedRef.current = false;
     if (tool === "zone" && isFieldTarget(e)) setZoneStart(toCanvas(e));
   };
@@ -367,6 +377,11 @@ export default function StudioCanvas({
     }
   };
   const onFieldPointerMove = (e: React.PointerEvent) => {
+    if (panDrag.current) {
+      const drag = panDrag.current;
+      setPan([Math.max(-100, Math.min(100, drag.origin[0] - (e.clientX - drag.x) / scale)), Math.max(-FIELD_H, Math.min(FIELD_H, drag.origin[1] + (e.clientY - drag.y) / scale))]);
+      return;
+    }
     if (pending || extendId || zoneStart) setHover(toCanvas(e));
     const d = dragRef.current;
     if (!d) return;
@@ -417,6 +432,7 @@ export default function StudioCanvas({
     }
   };
   const onFieldPointerUp = (e: React.PointerEvent) => {
+    if (panDrag.current) { panDrag.current = null; clickConsumedRef.current = true; return; }
     if (zoneStart) {
       const [x, y] = toCanvas(e);
       const rx = Math.abs(x - zoneStart[0]) / 2;
@@ -449,6 +465,7 @@ export default function StudioCanvas({
     dragRef.current = null;
   };
   const beginMarkerDrag = (e: React.PointerEvent, kind: "off" | "def" | "text", id: string, slot?: number) => {
+    if (panMode) { onFieldPointerDown(e); return; }
     e.preventDefault();
     e.stopPropagation();
     clickConsumedRef.current = false;
@@ -495,6 +512,7 @@ export default function StudioCanvas({
         cancelDraft();
         setExtendId(null);
         setTool(toolByKey.id);
+        setPanMode(false);
         return;
       }
       if (e.key === "Enter" && draft) {
@@ -546,22 +564,29 @@ export default function StudioCanvas({
       ? lineEnd(call.lines.find((l) => l.id === extendId) ?? { anchor: "", points: [] })
       : null;
 
-  const offenseRadius = Math.max(12, Math.min(36, fieldWidth * 0.031)) / 2;
+  const offenseRadius = 3.1 * scale / 2;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className="mb-2 flex flex-wrap items-center justify-center gap-3 text-xs">
-        <button type="button" onClick={() => { cancelDraft(); setFullField(!fullField); }} className="rounded border border-line px-2 py-1 text-gold">{fullField ? "Wide field view" : "Show full field"}</button>
-        {!fullField && <label className="flex items-center gap-2 text-dim">Field position <input aria-label="Field view position" type="range" min={0} max={FIELD_H - viewHeight} value={viewTop} onChange={e => { cancelDraft(); setViewTop(Number(e.target.value)); }} /></label>}
+      <div className="flex shrink-0 items-center justify-between gap-2 py-1 text-xs">
+        <span className="hidden lg:block text-dim">Click bends · Enter finishes · Esc cancels</span>
+        <div className="ml-auto flex items-center gap-1" aria-label="Canvas view controls">
+          <button type="button" aria-label="Zoom out" onClick={() => { cancelDraft(); setZoom(z => Math.max(1, z / 1.25)); setPan([0, 0]); setPanMode(false); }} className="rounded border border-line px-3 py-1">−</button>
+          <button type="button" title="100% is Fit to Screen" onClick={() => { cancelDraft(); fit(); }} className="min-w-14 rounded border border-line px-2 py-1">{Math.round(zoom * 100)}%</button>
+          <button type="button" aria-label="Zoom in" onClick={() => { cancelDraft(); setZoom(z => Math.min(4, z * 1.25)); }} className="rounded border border-line px-3 py-1">+</button>
+          <button type="button" onClick={() => { cancelDraft(); fit(); }} className="rounded border border-line px-3 py-1 text-gold">Fit</button>
+          <button type="button" aria-pressed={panMode} disabled={zoom === 1} onClick={() => { cancelDraft(); setPanMode(!panMode); }} className={`rounded border border-line px-3 py-1 disabled:opacity-40 ${panMode ? "bg-grass text-white" : ""}`}>Pan</button>
+        </div>
       </div>
-      <p className="mb-2 text-center text-[10px] text-dim">Click a player or field to start · Click bends · Double-click the endpoint or press Enter to finish · Esc cancels</p>
       <div
         ref={fieldRef}
+        onPointerDownCapture={e => { if (panMode) { onFieldPointerDown(e); e.stopPropagation(); } }}
         onPointerDown={onFieldPointerDown}
         onPointerMove={onFieldPointerMove}
         onPointerUp={onFieldPointerUp}
         onPointerLeave={() => setHover(null)}
         onPointerCancel={() => {
+          panDrag.current = null;
           // iOS fires this on system gestures / palm rejection — abort the drag
           // and restore the pre-gesture state so nothing is half-moved.
           if (dragRef.current?.moved) undo();
@@ -570,12 +595,12 @@ export default function StudioCanvas({
         }}
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
-        style={{ aspectRatio: `100 / ${viewHeight}`, maxWidth: fitWidth === undefined ? "100%" : `min(100%, ${fitWidth}px)` }}
-        className={`relative mx-auto shrink-0 [container-type:inline-size] w-full max-w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-[#252729] touch-none select-none ${
+        style={{ cursor: panMode ? "grab" : undefined }}
+        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-[#252729] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
-        <svg viewBox={`0 ${cameraTop} 100 ${viewHeight}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
+        <svg viewBox={`${cameraLeft} ${cameraTop - viewHeight} ${viewWidth} ${viewHeight}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
             <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
               <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#36393C" strokeWidth="0.12" />
@@ -584,11 +609,11 @@ export default function StudioCanvas({
               <rect width="100" height={FIELD_H} fill="white" />
               {structure.slots.map((_, i) => {
                 const [x, y] = defPos(i);
-                const halfWidth = (labelFor(i).length * 6 + 3) * Math.min(1, fieldWidth / 1000) * 100 / fieldWidth;
-                const halfHeight = 11 * Math.min(1, fieldWidth / 1000) * viewHeight / fieldHeight;
+                const halfWidth = (labelFor(i).length * 6 + 3) * (scale / 10) * viewWidth / fieldWidth;
+                const halfHeight = 11 * (scale / 10) * viewHeight / fieldHeight;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
-              {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 2) * 100 / fieldWidth} ry={(offenseRadius + 2) * viewHeight / fieldHeight} fill="black" />)}
+              {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 0.2 * scale) * viewWidth / fieldWidth} ry={(offenseRadius + 0.2 * scale) * viewHeight / fieldHeight} fill="black" />)}
             </mask>
             {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
@@ -597,14 +622,15 @@ export default function StudioCanvas({
             ))}
           </defs>
 
-          <rect width="100" height={FIELD_H} fill={`url(#${pathMaskId}-grid)`} />
+          <g transform={`translate(0 ${2 * cameraTop - viewHeight}) scale(1 -1)`}>
+          <rect x={cameraLeft} y={cameraTop - viewHeight} width={viewWidth} height={viewHeight} fill={`url(#${pathMaskId}-grid)`} />
           {yardLines.map((yl) => (
             <g key={yl.y}>
               <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#686E72"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
-                  <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
-                  <text x="86" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 86 ${yl.y})`}>{yl.label}</text>
+                  <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`translate(0 ${2 * yl.y}) scale(1 -1) rotate(-90 14 ${yl.y})`}>{yl.label}</text>
+                  <text x="86" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`translate(0 ${2 * yl.y}) scale(1 -1) rotate(90 86 ${yl.y})`}>{yl.label}</text>
                 </>
               )}
             </g>
@@ -655,8 +681,8 @@ export default function StudioCanvas({
             // Keep the attached start handle just outside the player so it is reachable.
             const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
             const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
-            const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : offenseRadius + 3) * 100 / fieldWidth;
-            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * viewHeight / fieldHeight;
+            const halfWidth = (defIndex !== null ? Math.max(2.2, labelFor(defIndex).length * 0.6 + 0.5) * scale : offenseRadius + 0.3 * scale) * viewWidth / fieldWidth;
+            const halfHeight = (defIndex !== null ? 2.2 * scale : offenseRadius + 0.3 * scale) * viewHeight / fieldHeight;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l, selected);
@@ -797,6 +823,7 @@ export default function StudioCanvas({
               fill="rgba(29,99,237,0.06)" stroke="rgba(29,99,237,0.5)" strokeWidth="0.3" strokeDasharray="1.4 1"
             />
           )}
+          </g>
         </svg>
 
         {/* text notes */}
@@ -804,10 +831,10 @@ export default function StudioCanvas({
           <span
             key={t.id}
             onPointerDown={(e) => beginMarkerDrag(e, "text", t.id)}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[14px] font-semibold whitespace-pre ${
+            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 font-semibold whitespace-pre ${
               selection?.kind === "text" && selection.id === t.id ? "bg-[#8F1D22] text-[#E8EAEB] ring-1 ring-[#BFA46F]" : "text-[#E8EAEB]"
             } ${tool === "select" ? "cursor-grab" : ""}`}
-            style={{ left: `${t.x}%`, top: `${((t.y - cameraTop) / viewHeight) * 100}%` }}
+            style={{ ...screenPosition(t.x, t.y), fontSize: 1.4 * scale }}
           >
             {t.text}
           </span>
@@ -825,9 +852,9 @@ export default function StudioCanvas({
               onDoubleClick={(e) => { if (!draft) { e.stopPropagation(); if (tool === "select") blockTo(i); } }}
               title={`${labelFor(i)} · drag to align`}
               className="group absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${x}%`, top: `${((y - cameraTop) / viewHeight) * 100}%` }}
+              style={{ ...screenPosition(x, y) }}
             >
-              <span className={`grid min-w-[clamp(16px,4cqw,40px)] min-h-[clamp(16px,4cqw,40px)] px-0.5 place-items-center text-[clamp(8px,1.7cqw,17px)] font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
+              <span style={{ width: 4 * scale, height: 4 * scale, fontSize: 1.7 * scale }} className={`grid place-items-center font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -843,8 +870,8 @@ export default function StudioCanvas({
               key={o.id}
               title={`${o.label}${o.ptype ? ` · ${o.ptype}` : ""}${isOffensiveLineman(o) ? " · Drag the line together; Shift-drag this player" : " · Drag to align"}`}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
-              className={`group absolute aspect-square w-[3.1cqw] min-w-[12px] max-w-[36px] -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
-              style={{ left: `${o.x}%`, top: `${((o.y - cameraTop) / viewHeight) * 100}%` }}
+              className={`group absolute aspect-square -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
+              style={{ ...screenPosition(o.x, o.y), width: 3.1 * scale }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
               <svg viewBox="0 0 40 40" className={`pointer-events-none h-full w-full ${sel || armed ? "ring-2 ring-[#BFA46F] rounded-sm" : ""}`}>
@@ -875,7 +902,7 @@ export default function StudioCanvas({
             onClick={(e) => e.stopPropagation()}
             title="Drag to move the endpoint · click + to extend the line"
             className="absolute z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-ember bg-pitch text-ember shadow-lg transition hover:bg-ember hover:text-white"
-            style={{ left: `${extendBtnPos[0]}%`, top: `${((extendBtnPos[1] - cameraTop) / viewHeight) * 100}%` }}
+            style={{ ...screenPosition(extendBtnPos[0], extendBtnPos[1]) }}
           >
             <Plus size={13} />
           </button>
@@ -883,18 +910,18 @@ export default function StudioCanvas({
       </div>
 
       {/* Floating toolbar */}
-      <div ref={toolbarRef} className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-0.5 rounded-lg border border-line bg-card px-2 py-1">
+      <div className="mx-auto mt-1 shrink-0 flex flex-wrap items-center justify-center gap-0.5 rounded-lg border border-line bg-card px-2 py-1">
         {TOOLS.map((t) => (
           <button
             key={t.id}
-            onClick={() => { cancelDraft(); setExtendId(null); setTool(t.id); }}
-            title={`${t.label} (${t.key})`}
+            onClick={() => { cancelDraft(); setExtendId(null); setTool(t.id); setPanMode(false); }}
+            aria-label={t.label} title={`${t.label} (${t.key})`}
             className={`flex flex-col items-center gap-0.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition ${
               tool === t.id ? "bg-grass/15 text-grass ring-1 ring-grass/40" : "text-dim hover:bg-slate-100 hover:text-ink"
             }`}
           >
             <t.icon size={17} />
-            {t.label}
+            <span className="hidden min-[1100px]:inline">{t.label}</span>
           </button>
         ))}
         <span className="mx-1 h-8 w-px bg-line" />

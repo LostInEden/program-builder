@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowLeft, Plus, Copy, Trash2, X } from "lucide-react";
@@ -23,6 +23,24 @@ const PTYPES = ["Quarterback", "Running Back", "Fullback", "Wide Receiver", "Tig
 
 export default function PlaybookPage() {
   const hydrated = useHydrated();
+  const [navHeight, setNavHeight] = useState(100);
+  useEffect(() => {
+    const header = document.querySelector("body > header");
+    if (!header) return;
+    const bodyOverflow = document.body.style.overflow;
+    const rootOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const measure = () => setNavHeight(header.getBoundingClientRect().height);
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    measure();
+    return () => {
+      observer.disconnect();
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = rootOverflow;
+    };
+  }, []);
   const {
     calls, activeCallId, setActiveCall, addCall, updateCall, duplicateCall, deleteCall,
     groups, activeGroupId, players, overrides, strengthRule, formationTerms,
@@ -51,9 +69,9 @@ export default function PlaybookPage() {
   const selDef = selection?.kind === "def" ? selection.slot : null;
 
   return (
-    <div data-play-art-workspace className="fixed inset-0 z-[60] overflow-y-auto bg-pitch px-2 pb-4 pt-16">
+    <div data-play-art-workspace style={{ top: navHeight, height: `calc(100dvh - ${navHeight}px)` }} className="fixed inset-x-0 bottom-0 z-40 flex flex-col overflow-hidden bg-pitch px-2 pb-1 pt-12">
       <details className="absolute left-2 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-12px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
-        <summary className="cursor-pointer text-sm font-bold">Play Art · Workspace options</summary>
+        <summary className="cursor-pointer truncate text-sm font-bold">Play Art · Workspace options</summary>
       <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
         <ArrowLeft size={15} /> My Scheme
       </Link>
@@ -85,10 +103,10 @@ export default function PlaybookPage() {
       </div>
 
       </details>
-      <div className="grid gap-3 items-start">
+      <div className="flex min-h-0 flex-1 flex-col">
         {/* Call list */}
         <details className="absolute left-1/3 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-8px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
-          <summary className="cursor-pointer text-sm font-semibold">Saved diagrams · {call?.name ?? "Choose or create a diagram"} <span className="text-dim font-normal">({sectionCalls.length})</span></summary>
+          <summary className="cursor-pointer truncate text-sm font-semibold">Saved diagrams · {call?.name ?? "Choose or create a diagram"} <span className="text-dim font-normal">({sectionCalls.length}) · autosaved</span></summary>
           <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {sectionCalls.map((c) => (
             <button
@@ -139,11 +157,11 @@ export default function PlaybookPage() {
         </details>
 
         {/* Editor */}
-        <div className="min-w-0">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {call ? (
-            <motion.div key={call.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col">
+            <motion.div key={call.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex min-h-0 flex-1 flex-col">
               <details className="absolute right-2 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-12px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
-                <summary className="cursor-pointer text-sm font-semibold">{call.name} · Play details & formation</summary>
+                <summary className="cursor-pointer truncate text-sm font-semibold">{call.name} · Play details & formation</summary>
               <div className="mb-2 mt-3 flex flex-wrap items-center gap-2">
                 <input
                   value={call.name}
@@ -223,18 +241,6 @@ export default function PlaybookPage() {
                 ))}
               </div>
 
-              </details>
-              <StudioCanvas
-                key={`${call.id}:${group.structureId}`}
-                call={call}
-                structureId={group.structureId}
-                groupSlots={groupSlots}
-                players={players}
-                labelFor={label}
-                selection={selection}
-                onSelect={setSelection}
-              />
-
               {rec && (
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-line bg-card/80 px-4 py-2.5 text-sm">
                   <span className="display uppercase text-xs font-semibold tracking-[0.15em] text-dim">Recognized</span>
@@ -253,6 +259,17 @@ export default function PlaybookPage() {
                   </button>
                 </div>
               )}
+              </details>
+              <StudioCanvas
+                key={`${call.id}:${group.structureId}`}
+                call={call}
+                structureId={group.structureId}
+                groupSlots={groupSlots}
+                players={players}
+                labelFor={label}
+                selection={selection}
+                onSelect={setSelection}
+              />
 
             </motion.div>
           ) : (
@@ -263,7 +280,8 @@ export default function PlaybookPage() {
         </div>
 
         {/* Inspector */}
-        <div className="rounded-xl border border-line bg-card/80 p-3">
+        <details key={selection ? JSON.stringify(selection) : "none"} open={!!selection} className="absolute bottom-14 right-3 z-20 max-h-[55dvh] w-72 max-w-[90vw] overflow-y-auto rounded-xl border border-line bg-card p-3 shadow-xl">
+          <summary className="cursor-pointer text-xs font-semibold">Selection & notes</summary>
           {call && selOff ? (
             <>
               <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">Offensive player</div>
@@ -433,7 +451,7 @@ export default function PlaybookPage() {
               </div>
             </details>
           )}
-        </div>
+        </details>
       </div>
     </div>
   );
