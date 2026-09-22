@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {
-  Home, Users, Shield, Binoculars, ClipboardList, ShieldCheck, Settings, PencilRuler,
+  Home, Users, Shield, Binoculars, ClipboardList, Settings,
 } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
 
@@ -41,16 +41,14 @@ export const SECTIONS: Section[] = [
     href: "/scheme",
     label: "My Scheme",
     icon: Shield,
-    match: ["/scheme"],
+    match: ["/scheme", "/analysis"],
     badge: (s) => (s.pending ? `${s.pending} to confirm` : null),
     children: [
-      { href: "/scheme/concepts?kind=front", label: "Fronts" },
-      { href: "/scheme/concepts?kind=coverage", label: "Coverages" },
-      { href: "/scheme/concepts?kind=pressure", label: "Pressures" },
-      { href: "/scheme/concepts?kind=adjustment", label: "Adjustments" },
+      { href: "/scheme/concepts?view=full-calls", label: "Scheme Library" },
+      { href: "/analysis", label: "Defense Analysis" },
+      { href: "/scheme/playbook", label: "Play Art" },
     ],
   },
-  { href: "/scheme/playbook", label: "Play Art", icon: PencilRuler, match: ["/scheme/playbook"] },
   {
     href: "/matchup",
     label: "Opponent Matchup",
@@ -75,11 +73,9 @@ export const SECTIONS: Section[] = [
       { href: "/practice", label: "Practice Script" },
     ],
   },
-  { href: "/analysis", label: "Defensive Analysis", icon: ShieldCheck, match: ["/analysis"] },
 ];
 
 function inSection(pathname: string, sec: Section) {
-  if (sec.href === "/scheme" && pathname.startsWith("/scheme/playbook")) return false;
   return sec.match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(m + "/")));
 }
 
@@ -109,6 +105,7 @@ function SideNavInner() {
   if (pathname.startsWith("/scheme/playbook") || pathname.startsWith("/chat")) return null;
 
   const isCurrentChild = (href: string) => {
+    if (href.startsWith("/scheme/concepts")) return pathname === "/scheme/concepts";
     if (!href.includes("?")) return pathname === href;
     const [p, q] = href.split("?");
     if (pathname !== p) return false;

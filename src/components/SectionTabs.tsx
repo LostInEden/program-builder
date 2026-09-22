@@ -37,6 +37,7 @@ function SectionTabsInner() {
 
   const current = (href: string) => {
     const [path, query] = href.split("?");
+    if (path === "/scheme/concepts") return pathname === path;
 
     return pathname === path && (query
       ? [...new URLSearchParams(query)].every(([k, v]) => search.get(k) === v)
@@ -56,7 +57,7 @@ function SectionTabsInner() {
       <div className="hidden xl:block w-44 shrink-0 mr-3 pr-4 border-r border-line text-sm truncate" title={hydrated ? `${program.name} · ${program.level || "Varsity"} Defense · ${new Date().getFullYear()}` : undefined}>{hydrated ? program.name : ""}</div>
       <div className="flex items-center gap-0.5">
         {SECTIONS.filter((section) => section.href !== "/analysis").map((section, index) => {
-          const active = !(section.href === "/scheme" && pathname.startsWith("/scheme/playbook")) && section.match.some((path) => path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(path + "/"));
+          const active = section.match.some((path) => path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(path + "/"));
           const expanded = visibleOpen === section.href;
           const badge = hydrated ? section.badge?.({ players, pending }) : null;
           const label = <><span>{section.label}</span>{badge && <span className="rounded-full bg-slate-200/70 px-1.5 text-[10px]">{badge}</span>}</>;

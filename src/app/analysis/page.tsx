@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { Star, AlertTriangle, Wrench, ChevronDown } from "lucide-react";
 import { useStore, useHydrated } from "@/lib/store";
 import { computeFindings, type Finding, type Status } from "@/lib/analyze";
+import SchemeTabs from "@/components/SchemeTabs";
 import { AI_LABEL } from "@/lib/ai";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
@@ -77,7 +78,7 @@ export default function AnalysisPage() {
     <div className="px-6 py-8 max-w-6xl mx-auto">
       <Link href="/scheme" className="mb-3 inline-block text-sm text-dim hover:text-ink">← My Scheme</Link>
       <div className="mb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">Defensive Analysis</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1>
         <p className="text-dim mt-0.5">How your saved fronts, coverages, pressures, and adjustments work together.</p>
         <p className="text-dim mt-2 text-sm">
           Your saved defense — {confirmed} concepts, {groupName} ({structureName}) — checked against personnel, formations,
@@ -85,6 +86,7 @@ export default function AnalysisPage() {
         </p>
       </div>
 
+      <SchemeTabs active="analysis" />
       <div className="grid gap-5 lg:grid-cols-3 items-start">
         {buckets.map(({ key, title, sub, icon: Icon, accent, head }, bi) => {
           const list = findings.filter((f) => f.status === key);

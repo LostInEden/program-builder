@@ -13,6 +13,7 @@ import {
   type LineStyle,
 } from "@/lib/football";
 import { recognizeFormation, formationLabel } from "@/lib/recognize";
+import SchemeTabs from "@/components/SchemeTabs";
 import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
 const SECTIONS: PlaybookSection[] = ["Fronts", "Coverages", "Pressures", "Checks & Adjustments"];
@@ -55,6 +56,7 @@ export default function PlaybookPage() {
         <ArrowLeft size={15} /> My Scheme
       </Link>
 
+      <SchemeTabs active="art" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="display text-2xl font-bold">Play Art</h1>
         <Link

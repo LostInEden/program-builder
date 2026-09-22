@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Regroup My Scheme tabs and library segments
+- **Asked for:** My Scheme tabs should be Overview, Scheme Library (Full Calls first, then each segment), Defense Analysis, and Play Art.
+- **Changed:** Updated shared navigation and page tabs to those four destinations. Moved Fronts, Coverages, Pressures, and Adjustments into a second-level Scheme Library navigation after Full Calls. Added the same My Scheme tabs to Defense Analysis and Play Art; removed the separate Play Art main-navigation entry.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Reused existing pages and query navigation. Full Calls clearly states that saved component combinations are not yet available and links to existing Play Art; engineering request #2 remains open. No stored scheme data, drawing behavior, or engine changes.
+
 ## 2026-09-21 — Simplify My Scheme overview
 - **Asked for:** Simplify My Scheme to Defensive Identity, Your Defense, and Core Rules without losing information.
 - **Changed:** Replaced the overview lists with a concise identity section and 2x2 category summaries. Moved the existing teaching, uploads, confirmation, and activity workflow into an expandable Scheme tools & review panel; preserved terminology, reference, Self Scout, and Defensive Analysis links.

@@ -25,6 +25,7 @@ function ConceptsInner() {
   const sp = useSearchParams();
   const rawKind = sp.get("kind");
   const kindParam: ConceptKind = rawKind && Object.hasOwn(KIND_LABEL, rawKind) ? rawKind as ConceptKind : "front";
+  const fullCalls = sp.get("view") === "full-calls" || (!rawKind && !sp.has("new") && !sp.has("id"));
   const cat = sp.get("cat");
   const id = sp.get("id");
   const isNew = sp.get("new") === "1";
@@ -62,10 +63,20 @@ function ConceptsInner() {
         <ArrowLeft size={15} /> My Scheme
       </Link>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="text-3xl font-extrabold tracking-tight">{KIND_LABEL[kindParam]}</h1><p className="mt-1 text-sm text-dim">Your saved {KIND_LABEL[kindParam].toLowerCase()}. Open a card for its rules and coaching notes.</p></div>
-        <button onClick={() => go(`kind=${kindParam}${cat ? `&cat=${encodeURIComponent(cat)}` : ""}&new=1`)} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white"><Plus size={16} /> Add {KIND_LABEL[kindParam].replace(/s$/, '')}</button>
+        <div><h1 className="text-3xl font-extrabold tracking-tight">Scheme Library</h1><p className="mt-1 text-sm text-dim">Full calls and the individual pieces of your defense.</p></div>
+        {!fullCalls && <button onClick={() => go(`kind=${kindParam}${cat ? `&cat=${encodeURIComponent(cat)}` : ""}&new=1`)} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white"><Plus size={16} /> Add {KIND_LABEL[kindParam].replace(/s$/, '')}</button>}
       </div>
-      <SchemeTabs active={kindParam} />
+      <SchemeTabs active="library" />
+      <nav aria-label="Scheme Library categories" className="mb-5 flex flex-wrap gap-2">
+        <Link href="/scheme/concepts?view=full-calls" aria-current={fullCalls ? 'page' : undefined} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${fullCalls ? 'border-grass bg-grass/10 text-grass' : 'border-line text-dim'}`}>Full Calls</Link>
+        {(Object.keys(KIND_LABEL) as ConceptKind[]).map(kind => <Link key={kind} href={`/scheme/concepts?kind=${kind}`} aria-current={!fullCalls && kindParam === kind ? 'page' : undefined} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${!fullCalls && kindParam === kind ? 'border-grass bg-grass/10 text-grass' : 'border-line text-dim'}`}>{KIND_LABEL[kind]}</Link>)}
+      </nav>
+      {fullCalls ? <section className={`${card} p-6`}>
+        <h2 className="text-xl font-extrabold">Full Calls</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-dim">Saving full calls that combine fronts, coverages, pressures, and adjustments is not available yet. Your saved drawings remain in Play Art, and each scheme segment is available above.</p>
+        <Link href="/scheme/playbook" className="mt-4 inline-flex rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white">Open Play Art →</Link>
+      </section> : <>
+      <h2 className="mb-4 text-xl font-bold">{KIND_LABEL[kindParam]}</h2>
       {isNew && <div className={`${card} mb-5 p-4`}>
         <label className="text-sm font-semibold" htmlFor="new-concept-name">New {KIND_LABEL[newKind].replace(/s$/, '')}</label>
         <div className="mt-2 flex gap-2">
@@ -95,6 +106,7 @@ function ConceptsInner() {
           </div>
           {list.length === 0 && <div className={`${card} p-8 text-center text-sm text-dim`}>No {KIND_LABEL[kindParam].toLowerCase()} in this view. Add one or choose another category.</div>}
       </div>}
+      </>}
 
     </div>
   );
