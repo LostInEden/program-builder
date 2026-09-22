@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Move Self Scout to the end of Game Plans
+- **Asked for:** Put Self Scout as the last tab under Game Plans.
+- **Changed:** Added Self Scout after Call Sheet and Practice Script in shared Game Plans navigation. Removed the My Scheme tools link, changed Self Scout’s back link to Game Plans, and made Game Plans the active section on Self Scout.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Corrected the unshipped Reports placement at the coach's request. Kept the existing URL and report status; no data or report logic changed.
+
+## 2026-09-21 — Drop proposed Self Scout placement under Reports
+- **Asked for:** Initially put Self Scout under Reports, then corrected to the last tab under Game Plans.
+- **Changed:** Removed the unshipped Reports navigation and card additions before publishing.
+- **Commit:** (this one)
+- **Status:** Dropped
+- **Notes:** Reports placement never shipped. Self Scout now belongs to Game Plans.
+
 ## 2026-09-21 — Match Play Art field to the CounterScheme theme
 - **Asked for:** Make the Play Art background fit my color theme.
 - **Changed:** Changed the drawing field to graphite with a subtle dark-gray grid, metallic-gray yard lines and hashes, and a champagne-gold line of scrimmage. Player symbols and labels use light ink; selection accents use deep red and gold. Screen-only route colors are brightened for contrast.

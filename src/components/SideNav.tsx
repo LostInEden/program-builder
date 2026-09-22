@@ -65,17 +65,20 @@ export const SECTIONS: Section[] = [
     href: "/gameplan",
     label: "Game Plans",
     icon: ClipboardList,
-    match: ["/gameplan", "/callsheet", "/practice"],
+    match: ["/gameplan", "/callsheet", "/practice", "/scheme/self-scout"],
     // Q45: the game-day sheet is the plan you can hold in your hand. Q46: the
     // practice script is optional, so it lives under the plan, not beside it.
     children: [
       { href: "/callsheet", label: "Call Sheet" },
       { href: "/practice", label: "Practice Script" },
+      { href: "/scheme/self-scout", label: "Self Scout" },
     ],
   },
+
 ];
 
-function inSection(pathname: string, sec: Section) {
+export function inSection(pathname: string, sec: Section) {
+  if (sec.href === "/scheme" && pathname.startsWith("/scheme/self-scout")) return false;
   return sec.match.some((m) => (m === "/" ? pathname === "/" : pathname === m || pathname.startsWith(m + "/")));
 }
 

@@ -10,12 +10,12 @@ export default function SelfScoutPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-      <Link href="/scheme" className="mb-3 inline-block text-sm text-dim hover:text-ink">← My Scheme</Link>
+      <Link href="/gameplan" className="mb-3 inline-block text-sm text-dim hover:text-ink">← Game Plans</Link>
       <header className="mb-6">
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-grass">
           <Shield size={17} /> Defense
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Self scout</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">Self Scout</h1>
         <p className="mt-2 text-dim">
           A look at {hydrated && programName ? `${programName}’s` : "your team’s"} defensive tendencies from your own game snaps.
         </p>

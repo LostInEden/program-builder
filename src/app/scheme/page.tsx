@@ -35,7 +35,7 @@ export default function SchemePage() {
       <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">Scheme tools & review{pending > 0 ? ` · ${pending} to confirm` : ""}</summary>
       <div className="border-t border-line p-3 sm:p-4">
         <div className="mb-4 flex flex-wrap gap-2 text-sm font-semibold text-grass">
-          {[['/scheme/terminology', 'Terminology'], ['/scheme/coverages', 'Coverage Reference'], ['/scheme/self-scout', 'Self Scout'], ['/analysis', 'Defensive Analysis'], ['/scheme/playbook', 'Play Art']].map(([href, label]) => <Link key={href} href={href} className="rounded-lg border border-line px-3 py-2 hover:border-grass">{label}</Link>)}
+          {[['/scheme/terminology', 'Terminology'], ['/scheme/coverages', 'Coverage Reference'], ['/analysis', 'Defensive Analysis'], ['/scheme/playbook', 'Play Art']].map(([href, label]) => <Link key={href} href={href} className="rounded-lg border border-line px-3 py-2 hover:border-grass">{label}</Link>)}
         </div>
         <SchemeTeachingPanel />
       </div>

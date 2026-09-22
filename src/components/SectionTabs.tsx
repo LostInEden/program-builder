@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useHydrated, useStore } from "@/lib/store";
-import { SECTIONS } from "@/components/SideNav";
+import { SECTIONS, inSection } from "@/components/SideNav";
 
 function SectionTabsInner() {
   const pathname = usePathname();
@@ -57,7 +57,7 @@ function SectionTabsInner() {
       <div className="hidden xl:block w-44 shrink-0 mr-3 pr-4 border-r border-line text-sm truncate" title={hydrated ? `${program.name} · ${program.level || "Varsity"} Defense · ${new Date().getFullYear()}` : undefined}>{hydrated ? program.name : ""}</div>
       <div className="flex items-center gap-0.5">
         {SECTIONS.filter((section) => section.href !== "/analysis").map((section, index) => {
-          const active = section.match.some((path) => path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(path + "/"));
+          const active = inSection(pathname, section);
           const expanded = visibleOpen === section.href;
           const badge = hydrated ? section.badge?.({ players, pending }) : null;
           const label = <><span>{section.label}</span>{badge && <span className="rounded-full bg-slate-200/70 px-1.5 text-[10px]">{badge}</span>}</>;
