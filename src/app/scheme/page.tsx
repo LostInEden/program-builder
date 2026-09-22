@@ -19,6 +19,7 @@ const categories = [
 export default function SchemePage() {
   const hydrated = useHydrated();
   const { scheme, setScheme, concepts } = useStore();
+  const [teaching, setTeaching] = useState(false);
   const [editing, setEditing] = useState(false);
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
   const confirmed = concepts.filter((c) => c.confirmed);
@@ -29,15 +30,17 @@ export default function SchemePage() {
     <header className="mb-5">
       <h1 className="text-3xl font-extrabold tracking-tight">My Scheme</h1>
       <p className="mt-1 text-sm text-dim">Your defensive identity, what you carry, and the rules you coach.</p>
+      <button onClick={() => setTeaching(!teaching)} aria-expanded={teaching} className="mt-3 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-gold">{teaching ? "Close Teaching" : "Teach CounterScheme"}{pending ? ` · ${pending} to review` : ""}</button>
     </header>
     <SchemeTabs />
+    {teaching && <div className="mb-5"><SchemeTeachingPanel /></div>}
     <details className="mb-5 rounded-lg border border-line bg-card">
       <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">Scheme tools & review{pending > 0 ? ` · ${pending} to confirm` : ""}</summary>
       <div className="border-t border-line p-3 sm:p-4">
         <div className="mb-4 flex flex-wrap gap-2 text-sm font-semibold text-grass">
           {[['/scheme/terminology', 'Terminology'], ['/scheme/coverages', 'Coverage Reference'], ['/analysis', 'Defensive Analysis'], ['/scheme/playbook', 'Play Art']].map(([href, label]) => <Link key={href} href={href} className="rounded-lg border border-line px-3 py-2 hover:border-grass">{label}</Link>)}
         </div>
-        <SchemeTeachingPanel />
+        <button onClick={() => setTeaching(true)} className="text-sm font-semibold text-gold">Open teaching & pending review</button>
       </div>
     </details>
 

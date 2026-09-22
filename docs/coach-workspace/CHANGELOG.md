@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Restore contextual Talk and Type controls
+- **Asked for:** Add talk/speech areas where needed, reusing the existing voice and AI tools.
+- **Changed:** Added a shared TalkTypeInput using existing startDictation, with Type fallback, editable transcript, stop controls, and microphone cleanup. Surfaced Teach CounterScheme near the top of My Scheme and added Talk / Type inside the existing Game Plan priority discussion.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** No new voice service or AI provider. Global Ask CounterScheme and Play Art controls are unchanged. Game Plan still requires explicit Add to Plan approval.
+
+## 2026-09-21 — Review scheme teaching before saving
+- **Asked for:** Show what CounterScheme understood and let the coach confirm or correct before saving.
+- **Changed:** Reused the existing pure ai.teach parser to hold proposals in component state. Displayed proposed names, kinds, base flags, checks, responsibilities, and notes before Save to My Scheme. Only approval calls existing concept, teaching-log, and conversation actions; existing pending-item review and uploads remain available.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** No store schema or engine changes. The local parser handles limited patterns; unrecognized text is reported rather than invented. Drafts are not persisted before approval.
+
+## 2026-09-21 — Add reviewed coaching notes through Talk or Type
+- **Asked for:** Add Scout Info on Opponent Matchup and contextual input for individual scheme items.
+- **Changed:** Added expandable Add Scout Info and Add Coaching Note controls. Talk and Type feed the same draft; review, correction, discard, and explicit Save Note append the coach’s words to the selected opponent or scheme item’s existing notes.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Notes are explicitly labeled coach observations, not AI interpretations or snap statistics. Selection IDs are bound to each editor and current notes are read at save time. Structured opponent/player extraction and targeted interpreted scheme updates remain engineering work.
+
 ## 2026-09-21 — Move Self Scout to the end of Game Plans
 - **Asked for:** Put Self Scout as the last tab under Game Plans.
 - **Changed:** Added Self Scout after Call Sheet and Practice Script in shared Game Plans navigation. Removed the My Scheme tools link, changed Self Scout’s back link to Game Plans, and made Game Plans the active section on Self Scout.

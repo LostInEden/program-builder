@@ -8,6 +8,7 @@ import { opponentOverview } from "@/lib/opponentOverview";
 import { answerFor, makeKit } from "@/lib/plan";
 import { ai, AI_LABEL } from "@/lib/ai";
 import { approveDecision, approvedPlan, decisionGroups, decisionText, emptyMeeting, PLAN_CATEGORIES } from "@/lib/meeting";
+import TalkTypeInput from "@/components/TalkTypeInput";
 import PlanNavigation from "@/components/PlanNavigation";
 
 const card = "rounded-xl border border-line bg-card p-5";
@@ -79,7 +80,7 @@ function PriorityMeeting({ opponent, priority, meeting, update }: { opponent: Op
       <p className="mt-3 text-xs text-dim">{AI_LABEL}: rules-based suggestions, not a connected conversational model. Review football reasoning with your staff.</p>
       {!talking ? <button className={`${button} mt-4`} onClick={() => setTalking(true)}>Talk It Through</button> : <>
         <div className="mt-4 space-y-3 max-h-[420px] overflow-y-auto" aria-live="polite">{messages.map((m, i) => <div key={i} className={`rounded-lg p-3 text-sm ${m.role === "coach" ? "bg-panel" : "border border-line"}`}><p className="text-xs font-bold text-gold mb-1">{m.role === "coach" ? "Coach" : "CounterScheme"}</p><p className="whitespace-pre-wrap">{m.text}</p><button className="mt-2 text-gold text-xs font-semibold hover:underline" onClick={() => { patch({ point: m.text }); setEditing(true); }}>Use in decision draft</button></div>)}</div>
-        <form className="mt-4 space-y-2" onSubmit={e => { e.preventDefault(); void send(); }}><label htmlFor="priority-question" className="text-sm font-semibold">Discuss this priority</label><textarea id="priority-question" className={input} rows={3} value={question} onChange={e => setQuestion(e.target.value)} placeholder="What if they start reading the end?" /><button className={primary} disabled={busy || !question.trim()}>{busy ? "Thinking…" : "Send"}</button></form>
+        <form className="mt-4 space-y-2" onSubmit={e => { e.preventDefault(); void send(); }}><TalkTypeInput value={question} onChange={setQuestion} label="Discuss this priority" disabled={busy} /><button className={primary} disabled={busy || !question.trim()}>{busy ? "Thinking…" : "Send"}</button></form>
         {error && <p role="alert" className="mt-2 text-sm text-red-500">{error}</p>}
         <button className={`${button} mt-3`} onClick={() => setEditing(true)}>Add to Plan — review decision</button>
       </>}

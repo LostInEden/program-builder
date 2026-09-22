@@ -14,6 +14,12 @@ Entry format:
 
 ---
 
+## #6 — 2026-09-21 — Contextual interpreted proposals for scheme and scout information
+- **Coach asked:** Talk or type football explanations; show structured understanding, allow corrections, then save explicitly to the selected scheme item, opponent, or player.
+- **Why it's not front-end:** The existing local teach parser can propose limited new scheme concepts, but there is no interpreted update contract for an existing Concept, no opponent/player observation extraction contract, and useChat currently applies terminology and question side effects immediately. Engineering needs context-bound proposals, stable target IDs, validation, preview/correction, and an explicit apply boundary for interpreted writes. Keep observations distinct from imported statistics; do not infer percentages from coach prose. Coordinate the real conversational provider in request #4.
+- **Where it would show up:** My Scheme teaching and item details, Opponent Matchup Add Scout Info, and opponent Personnel Add Note. The frontend now reuses ai.teach for ephemeral new-concept proposals with Save approval, and offers reviewed verbatim notes on opponents and scheme items. It does not claim to extract structured observations or attach notes to inferred players. Global Ask behavior remains unchanged.
+- **Status:** Open
+
 ## #5 — 2026-09-21 — Designate global defensive core rules
 - **Coach asked:** Show actual system-wide Strength, Run Fit, Trips, Motion, Unbalanced, and Personnel rules in a concise Core Rules summary without duplicating scheme definitions.
 - **Why it's not front-end:** There is no persisted global defensive-rule designation. Existing Concept responsibilities and adjustment trigger/action/result fields are scoped to individual concepts. The existing strengthRule supports offensive formation recognition and must not be relabeled as the defense's global strength rule. Engineering should define explicit references or scope for existing rules, preserve structured knowledge, and support editing without duplicating or guessing rules from prose.

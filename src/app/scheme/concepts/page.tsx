@@ -8,6 +8,7 @@ import {
   useStore, useHydrated, ADJUSTMENT_CATEGORIES, PRESSURE_GROUPS,
   type Concept, type ConceptKind, type ConceptStatus, type Responsibility,
 } from "@/lib/store";
+import CoachObservation from "@/components/CoachObservation";
 import SchemeTabs from "@/components/SchemeTabs";
 import SchemeConceptCard from "@/components/SchemeConceptCard";
 import { COVERAGES } from "@/lib/coverages";
@@ -120,6 +121,12 @@ function ConceptDetails(props: Parameters<typeof Editor>[0]) {
       <h2 className="text-2xl font-extrabold">{c.name}</h2>
       <button onClick={() => setEditing(!editing)} className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-grass">{editing ? 'Done Editing' : 'Edit Scheme Item'}</button>
     </div>
+    <CoachObservation action="Add Coaching Note" context={`Scheme note · ${c.name}`} onSave={note => {
+      const current = useStore.getState().concepts.find(x => x.id === c.id);
+      if (!current) return false;
+      props.onChange({ notes: [current.notes, note].filter(Boolean).join("\n\n") });
+      return true;
+    }} />
     {editing ? <Editor {...props} /> : <div className="grid gap-4">
       <div className={`${card} p-5`}>
         <p className="text-sm text-dim">{c.confirmed ? (c.status === 'backPocket' ? 'Back pocket' : 'Active') : 'Needs confirmation'}{c.isBase ? ` · Base ${c.kind}` : ''}{c.category || c.group ? ` · ${c.category || c.group}` : ''}</p>

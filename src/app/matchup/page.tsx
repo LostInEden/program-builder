@@ -12,6 +12,7 @@ import {
   useStore, useHydrated, initialsOf, DOWNS, DISTANCES, type Opponent, type ScoutFormation, type ScoutConcept, type ScoutKeyPlayer,
 } from "@/lib/store";
 import { AI_LABEL } from "@/lib/ai";
+import CoachObservation from "@/components/CoachObservation";
 import OpponentOverview from "@/components/OpponentOverview";
 import TendencyImport from "@/components/TendencyImport";
 import { TopTellsCard } from "@/components/TendencyReport";
@@ -185,6 +186,13 @@ function MatchupInner() {
         </div>
       </div>
 
+      {o && <CoachObservation key={o.id} action="Add Scout Info" context={`Coach observation · ${o.name}`} onSave={note => {
+        const state = useStore.getState();
+        const current = state.opponents.find(x => x.id === o.id);
+        if (!current) return false;
+        state.updateOpponent(current.id, { notes: [current.notes, note].filter(Boolean).join("\n\n") });
+        return true;
+      }} />}
       {showDetails && o && <Link href={`/matchup?id=${o.id}`} className="inline-block mb-4 text-sm font-semibold text-gold hover:underline">← Back to Overview</Link>}
       {!o ? (
         <div className={`${card} px-6 py-14 text-center`}>

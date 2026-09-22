@@ -4,13 +4,13 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 
 import {
-  ChevronRight, Send, Mic, Upload,
+  ChevronRight, Send, Upload,
   CheckCircle2, Clock, X,
 } from "lucide-react";
 import { useStore, useHydrated } from "@/lib/store";
 
-import { AI_LABEL } from "@/lib/ai";
-import { useChat } from "@/lib/useChat";
+import { ai, AI_LABEL, type TeachResult } from "@/lib/ai";
+import TalkTypeInput from "@/components/TalkTypeInput";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 
@@ -28,14 +28,11 @@ export default function SchemeTeachingPanel() {
   const {
     concepts, confirmConcept, removeConcept, teachLog,
   } = useStore();
-  // Teach posts into the ONE conversation (Q26) — same thread as the drawer,
-  // the phone and the Ask box on Opponent Matchup. The card below just shows
-  // the reply where he typed it.
-  const chat = useChat("/scheme");
   const [teach, setTeach] = useState("");
   const [busy, setBusy] = useState(false);
   const [reply, setReply] = useState<{ summary: string; actions?: { label: string; href: string }[] } | null>(null);
-  const [listening, setListening] = useState(false);
+  const [proposal, setProposal] = useState<TeachResult | null>(null);
+  const saving = useRef(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
@@ -48,32 +45,24 @@ export default function SchemeTeachingPanel() {
     if (!input || busy) return;
     setBusy(true);
     try {
-      const msg = await chat.send(input, "/scheme");
-      if (msg) setReply({ summary: msg.text, actions: msg.actions });
-      setTeach("");
+      const result = await ai.teach(input, useStore.getState());
+      setProposal(result); setReply(null);
+    } catch { setReply({ summary: "Could not interpret this draft. Your text is still here; try again." });
     } finally {
       setBusy(false);
     }
   };
 
-  const startVoice = () => {
-    const w = window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike; SpeechRecognition?: new () => SpeechRecognitionLike };
-    const Ctor = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-    if (!Ctor) {
-      setReply({ summary: "Voice input isn't available in this browser — type it instead." });
-      return;
-    }
-    const rec = new Ctor();
-    rec.lang = "en-US";
-    rec.interimResults = false;
-    rec.onresult = (e) => {
-      const text = Array.from(e.results).map((r) => r[0].transcript).join(" ");
-      setTeach((t) => (t ? `${t} ${text}` : text));
-    };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
-    setListening(true);
-    rec.start();
+  const saveProposal = () => {
+    if (!proposal?.concepts.length || saving.current) return;
+    saving.current = true;
+    const state = useStore.getState();
+    const ids = proposal.concepts.map(c => state.addConcept({ ...c, source: "teach", confirmed: true }));
+    state.addTeachEntry({ input: teach, conceptIds: ids });
+    state.appendChat({ role: "coach", text: teach, context: { page: "/scheme" } });
+    state.appendChat({ role: "counterscheme", text: `Coach approved ${ids.length} scheme item(s).`, context: { page: "/scheme", conceptIds: ids } });
+    setProposal(null); setTeach(""); setReply({ summary: "Saved to My Scheme." });
+    saving.current = false;
   };
 
   const onFile = async (f: File | undefined) => {
@@ -93,28 +82,14 @@ export default function SchemeTeachingPanel() {
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-navy text-white font-extrabold text-sm">CS</span>
             <div>
               <div className="text-lg font-extrabold">Teach CounterScheme</div>
-              <p className="text-sm text-dim">Tell CounterScheme something about your defense. We&apos;ll learn it, save it, and use it to help you win.</p>
+              <p className="text-sm text-dim">Explain your defense. Review the proposed scheme items before saving.</p>
             </div>
           </div>
           <div className="rounded-xl border border-line bg-white p-3">
-            <textarea
-              rows={3}
-              value={teach}
-              onChange={(e) => setTeach(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submitTeach(); }}
-              placeholder={"Example: Against 12 personnel (2 TE), we check to Over front.\nOn 3rd and long, we play Cover 1 Robber."}
-              className="w-full resize-y bg-transparent text-[15px] leading-relaxed placeholder:text-dim/60 focus:outline-none"
-            />
-            <div className="mt-2 flex items-center gap-2">
+            <TalkTypeInput value={teach} onChange={setTeach} label="Teach CounterScheme how your defense works" disabled={busy || !!proposal} />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <button
-                onClick={startVoice}
-                className={`grid size-10 place-items-center rounded-lg border transition ${listening ? "border-red-400 bg-red-50 text-red-500" : "border-line text-dim hover:text-ink"}`}
-                aria-label="Dictate"
-              >
-                <Mic size={16} />
-              </button>
-              <button
-                onClick={() => fileRef.current?.click()}
+                disabled={busy || !!proposal} onClick={() => fileRef.current?.click()}
                 className="inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-sm font-semibold text-ink hover:border-dim"
               >
                 <Upload size={15} /> Upload Note
@@ -122,13 +97,24 @@ export default function SchemeTeachingPanel() {
               <input ref={fileRef} type="file" accept=".txt,.md,.csv,text/plain" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
               <button
                 onClick={submitTeach}
-                disabled={!teach.trim() || busy}
+                disabled={!teach.trim() || busy || !!proposal}
                 className="ml-auto inline-flex items-center gap-2 rounded-lg bg-grass px-5 py-2.5 text-sm font-bold text-white hover:bg-grass-deep disabled:opacity-50"
               >
-                <Send size={15} /> {busy ? "Filing…" : "Send"}
+                <Send size={15} /> {busy ? "Interpreting…" : "Review Interpretation"}
               </button>
             </div>
           </div>
+          {proposal && <section className="mt-4 rounded-xl border border-line p-4">
+            <h3 className="font-bold">Here&apos;s what I understood</h3>
+            {proposal.concepts.map((c, i) => <div key={i} className="mt-3 border-t border-line pt-3 text-sm">
+              <p className="font-semibold">{c.name} · {c.kind}{c.isBase ? ' · Base' : ''}</p>
+              <dl>{[['Summary', c.summary], ['Category', c.category || c.group], ['Trigger', c.trigger], ['Action', c.action], ['Result', c.result], ['Notes', c.notes]].filter(([,v]) => v).map(([k,v]) => <div key={k} className="mt-1"><dt className="text-xs text-dim">{k}</dt><dd className="whitespace-pre-wrap">{v}</dd></div>)}</dl>
+              {c.responsibilities?.map(r => <p key={r.id} className="mt-2">{r.role}: {r.job}</p>)}
+            </div>)}
+            {proposal.question && <p className="mt-3 text-sm text-dim">{proposal.question}</p>}
+            {!proposal.concepts.length && <p className="mt-3 text-sm">No scheme items were recognized. Correct the draft or use the existing scheme editor.</p>}
+            <div className="mt-4 flex flex-wrap gap-2"><button disabled={!proposal.concepts.length} onClick={saveProposal} className="rounded-lg bg-grass px-3 py-2 text-sm font-bold text-white disabled:opacity-50">Save to My Scheme</button><button onClick={() => setProposal(null)} className="px-3 text-sm text-gold">Correct Something</button><button onClick={() => { setProposal(null); setTeach(''); }} className="px-3 text-sm text-dim">Discard Draft</button></div>
+          </section>}
           {reply && (
             <div className="mt-3 rounded-lg border border-grass/30 bg-grass/5 px-4 py-3 text-sm">
               <div className="leading-relaxed">{reply.summary}</div>
@@ -145,8 +131,7 @@ export default function SchemeTeachingPanel() {
             </div>
           )}
           <p className="mt-3 text-[11px] text-dim">
-            Engine: {AI_LABEL}. This goes into the same CounterScheme conversation as the chat. Nothing is saved until you
-            confirm it on the right. Ctrl+Enter to send.
+            Engine: {AI_LABEL}. Recognizes a limited set of scheme statements. Only the items shown in your review are saved, after you approve them. Unrecognized details need correction or manual entry.
           </p>
         </div>
 
@@ -196,11 +181,3 @@ export default function SchemeTeachingPanel() {
       </div>
   );
 }
-type SpeechRecognitionLike = {
-  lang: string;
-  interimResults: boolean;
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  start: () => void;
-};
