@@ -116,6 +116,26 @@ export default function StudioCanvas({
   const texts = call.texts ?? [];
 
   const fieldRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [fitWidth, setFitWidth] = useState<number>();
+  useEffect(() => {
+    const field = fieldRef.current;
+    const toolbar = toolbarRef.current;
+    if (!field || !toolbar) return;
+    const fit = () => {
+      // Use document position so scrolling never changes the diagram scale.
+      const top = field.getBoundingClientRect().top + window.scrollY;
+      const height = Math.max(100, window.innerHeight - top - toolbar.getBoundingClientRect().height - 24);
+      setFitWidth(height * 100 / FIELD_H);
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(field.parentElement!);
+    observer.observe(toolbar);
+    window.addEventListener("resize", fit);
+    document.addEventListener("toggle", fit, true);
+    fit();
+    return () => { observer.disconnect(); window.removeEventListener("resize", fit); document.removeEventListener("toggle", fit, true); };
+  }, []);
   const pathMaskId = useId();
   const [fieldWidth, setFieldWidth] = useState(1000);
   const [fieldHeight, setFieldHeight] = useState(FIELD_H * 10);
@@ -521,7 +541,7 @@ export default function StudioCanvas({
       ? lineEnd(call.lines.find((l) => l.id === extendId) ?? { anchor: "", points: [] })
       : null;
 
-  const offenseRadius = Math.max(24, Math.min(36, fieldWidth * 0.031)) / 2;
+  const offenseRadius = Math.max(12, Math.min(36, fieldWidth * 0.031)) / 2;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -541,7 +561,7 @@ export default function StudioCanvas({
         }}
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
-        style={{ aspectRatio: `100 / ${FIELD_H}` }}
+        style={{ aspectRatio: `100 / ${FIELD_H}`, maxWidth: fitWidth === undefined ? "100%" : `min(100%, ${fitWidth}px)` }}
         className={`relative mx-auto shrink-0 [container-type:inline-size] w-full max-w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-[#252729] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
@@ -555,8 +575,8 @@ export default function StudioCanvas({
               <rect width="100" height={FIELD_H} fill="white" />
               {structure.slots.map((_, i) => {
                 const [x, y] = defPos(i);
-                const halfWidth = (labelFor(i).length * 6 + 3) * 100 / fieldWidth;
-                const halfHeight = 11 * FIELD_H / fieldHeight;
+                const halfWidth = (labelFor(i).length * 6 + 3) * Math.min(1, fieldWidth / 1000) * 100 / fieldWidth;
+                const halfHeight = 11 * Math.min(1, fieldWidth / 1000) * FIELD_H / fieldHeight;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
               {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 2) * 100 / fieldWidth} ry={(offenseRadius + 2) * FIELD_H / fieldHeight} fill="black" />)}
@@ -798,7 +818,7 @@ export default function StudioCanvas({
               className="group absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
-              <span className={`grid min-w-10 min-h-10 px-1 place-items-center text-[17px] font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
+              <span className={`grid min-w-[clamp(16px,4cqw,40px)] min-h-[clamp(16px,4cqw,40px)] px-0.5 place-items-center text-[clamp(8px,1.7cqw,17px)] font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -814,7 +834,7 @@ export default function StudioCanvas({
               key={o.id}
               title={`${o.label}${o.ptype ? ` · ${o.ptype}` : ""}${isOffensiveLineman(o) ? " · Drag the line together; Shift-drag this player" : " · Drag to align"}`}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
-              className={`group absolute aspect-square w-[3.1cqw] min-w-[24px] max-w-[36px] -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
+              className={`group absolute aspect-square w-[3.1cqw] min-w-[12px] max-w-[36px] -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
@@ -854,7 +874,7 @@ export default function StudioCanvas({
       </div>
 
       {/* Floating toolbar */}
-      <div className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-0.5 rounded-lg border border-line bg-card px-2 py-1">
+      <div ref={toolbarRef} className="mx-auto mt-2 flex flex-wrap items-center justify-center gap-0.5 rounded-lg border border-line bg-card px-2 py-1">
         {TOOLS.map((t) => (
           <button
             key={t.id}

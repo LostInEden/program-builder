@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Fit Play Art to the screen
+- **Asked for:** Scale the diagram to fit the screen without scrolling.
+- **Changed:** Sized the centered field from available viewport height, reserving room for its drawing toolbar. Recalculates on resizing and layout changes while preserving the field's aspect ratio. Player symbols and defensive text scale down with the board. Collapsed workspace options and play details by default to reserve more room for the diagram.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Saved coordinates and drawing behavior are unchanged. Extra editing panels remain below the board; the field and toolbar fit together on normal desktop viewports.
+
 ## 2026-09-21 — Make Play Art strokes thicker
 - **Asked for:** Slightly thicken lines, arrows, and other drawn paths.
 - **Changed:** Increased saved and preview path stroke widths, block end bars, and print strokes.

@@ -52,6 +52,8 @@ export default function PlaybookPage() {
 
   return (
     <div className="px-4 sm:px-6 py-4 max-w-[1400px] mx-auto">
+      <details className="mb-3 rounded-lg border border-line bg-card p-3">
+        <summary className="cursor-pointer text-sm font-bold">Play Art · Workspace options</summary>
       <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
         <ArrowLeft size={15} /> My Scheme
       </Link>
@@ -81,6 +83,7 @@ export default function PlaybookPage() {
         </div>
       </div>
 
+      </details>
       <div className="grid gap-3 items-start">
         {/* Call list */}
         <details className="rounded-xl border border-line bg-card/80 p-3">
@@ -138,7 +141,9 @@ export default function PlaybookPage() {
         <div className="min-w-0">
           {call ? (
             <motion.div key={call.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
+              <details className="mb-3 rounded-lg border border-line bg-card p-3">
+                <summary className="cursor-pointer text-sm font-semibold">{call.name} · Play details & formation</summary>
+              <div className="mb-2 mt-3 flex flex-wrap items-center gap-2">
                 <input
                   value={call.name}
                   onChange={(e) => updateCall(call.id, { name: e.target.value })}
@@ -217,6 +222,7 @@ export default function PlaybookPage() {
                 ))}
               </div>
 
+              </details>
               <StudioCanvas
                 key={`${call.id}:${group.structureId}`}
                 call={call}
