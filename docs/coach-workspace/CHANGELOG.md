@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Slightly thicken Play Art lines
+- **Asked for:** Lines slightly thicker.
+- **Changed:** Increased the shared drawing stroke by 12.5%, including routes, arrows, blocking lines, and previews.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Keeps the shorter blocking end bars and coordinated zoom scaling.
+
+## 2026-09-22 — Slightly reduce defensive letters
+- **Asked for:** Defenders slightly smaller.
+- **Changed:** Reduced defensive font size from 2.5 to 2.3 field units, an 8% reduction.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves all player positions, offense sizes, and defense-bottom orientation.
+
 ## 2026-09-22 — Set defensive letters to a medium size
 - **Asked for:** The defensive icons are too big; find a medium.
 - **Changed:** Reduced defensive letter size from 3.5 to 2.5 field units, between the original and enlarged sizes. Line masks continue to scale with the letters.

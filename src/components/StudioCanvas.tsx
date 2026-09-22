@@ -62,8 +62,8 @@ const INK = ROUTE_COLORS[0];
 const DEF_INK = "#17212B";
 // Sizes are in football coordinates so symbols and strokes zoom together.
 const PLAYER_SIZE = 3.1;
-const DEF_FONT_SIZE = 2.5; // Medium-sized defensive letters keep the alignment easy to read.
-const PATH_WIDTH = PLAYER_SIZE * 0.08;
+const DEF_FONT_SIZE = 2.3; // Medium-sized defensive letters keep the alignment easy to read.
+const PATH_WIDTH = PLAYER_SIZE * 0.09;
 const BLOCK_BAR_HALF = 1.1;
 // Screen-only contrast on graphite; saved route colors and printed art stay unchanged.
 const fieldColor = (color: string) => ({
