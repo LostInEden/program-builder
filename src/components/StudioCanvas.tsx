@@ -252,7 +252,9 @@ export default function StudioCanvas({
     ];
   };
   const colorOf = (l: { anchor: string; color?: string }) => {
-    return legacy(l.color) ?? (l.anchor.startsWith("def:") ? DEF_INK : INK);
+    if (l.anchor.startsWith("off:")) return call.offLook.find(o => o.id === l.anchor.slice(4))?.color ?? INK;
+    if (l.anchor.startsWith("def:")) return defAppearance(Number(l.anchor.slice(4))).color ?? DEF_INK;
+    return legacy(l.color) ?? INK;
   };
   // clicks on empty field land on the SVG layer, not the container
   const isFieldTarget = (e: React.SyntheticEvent) => {
@@ -740,7 +742,7 @@ export default function StudioCanvas({
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l);
-            const rawColor = legacy(l.color) ?? (l.anchor.startsWith("def:") ? DEF_INK : INK);
+            const rawColor = c;
             const d = l.smooth ? smoothPath(pts) : pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
             const arrows = arrowStyleOf(l);
             const showArrow = arrows !== "none";
@@ -856,7 +858,7 @@ export default function StudioCanvas({
             if (!a) return null;
             const pts = [...(draft.anchor === "free" ? [] : [a]), ...draft.points, ...(hover ? [hover] : [])];
             if (pts.length < 2) return null;
-            const c = color === INK && draft.anchor.startsWith("def:") ? DEF_INK : color;
+            const c = colorOf({ anchor: draft.anchor, color: color === INK ? undefined : color });
             const end = pts.at(-1)!;
             const prev = pts.at(-2)!;
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
@@ -870,7 +872,7 @@ export default function StudioCanvas({
             </g>;
           })()}
           {extendId && ghostFrom && hover && (
-            <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={fieldColor(INK)} strokeOpacity="0.35" strokeWidth={PATH_WIDTH} strokeDasharray="0.9 0.9" />
+            <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={fieldColor(extendBtnFor ? colorOf(extendBtnFor) : INK)} strokeOpacity="0.35" strokeWidth={PATH_WIDTH} strokeDasharray="0.9 0.9" />
           )}
           {zoneStart && hover && (
             <ellipse

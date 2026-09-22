@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Match attached drawings to the player's color
+- **Asked for:** The color of the circle should determine the color of the line.
+- **Changed:** Attached routes, blocks, motion, arrows, and drawing previews now inherit their player's color. Changing the player updates all attached drawings immediately, including print.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Unattached drawings retain their own color controls. Stored paths and positions remain unchanged.
+
+## 2026-09-22 — Simplify player color and label editing
+- **Asked for:** Keep it simple: click the circle to fill it with a color and/or label it.
+- **Changed:** Choosing a player color fills the symbol immediately. Label and color are the primary controls; shading and symbol choices are under More options.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Auto restores the normal outline appearance. Defensive letters retain their letter-only form unless a symbol is chosen.
+
 ## 2026-09-22 — Add one contextual editor for every Play Art player
 - **Asked for:** Click any offensive or defensive player for a small nearby editor.
 - **Changed:** Added a shared on-field player menu for labels, preset colors, fill, symbols, and deletion. Kept player metadata and assignment notes in the secondary menu.

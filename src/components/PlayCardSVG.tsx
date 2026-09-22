@@ -113,7 +113,8 @@ export default function PlayCardSVG({
         if (!a) return null;
         const pts: [number, number][] = l.anchor === "free" ? l.points : [a, ...l.points.map(([dx, dy]) => [a[0] + dx, a[1] + dy] as [number, number])];
         if (pts.length < 2) return null;
-        const color = l.color ?? (l.anchor.startsWith("def:") ? DEF : OFF);
+        const color = l.anchor.startsWith("off:") ? call.offLook.find(o => o.id === l.anchor.slice(4))?.color ?? OFF :
+          l.anchor.startsWith("def:") ? call.defAppearance?.[Number(l.anchor.slice(4))]?.color ?? DEF : l.color ?? OFF;
         const arrows = arrowStyleOf(l);
         const showArrow = arrows !== "none";
         const d = l.smooth ? smoothPath(pts) : pts.map(([x, y], i) => `${i === 0 ? "M" : "L"}${x},${y}`).join(" ");
