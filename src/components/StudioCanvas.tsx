@@ -62,8 +62,9 @@ const INK = ROUTE_COLORS[0];
 const DEF_INK = "#17212B";
 // Sizes are in football coordinates so symbols and strokes zoom together.
 const PLAYER_SIZE = 3.1;
-const DEF_FONT_SIZE = 3.5; // Letter cap height matches the offensive symbol diameter.
+const DEF_FONT_SIZE = 2.5; // Medium-sized defensive letters keep the alignment easy to read.
 const PATH_WIDTH = PLAYER_SIZE * 0.08;
+const BLOCK_BAR_HALF = 1.1;
 // Screen-only contrast on graphite; saved route colors and printed art stay unchanged.
 const fieldColor = (color: string) => ({
   "#1e2a3a": "#E8EAEB", "#17212B": "#E8EAEB",
@@ -700,7 +701,7 @@ export default function StudioCanvas({
               const len = Math.hypot(bx - ax, by - ay) || 1;
               const nx = -(by - ay) / len;
               const ny = (bx - ax) / len;
-              bar = { x1: bx - nx * 1.9, y1: by - ny * 1.9, x2: bx + nx * 1.9, y2: by + ny * 1.9 };
+              bar = { x1: bx - nx * BLOCK_BAR_HALF, y1: by - ny * BLOCK_BAR_HALF, x2: bx + nx * BLOCK_BAR_HALF, y2: by + ny * BLOCK_BAR_HALF };
             }
             // Excalidraw-style midpoint handles for bending
             // suppress midpoint handles on short segments (Excalidraw: 4× handle size)
@@ -740,12 +741,12 @@ export default function StudioCanvas({
                   }}
                 />
                 <path
-                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.35 : 1)}
+                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1)}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
                   markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
                   style={{ pointerEvents: "none" }}
                 />
-                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.45 : 1.1)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.2 : 0.9)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
                     <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
@@ -810,10 +811,10 @@ export default function StudioCanvas({
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
             const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
             return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
-              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH} strokeLinejoin="round" strokeLinecap="round"
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (tool === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
                 strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
                 markerEnd={tool !== "block" && tool !== "line" ? `url(#sarr-${c.slice(1)})` : undefined} />
-              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * 1.1} />}
+              {tool === "block" && <line x1={end[0] - nx * BLOCK_BAR_HALF} y1={end[1] - ny * BLOCK_BAR_HALF} x2={end[0] + nx * BLOCK_BAR_HALF} y2={end[1] + ny * BLOCK_BAR_HALF} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * 0.9} />}
               {draft.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.5" fill={fieldColor(c)} />)}
             </g>;
           })()}

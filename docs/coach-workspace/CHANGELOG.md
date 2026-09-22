@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Set defensive letters to a medium size
+- **Asked for:** The defensive icons are too big; find a medium.
+- **Changed:** Reduced defensive letter size from 3.5 to 2.5 field units, between the original and enlarged sizes. Line masks continue to scale with the letters.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Keeps defense below the offense and preserves saved alignments, Fit, and zoom.
+
+## 2026-09-22 — Reduce blocking line size
+- **Asked for:** Make the block line smaller.
+- **Changed:** Shortened the blocking end bar from 3.8 to 2.2 field units and slightly thinned blocking strokes, including the drawing preview.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing blocking paths and endpoints stay in place; only their visual styling changes.
+
 ## 2026-09-22 — Match defensive player size to offensive symbols
 - **Asked for:** Defensive players need to be the same size as offensive players, with lines scaled to them.
 - **Changed:** Enlarged defensive letter cap heights to match offensive symbol diameters. Route and blocking strokes derive from the shared player size, and defensive line masks now account for the larger letters.
