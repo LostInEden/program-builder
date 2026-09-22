@@ -60,6 +60,11 @@ const isOffensiveLineman = (m: { ptype?: string; label: string }) =>
 const uid = () => Math.random().toString(36).slice(2, 9);
 const INK = ROUTE_COLORS[0];
 const DEF_INK = "#17212B";
+// Screen-only contrast on graphite; saved route colors and printed art stay unchanged.
+const fieldColor = (color: string) => ({
+  "#1e2a3a": "#E8EAEB", "#17212B": "#E8EAEB",
+  "#ca8a04": "#BFA46F", "#0284c7": "#64B5E8", "#16a34a": "#66BB8A",
+}[color] ?? color);
 // legacy stored colors from the light-theme build
 const legacy = (c?: string) =>
   c === "#111827" || c === "#6b7280" || c === "#e9efe9" || c === "#9aa59b"
@@ -541,14 +546,14 @@ export default function StudioCanvas({
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
         style={{ aspectRatio: `100 / ${FIELD_H}` }}
-        className={`relative mx-auto shrink-0 [container-type:inline-size] w-full max-w-full overflow-hidden rounded-sm border border-[#B8B8B8] bg-[#F1F1F1] touch-none select-none ${
+        className={`relative mx-auto shrink-0 [container-type:inline-size] w-full max-w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-[#252729] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
         <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
             <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
-              <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#DCDCDC" strokeWidth="0.12" />
+              <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#36393C" strokeWidth="0.12" />
             </pattern>
             <mask id={pathMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={FIELD_H}>
               <rect width="100" height={FIELD_H} fill="white" />
@@ -562,7 +567,7 @@ export default function StudioCanvas({
             </mask>
             {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
-                <path d="M0,0 L6,3 L0,6 z" fill={c} />
+                <path d="M0,0 L6,3 L0,6 z" fill={fieldColor(c)} />
               </marker>
             ))}
           </defs>
@@ -570,11 +575,11 @@ export default function StudioCanvas({
           <rect width="100" height={FIELD_H} fill={`url(#${pathMaskId}-grid)`} />
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#888888" : "#B3B3B3"} strokeWidth={yl.goal ? 0.5 : 0.24} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#686E72"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
-                  <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#BDBDBD" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
-                  <text x="86" y={yl.y} fontSize="6" fill="none" stroke="#BDBDBD" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 86 ${yl.y})`}>{yl.label}</text>
+                  <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
+                  <text x="86" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 86 ${yl.y})`}>{yl.label}</text>
                 </>
               )}
             </g>
@@ -582,12 +587,12 @@ export default function StudioCanvas({
           {/* Horizontal hash marks positioned like the reference board. */}
           {[100 / 3, 200 / 3].map((x) =>
             Array.from({ length: Math.floor(FIELD_H / YD) }, (_, i) => i * YD + (LOS_Y % YD)).map((y) => (
-              <line key={`${x}-${y}`} x1={x - 0.625} x2={x + 0.625} y1={y} y2={y} stroke="rgba(15,28,46,0.32)" strokeWidth="0.22" />
+              <line key={`${x}-${y}`} x1={x - 0.625} x2={x + 0.625} y1={y} y2={y} stroke="rgba(157,163,166,0.65)" strokeWidth="0.22" />
             )),
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
-          {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(15,28,46,0.32)" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#7770ED" strokeWidth="0.4" />
+          {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(157,163,166,0.65)" strokeWidth="0.8" />)}
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#BFA46F" strokeWidth="0.4" />
 
           {call.zones.map((z) => (
             <g key={z.id}>
@@ -680,12 +685,12 @@ export default function StudioCanvas({
                   }}
                 />
                 <path
-                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={c} strokeWidth={selected ? 0.32 : 0.25}
+                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={selected ? 0.32 : 0.25}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
                   markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
                   style={{ pointerEvents: "none" }}
                 />
-                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={c} strokeWidth={selected ? 0.35 : 0.28} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={selected ? 0.35 : 0.28} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
                     <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
@@ -750,15 +755,15 @@ export default function StudioCanvas({
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
             const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
             return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
-              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={c} strokeWidth="0.25" strokeLinejoin="round" strokeLinecap="round"
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth="0.25" strokeLinejoin="round" strokeLinecap="round"
                 strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
                 markerEnd={tool !== "block" && tool !== "line" ? `url(#sarr-${c.slice(1)})` : undefined} />
-              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={c} strokeWidth="0.28" />}
-              {draft.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.5" fill={c} />)}
+              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={fieldColor(c)} strokeWidth="0.28" />}
+              {draft.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.5" fill={fieldColor(c)} />)}
             </g>;
           })()}
           {extendId && ghostFrom && hover && (
-            <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={INK} strokeOpacity="0.35" strokeWidth="0.35" strokeDasharray="0.9 0.9" />
+            <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={fieldColor(INK)} strokeOpacity="0.35" strokeWidth="0.35" strokeDasharray="0.9 0.9" />
           )}
           {zoneStart && hover && (
             <ellipse
@@ -775,7 +780,7 @@ export default function StudioCanvas({
             key={t.id}
             onPointerDown={(e) => beginMarkerDrag(e, "text", t.id)}
             className={`absolute -translate-x-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[14px] font-semibold whitespace-pre ${
-              selection?.kind === "text" && selection.id === t.id ? "bg-[#F4E8E8] text-[#17212B] ring-1 ring-[#8F1D22]" : "text-[#17212B]"
+              selection?.kind === "text" && selection.id === t.id ? "bg-[#8F1D22] text-[#E8EAEB] ring-1 ring-[#BFA46F]" : "text-[#E8EAEB]"
             } ${tool === "select" ? "cursor-grab" : ""}`}
             style={{ left: `${t.x}%`, top: `${(t.y / FIELD_H) * 100}%` }}
           >
@@ -798,7 +803,7 @@ export default function StudioCanvas({
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <span className={`grid min-w-10 min-h-10 px-1 place-items-center text-[17px] font-extrabold text-[#17212B] whitespace-nowrap ${sel || armed ? "rounded-md ring-2 ring-[#8F1D22] bg-[#F4E8E8]" : ""}`}>
+              <span className={`grid min-w-10 min-h-10 px-1 place-items-center text-[17px] font-extrabold text-[#E8EAEB] whitespace-nowrap ${sel || armed ? "rounded-md ring-2 ring-[#BFA46F] bg-[#8F1D22]" : ""}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -818,13 +823,13 @@ export default function StudioCanvas({
               style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <svg viewBox="0 0 40 40" className={`pointer-events-none h-full w-full ${sel || armed ? "ring-2 ring-[#8F1D22] rounded-sm" : ""}`}>
+              <svg viewBox="0 0 40 40" className={`pointer-events-none h-full w-full ${sel || armed ? "ring-2 ring-[#BFA46F] rounded-sm" : ""}`}>
                 {o.ptype === "Tight End" || (!o.ptype && o.label.toUpperCase() === "TE") ? (
-                  <path d="M20 3 L37 36 H3 Z" fill="#F1F1F1" stroke="#17212B" strokeWidth="2" />
+                  <path d="M20 3 L37 36 H3 Z" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />
                 ) : o.label.toUpperCase() === "C" && (!o.ptype || o.ptype === "Offensive Line") ? (
-                  <rect x="3" y="3" width="34" height="34" fill="#F1F1F1" stroke="#17212B" strokeWidth="2" />
-                ) : <circle cx="20" cy="20" r="17" fill="#F1F1F1" stroke="#17212B" strokeWidth="2" />}
-                {o.showLabel === true && <text x="20" y="24" fontSize="13" textAnchor="middle" fontWeight="700" fill="#17212B">{o.label}</text>}
+                  <rect x="3" y="3" width="34" height="34" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />
+                ) : <circle cx="20" cy="20" r="17" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />}
+                {o.showLabel === true && <text x="20" y="24" fontSize="13" textAnchor="middle" fontWeight="700" fill="#E8EAEB">{o.label}</text>}
               </svg>
             </span>
           );
@@ -882,7 +887,7 @@ export default function StudioCanvas({
             aria-label={`Color ${c}`}
             className={`grid size-7 place-items-center rounded-full transition ${color === c ? "ring-2 ring-grass ring-offset-1 ring-offset-card" : ""}`}
           >
-            <span className="size-4.5 rounded-full border border-line" style={{ backgroundColor: c }} />
+            <span className="size-4.5 rounded-full border border-line" style={{ backgroundColor: fieldColor(c) }} />
           </button>
         ))}
         <span className="mx-1 h-8 w-px bg-line" />

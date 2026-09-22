@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Match Play Art field to the CounterScheme theme
+- **Asked for:** Make the Play Art background fit my color theme.
+- **Changed:** Changed the drawing field to graphite with a subtle dark-gray grid, metallic-gray yard lines and hashes, and a champagne-gold line of scrimmage. Player symbols and labels use light ink; selection accents use deep red and gold. Screen-only route colors are brightened for contrast.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Presentation only. Saved drawings, route color values, field geometry, drawing interactions, and the light print renderer are unchanged.
+
 ## 2026-09-21 — Regroup My Scheme tabs and library segments
 - **Asked for:** My Scheme tabs should be Overview, Scheme Library (Full Calls first, then each segment), Defense Analysis, and Play Art.
 - **Changed:** Updated shared navigation and page tabs to those four destinations. Moved Fronts, Coverages, Pressures, and Adjustments into a second-level Scheme Library navigation after Full Calls. Added the same My Scheme tabs to Defense Analysis and Play Art; removed the separate Play Art main-navigation entry.
