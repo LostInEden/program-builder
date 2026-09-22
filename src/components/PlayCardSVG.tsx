@@ -127,11 +127,11 @@ export default function PlayCardSVG({
         return (
           <g key={l.id}>
             <path
-              d={d} fill="none" stroke={color} strokeWidth="0.42" strokeLinejoin="round" strokeLinecap="round"
+              d={d} fill="none" stroke={color} strokeWidth="0.5" strokeLinejoin="round" strokeLinecap="round"
               strokeDasharray={lineDash(l)}
               markerEnd={showArrow ? `url(#${arrId(color)})` : undefined}
             />
-            {bar && <line {...bar} stroke={color} strokeWidth="0.42" strokeLinecap="round" />}
+            {bar && <line {...bar} stroke={color} strokeWidth="0.5" strokeLinecap="round" />}
           </g>
         );
       })}
@@ -171,7 +171,7 @@ export default function PlayCardSVG({
             ) : (
               <circle cx={o.x} cy={o.y} r="1.95" fill="#fff" stroke={OFF} strokeWidth="0.35" />
             )}
-            {o.showLabel === true && <text x={o.x} y={o.y + 0.6} textAnchor="middle" fontSize="1.5" fontWeight="700" fill={OFF}>{o.label}</text>}
+            {o.showLabel === true && <text x={o.x} y={o.y + 0.6} textAnchor="middle" fontSize="1.5" fontWeight="700" fill={OFF}>{(o.displayLabel ?? o.label).slice(0, 2)}</text>}
           </g>
         );
       })}

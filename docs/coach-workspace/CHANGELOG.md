@@ -15,6 +15,34 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Make Play Art strokes thicker
+- **Asked for:** Slightly thicken lines, arrows, and other drawn paths.
+- **Changed:** Increased saved and preview path stroke widths, block end bars, and print strokes.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Field markings and stored path coordinates are unchanged.
+
+## 2026-09-21 — Add optional two-character offensive labels
+- **Asked for:** Let users name offensive players with a maximum of two letters or numbers.
+- **Changed:** Added an optional displayLabel on offensive markers; the inspector accepts up to two alphanumeric characters and shows entered labels automatically. Studio and print use that label.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Explicitly requested persisted label support. Optional field is backward compatible; original position label and type stay intact so center shapes and grouped line dragging do not change when renamed.
+
+## 2026-09-21 — Keep defenders as letters and retain drawing tools
+- **Asked for:** Defenders should only be letters with no box; keep each tool active until selecting another tool.
+- **Changed:** Removed defender hover/selection boxes, using gold letters for selection. Completing paths, zones, text, or added players no longer switches automatically to Select.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Select remains available through the toolbar or keyboard shortcut. Existing drawing data is unchanged.
+
+## 2026-09-21 — Center the Play Art board
+- **Asked for:** Center the drawing board on the screen.
+- **Changed:** Changed the studio to a centered single-column workspace, with the inspector below the field instead of reserving an empty right column.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Retains the field aspect ratio and proportional symbols.
+
 ## 2026-09-21 — Restore contextual Talk and Type controls
 - **Asked for:** Add talk/speech areas where needed, reusing the existing voice and AI tools.
 - **Changed:** Added a shared TalkTypeInput using existing startDictation, with Type fallback, editable transcript, stop controls, and microphone cleanup. Surfaced Teach CounterScheme near the top of My Scheme and added Talk / Type inside the existing Game Plan priority discussion.

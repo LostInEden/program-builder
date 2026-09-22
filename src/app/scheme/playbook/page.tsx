@@ -51,7 +51,7 @@ export default function PlaybookPage() {
   const selDef = selection?.kind === "def" ? selection.slot : null;
 
   return (
-    <div className="px-4 sm:px-6 py-4 max-w-[1800px] mx-auto">
+    <div className="px-4 sm:px-6 py-4 max-w-[1400px] mx-auto">
       <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
         <ArrowLeft size={15} /> My Scheme
       </Link>
@@ -81,9 +81,9 @@ export default function PlaybookPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px] items-start">
+      <div className="grid gap-3 items-start">
         {/* Call list */}
-        <details className="xl:col-span-2 rounded-xl border border-line bg-card/80 p-3">
+        <details className="rounded-xl border border-line bg-card/80 p-3">
           <summary className="cursor-pointer text-sm font-semibold">Saved diagrams · {call?.name ?? "Choose or create a diagram"} <span className="text-dim font-normal">({sectionCalls.length})</span></summary>
           <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {sectionCalls.map((c) => (
@@ -256,7 +256,7 @@ export default function PlaybookPage() {
         </div>
 
         {/* Inspector */}
-        <div className="rounded-xl border border-line bg-card/80 p-3 xl:sticky xl:top-28">
+        <div className="rounded-xl border border-line bg-card/80 p-3">
           {call && selOff ? (
             <>
               <div className="display uppercase text-xs font-semibold tracking-[0.2em] text-dim mb-3">Offensive player</div>
@@ -275,10 +275,13 @@ export default function PlaybookPage() {
                 </select>
               </Field>
               <div className="grid grid-cols-2 gap-2">
-                <Field label="Label">
+                <Field label="Label (optional, 2 characters)">
                   <input
-                    value={selOff.label}
-                    onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, label: e.target.value.slice(0, 3) } : m)) })}
+                    aria-label="Offensive player label"
+                    maxLength={2}
+                    placeholder="A, X, 12…"
+                    value={selOff.displayLabel ?? (selOff.showLabel ? selOff.label.slice(0, 2) : "")}
+                    onChange={(e) => updateCall(call.id, { offLook: call.offLook.map((m) => (m.id === selOff.id ? { ...m, displayLabel: e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2), showLabel: !!e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 2) } : m)) })}
                     className="w-full rounded-lg border border-line bg-slate-50 px-2.5 py-1.5 text-sm"
                   />
                 </Field>

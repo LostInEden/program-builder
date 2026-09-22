@@ -261,8 +261,7 @@ export default function StudioCanvas({
       }],
     });
     cancelDraft();
-    setTool("select");
-    onSelect({ kind: "line", id });
+    onSelect(null);
   };
 
   // One extension point on an existing line.
@@ -324,7 +323,6 @@ export default function StudioCanvas({
       const id = uid();
       updateCall(call.id, { texts: [...texts, { id, x, y, text: "Note" }] });
       onSelect({ kind: "text", id });
-      setTool("select");
       return;
     }
     if (tool === "player" && onField) {
@@ -333,10 +331,9 @@ export default function StudioCanvas({
       const id = uid();
       updateCall(call.id, { offLook: [...call.offLook, { id, label: "?", x, y: Math.min(LOS_Y - 1.2, y) }] });
       onSelect({ kind: "off", id });
-      setTool("select");
       return;
     }
-    if (onField) {
+    if (onField && tool === "select") {
       // empty-field click = done: back to Select, everything deselected/placed
       setTool("select");
       onSelect(null);
@@ -406,7 +403,6 @@ export default function StudioCanvas({
         const id = uid();
         updateCall(call.id, { zones: [...call.zones, { id, x: cx, y: cy, rx, ry, side: cy < LOS_Y ? "off" : "def" }] });
         onSelect({ kind: "zone", id });
-        setTool("select");
         clickConsumedRef.current = true;
       }
       setZoneStart(null);
@@ -685,12 +681,12 @@ export default function StudioCanvas({
                   }}
                 />
                 <path
-                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={selected ? 0.32 : 0.25}
+                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={selected ? 0.48 : 0.38}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
                   markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
                   style={{ pointerEvents: "none" }}
                 />
-                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={selected ? 0.35 : 0.28} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={selected ? 0.5 : 0.4} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
                     <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
@@ -755,10 +751,10 @@ export default function StudioCanvas({
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
             const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
             return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
-              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth="0.25" strokeLinejoin="round" strokeLinecap="round"
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth="0.38" strokeLinejoin="round" strokeLinecap="round"
                 strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
                 markerEnd={tool !== "block" && tool !== "line" ? `url(#sarr-${c.slice(1)})` : undefined} />
-              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={fieldColor(c)} strokeWidth="0.28" />}
+              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={fieldColor(c)} strokeWidth="0.4" />}
               {draft.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.5" fill={fieldColor(c)} />)}
             </g>;
           })()}
@@ -802,8 +798,7 @@ export default function StudioCanvas({
               className="group absolute -translate-x-1/2 -translate-y-1/2"
               style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
             >
-              <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
-              <span className={`grid min-w-10 min-h-10 px-1 place-items-center text-[17px] font-extrabold text-[#E8EAEB] whitespace-nowrap ${sel || armed ? "rounded-md ring-2 ring-[#BFA46F] bg-[#8F1D22]" : ""}`}>
+              <span className={`grid min-w-10 min-h-10 px-1 place-items-center text-[17px] font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -829,7 +824,7 @@ export default function StudioCanvas({
                 ) : o.label.toUpperCase() === "C" && (!o.ptype || o.ptype === "Offensive Line") ? (
                   <rect x="3" y="3" width="34" height="34" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />
                 ) : <circle cx="20" cy="20" r="17" fill="#252729" stroke="#E8EAEB" strokeWidth="2" />}
-                {o.showLabel === true && <text x="20" y="24" fontSize="13" textAnchor="middle" fontWeight="700" fill="#E8EAEB">{o.label}</text>}
+                {o.showLabel === true && <text x="20" y="24" fontSize="13" textAnchor="middle" fontWeight="700" fill="#E8EAEB">{(o.displayLabel ?? o.label).slice(0, 2)}</text>}
               </svg>
             </span>
           );

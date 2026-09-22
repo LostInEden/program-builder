@@ -166,6 +166,7 @@ export type OffMarker = {
   y: number;
   jersey?: string;
   ptype?: string; // position type e.g. "Running Back"
+  displayLabel?: string; // optional coach label; position identity stays in label/ptype
   showLabel?: boolean; // default true
 };
 
