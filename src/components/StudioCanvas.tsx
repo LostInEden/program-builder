@@ -117,6 +117,10 @@ export default function StudioCanvas({
 
   const fieldRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const [fullField, setFullField] = useState(false);
+  const [viewTop, setViewTop] = useState(24);
+  const viewHeight = fullField ? FIELD_H : 52;
+  const cameraTop = fullField ? 0 : viewTop;
   const [fitWidth, setFitWidth] = useState<number>();
   useEffect(() => {
     const field = fieldRef.current;
@@ -124,9 +128,10 @@ export default function StudioCanvas({
     if (!field || !toolbar) return;
     const fit = () => {
       // Use document position so scrolling never changes the diagram scale.
-      const top = field.getBoundingClientRect().top + window.scrollY;
+      const workspace = field.closest("[data-play-art-workspace]");
+      const top = field.getBoundingClientRect().top + (workspace?.scrollTop ?? window.scrollY);
       const height = Math.max(100, window.innerHeight - top - toolbar.getBoundingClientRect().height - 24);
-      setFitWidth(height * 100 / FIELD_H);
+      setFitWidth(height * 100 / viewHeight);
     };
     const observer = new ResizeObserver(fit);
     observer.observe(field.parentElement!);
@@ -135,7 +140,7 @@ export default function StudioCanvas({
     document.addEventListener("toggle", fit, true);
     fit();
     return () => { observer.disconnect(); window.removeEventListener("resize", fit); document.removeEventListener("toggle", fit, true); };
-  }, []);
+  }, [viewHeight]);
   const pathMaskId = useId();
   const [fieldWidth, setFieldWidth] = useState(1000);
   const [fieldHeight, setFieldHeight] = useState(FIELD_H * 10);
@@ -223,7 +228,7 @@ export default function StudioCanvas({
     const r = fieldRef.current!.getBoundingClientRect();
     return [
       Math.min(99, Math.max(1, ((e.clientX - r.left) / r.width) * 100)),
-      Math.min(FIELD_H - 1, Math.max(1, ((e.clientY - r.top) / r.height) * FIELD_H)),
+      Math.min(FIELD_H - 1, Math.max(1, cameraTop + ((e.clientY - r.top) / r.height) * viewHeight)),
     ];
   };
   const colorOf = (l: { anchor: string; color?: string }, selected: boolean) => {
@@ -246,7 +251,7 @@ export default function StudioCanvas({
         ...call.offLook.map((m) => ({ anchor: `off:${m.id}`, pos: [m.x, m.y] as Pt })),
         ...structure.slots.map((_, i) => ({ anchor: `def:${i}`, pos: defPos(i) })),
       ];
-      const nearest = candidates.map((c) => ({ ...c, distance: Math.hypot((c.pos[0] - pt[0]) * r.width / 100, (c.pos[1] - pt[1]) * r.height / FIELD_H) }))
+      const nearest = candidates.map((c) => ({ ...c, distance: Math.hypot((c.pos[0] - pt[0]) * r.width / 100, (c.pos[1] - pt[1]) * r.height / viewHeight) }))
         .sort((a, b) => a.distance - b.distance)[0];
       if (nearest?.distance <= 26) anchor = nearest.anchor;
     }
@@ -545,7 +550,11 @@ export default function StudioCanvas({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <p className="mb-2 text-xs text-dim">Click a player or field to start · Click bends · Double-click the endpoint or press Enter to finish · Esc cancels</p>
+      <div className="mb-2 flex flex-wrap items-center justify-center gap-3 text-xs">
+        <button type="button" onClick={() => { cancelDraft(); setFullField(!fullField); }} className="rounded border border-line px-2 py-1 text-gold">{fullField ? "Wide field view" : "Show full field"}</button>
+        {!fullField && <label className="flex items-center gap-2 text-dim">Field position <input aria-label="Field view position" type="range" min={0} max={FIELD_H - viewHeight} value={viewTop} onChange={e => { cancelDraft(); setViewTop(Number(e.target.value)); }} /></label>}
+      </div>
+      <p className="mb-2 text-center text-[10px] text-dim">Click a player or field to start · Click bends · Double-click the endpoint or press Enter to finish · Esc cancels</p>
       <div
         ref={fieldRef}
         onPointerDown={onFieldPointerDown}
@@ -561,12 +570,12 @@ export default function StudioCanvas({
         }}
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
-        style={{ aspectRatio: `100 / ${FIELD_H}`, maxWidth: fitWidth === undefined ? "100%" : `min(100%, ${fitWidth}px)` }}
+        style={{ aspectRatio: `100 / ${viewHeight}`, maxWidth: fitWidth === undefined ? "100%" : `min(100%, ${fitWidth}px)` }}
         className={`relative mx-auto shrink-0 [container-type:inline-size] w-full max-w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-[#252729] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
-        <svg viewBox={`0 0 100 ${FIELD_H}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
+        <svg viewBox={`0 ${cameraTop} 100 ${viewHeight}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
             <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
               <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#36393C" strokeWidth="0.12" />
@@ -576,10 +585,10 @@ export default function StudioCanvas({
               {structure.slots.map((_, i) => {
                 const [x, y] = defPos(i);
                 const halfWidth = (labelFor(i).length * 6 + 3) * Math.min(1, fieldWidth / 1000) * 100 / fieldWidth;
-                const halfHeight = 11 * Math.min(1, fieldWidth / 1000) * FIELD_H / fieldHeight;
+                const halfHeight = 11 * Math.min(1, fieldWidth / 1000) * viewHeight / fieldHeight;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
-              {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 2) * 100 / fieldWidth} ry={(offenseRadius + 2) * FIELD_H / fieldHeight} fill="black" />)}
+              {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 2) * 100 / fieldWidth} ry={(offenseRadius + 2) * viewHeight / fieldHeight} fill="black" />)}
             </mask>
             {[...ROUTE_COLORS, DEF_INK, "#f59e0b"].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
@@ -647,7 +656,7 @@ export default function StudioCanvas({
             const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
             const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
             const halfWidth = (defIndex !== null ? Math.max(22, labelFor(defIndex).length * 6 + 5) : offenseRadius + 3) * 100 / fieldWidth;
-            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * FIELD_H / fieldHeight;
+            const halfHeight = (defIndex !== null ? 22 : offenseRadius + 3) * viewHeight / fieldHeight;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
             const c = colorOf(l, selected);
@@ -798,7 +807,7 @@ export default function StudioCanvas({
             className={`absolute -translate-x-1/2 -translate-y-1/2 rounded px-1.5 py-0.5 text-[14px] font-semibold whitespace-pre ${
               selection?.kind === "text" && selection.id === t.id ? "bg-[#8F1D22] text-[#E8EAEB] ring-1 ring-[#BFA46F]" : "text-[#E8EAEB]"
             } ${tool === "select" ? "cursor-grab" : ""}`}
-            style={{ left: `${t.x}%`, top: `${(t.y / FIELD_H) * 100}%` }}
+            style={{ left: `${t.x}%`, top: `${((t.y - cameraTop) / viewHeight) * 100}%` }}
           >
             {t.text}
           </span>
@@ -816,7 +825,7 @@ export default function StudioCanvas({
               onDoubleClick={(e) => { if (!draft) { e.stopPropagation(); if (tool === "select") blockTo(i); } }}
               title={`${labelFor(i)} · drag to align`}
               className="group absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${x}%`, top: `${(y / FIELD_H) * 100}%` }}
+              style={{ left: `${x}%`, top: `${((y - cameraTop) / viewHeight) * 100}%` }}
             >
               <span className={`grid min-w-[clamp(16px,4cqw,40px)] min-h-[clamp(16px,4cqw,40px)] px-0.5 place-items-center text-[clamp(8px,1.7cqw,17px)] font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
                 {labelFor(i)}
@@ -835,7 +844,7 @@ export default function StudioCanvas({
               title={`${o.label}${o.ptype ? ` · ${o.ptype}` : ""}${isOffensiveLineman(o) ? " · Drag the line together; Shift-drag this player" : " · Drag to align"}`}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
               className={`group absolute aspect-square w-[3.1cqw] min-w-[12px] max-w-[36px] -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
-              style={{ left: `${o.x}%`, top: `${(o.y / FIELD_H) * 100}%` }}
+              style={{ left: `${o.x}%`, top: `${((o.y - cameraTop) / viewHeight) * 100}%` }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
               <svg viewBox="0 0 40 40" className={`pointer-events-none h-full w-full ${sel || armed ? "ring-2 ring-[#BFA46F] rounded-sm" : ""}`}>
@@ -866,7 +875,7 @@ export default function StudioCanvas({
             onClick={(e) => e.stopPropagation()}
             title="Drag to move the endpoint · click + to extend the line"
             className="absolute z-10 grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-ember bg-pitch text-ember shadow-lg transition hover:bg-ember hover:text-white"
-            style={{ left: `${extendBtnPos[0]}%`, top: `${(extendBtnPos[1] / FIELD_H) * 100}%` }}
+            style={{ left: `${extendBtnPos[0]}%`, top: `${((extendBtnPos[1] - cameraTop) / viewHeight) * 100}%` }}
           >
             <Plus size={13} />
           </button>

@@ -51,8 +51,8 @@ export default function PlaybookPage() {
   const selDef = selection?.kind === "def" ? selection.slot : null;
 
   return (
-    <div className="px-4 sm:px-6 py-4 max-w-[1400px] mx-auto">
-      <details className="mb-3 rounded-lg border border-line bg-card p-3">
+    <div data-play-art-workspace className="fixed inset-0 z-[60] overflow-y-auto bg-pitch px-2 pb-4 pt-16">
+      <details className="absolute left-2 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-12px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
         <summary className="cursor-pointer text-sm font-bold">Play Art · Workspace options</summary>
       <Link href="/scheme" className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
         <ArrowLeft size={15} /> My Scheme
@@ -61,6 +61,7 @@ export default function PlaybookPage() {
       <SchemeTabs active="art" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="display text-2xl font-bold">Play Art</h1>
+        <Link href="/chat" className="text-sm text-gold">Ask CounterScheme</Link>
         <Link
           href="/scheme/playbook/print"
           className="display rounded-full border border-line px-4 py-1.5 text-xs font-semibold text-dim transition hover:text-ink hover:border-dim"
@@ -86,7 +87,7 @@ export default function PlaybookPage() {
       </details>
       <div className="grid gap-3 items-start">
         {/* Call list */}
-        <details className="rounded-xl border border-line bg-card/80 p-3">
+        <details className="absolute left-1/3 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-8px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
           <summary className="cursor-pointer text-sm font-semibold">Saved diagrams · {call?.name ?? "Choose or create a diagram"} <span className="text-dim font-normal">({sectionCalls.length})</span></summary>
           <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {sectionCalls.map((c) => (
@@ -141,7 +142,7 @@ export default function PlaybookPage() {
         <div className="min-w-0">
           {call ? (
             <motion.div key={call.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col">
-              <details className="mb-3 rounded-lg border border-line bg-card p-3">
+              <details className="absolute right-2 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-12px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
                 <summary className="cursor-pointer text-sm font-semibold">{call.name} · Play details & formation</summary>
               <div className="mb-2 mt-3 flex flex-wrap items-center gap-2">
                 <input

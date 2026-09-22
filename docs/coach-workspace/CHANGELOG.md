@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-21 — Expand Play Art into a wide drawing workspace
+- **Asked for:** Make the screen fit like the supplied wide coaching-board screenshot.
+- **Changed:** Made Play Art a focused drawing workspace with three compact options menus across the top and the drawing tools under the field. Added a wide, uniformly scaled field window with a field-position control and Show full field option.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves graphite styling, player positions, routes, and proportions. Wide view shows a smaller yardage window rather than squashing the diagram; full-field view remains available for long routes. Camera coordinates are translated for drawing and player positioning without rewriting saved art. My Scheme navigation remains accessible through workspace options.
+
 ## 2026-09-21 — Fit Play Art to the screen
 - **Asked for:** Scale the diagram to fit the screen without scrolling.
 - **Changed:** Sized the centered field from available viewport height, reserving room for its drawing toolbar. Recalculates on resizing and layout changes while preserving the field's aspect ratio. Player symbols and defensive text scale down with the board. Collapsed workspace options and play details by default to reserve more room for the diagram.
