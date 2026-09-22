@@ -30,7 +30,7 @@ export function PlayerGlyph({ appearance, label, symbol, defaultColor = "#E8EAEB
     {symbol === "circle" && <circle cx="20" cy="20" r="17" {...shapeProps} />}
     {symbol === "square" && <rect x="3" y="3" width="34" height="34" {...shapeProps} />}
     {symbol === "triangle" && <path d="M20 3 L37 36 H3 Z" {...shapeProps} />}
-    {label && <text x="20" y={symbol === "triangle" ? 25 : 21} dominantBaseline="middle" textAnchor="middle" fontSize={symbol === "letters" ? 24 : 14} fontWeight="800" fill={textColor}>{shortLabel(label)}</text>}
+    {label && <text x="20" y={symbol === "triangle" ? 25 : 21} dominantBaseline="middle" textAnchor="middle" fontSize={symbol === "letters" ? 24 : shortLabel(label).length === 1 ? 22 : 19} fontWeight="800" fill={textColor}>{shortLabel(label)}</text>}
   </>;
 }
 

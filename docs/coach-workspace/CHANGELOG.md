@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Enlarge labels inside player symbols
+- **Asked for:** Make the letter bigger inside the circle.
+- **Changed:** Increased single-character labels from 14 to 22 SVG units and two-character labels to 19 units, keeping them centered in player symbols in the canvas and print view.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves symbol size, player colors, and the size of standalone defensive letters.
+
 ## 2026-09-22 — Match attached drawings to the player's color
 - **Asked for:** The color of the circle should determine the color of the line.
 - **Changed:** Attached routes, blocks, motion, arrows, and drawing previews now inherit their player's color. Changing the player updates all attached drawings immediately, including print.
