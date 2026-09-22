@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Reduce defensive letters by twenty percent
+- **Asked for:** Defenders 20% smaller.
+- **Changed:** Reduced defensive font size from 2.3 to 1.84 field units.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves player positions, offensive symbols, drawing stroke weights, and responsive scaling.
+
 ## 2026-09-22 — Slightly thicken Play Art lines
 - **Asked for:** Lines slightly thicker.
 - **Changed:** Increased the shared drawing stroke by 12.5%, including routes, arrows, blocking lines, and previews.
