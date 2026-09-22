@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-09-22 — Match defensive player size to offensive symbols
+- **Asked for:** Defensive players need to be the same size as offensive players, with lines scaled to them.
+- **Changed:** Enlarged defensive letter cap heights to match offensive symbol diameters. Route and blocking strokes derive from the shared player size, and defensive line masks now account for the larger letters.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Player symbols, defensive labels, paths, and arrowheads retain their proportions at every screen size and zoom level.
+
+## 2026-09-22 — Restore defense below the offense in Play Art
+- **Asked for:** Flip it back with the defense on the bottom.
+- **Changed:** Reversed the visual camera orientation, including pointer and pan mapping. Offense is above the LOS and defense is below it, with the LOS 32% down the canvas.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves Fit, zoom, responsive sizing, and all saved football coordinates.
+
+## 2026-09-22 — Make Play Art lines and arrows thinner
+- **Asked for:** Make the lines smaller.
+- **Changed:** Reduced drawn route, line, arrow, and blocking stroke widths, including drawing previews and selected lines. Arrowheads scale with the thinner strokes.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Changes presentation only; existing paths and click targets remain intact.
+
 ## 2026-09-22 — Fit the Play Art workspace below app navigation
 - **Asked for:** Make the drawing board use the available screen without page scrolling.
 - **Changed:** Restored CounterScheme navigation, measured its height, and allocated the remaining viewport to compact setup controls, the canvas, and drawing tools. Moved selection editing and secondary information into expandable panels.

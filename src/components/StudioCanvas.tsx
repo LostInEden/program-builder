@@ -60,6 +60,10 @@ const isOffensiveLineman = (m: { ptype?: string; label: string }) =>
 const uid = () => Math.random().toString(36).slice(2, 9);
 const INK = ROUTE_COLORS[0];
 const DEF_INK = "#17212B";
+// Sizes are in football coordinates so symbols and strokes zoom together.
+const PLAYER_SIZE = 3.1;
+const DEF_FONT_SIZE = 3.5; // Letter cap height matches the offensive symbol diameter.
+const PATH_WIDTH = PLAYER_SIZE * 0.08;
 // Screen-only contrast on graphite; saved route colors and printed art stay unchanged.
 const fieldColor = (color: string) => ({
   "#1e2a3a": "#E8EAEB", "#17212B": "#E8EAEB",
@@ -167,10 +171,10 @@ export default function StudioCanvas({
   const viewWidth = fieldWidth / scale;
   const viewHeight = fieldHeight / scale;
   const cameraLeft = 50 - viewWidth / 2 + pan[0];
-  const cameraTop = LOS_Y + viewHeight * 0.68 + pan[1];
+  const cameraTop = LOS_Y - viewHeight * 0.32 + pan[1];
   const screenPosition = (x: number, y: number) => ({
     left: `${(x - cameraLeft) / viewWidth * 100}%`,
-    top: `${(cameraTop - y) / viewHeight * 100}%`,
+    top: `${(y - cameraTop) / viewHeight * 100}%`,
   });
   const fit = () => { setFitSize(workingSize()); setZoom(1); setPan([0, 0]); setPanMode(false); };
   const [tool, setTool] = useState<Tool>("select");
@@ -231,7 +235,7 @@ export default function StudioCanvas({
     const r = fieldRef.current!.getBoundingClientRect();
     return [
       Math.min(99, Math.max(1, cameraLeft + ((e.clientX - r.left) / r.width) * viewWidth)),
-      Math.min(FIELD_H - 1, Math.max(1, cameraTop - ((e.clientY - r.top) / r.height) * viewHeight)),
+      Math.min(FIELD_H - 1, Math.max(1, cameraTop + ((e.clientY - r.top) / r.height) * viewHeight)),
     ];
   };
   const colorOf = (l: { anchor: string; color?: string }, selected: boolean) => {
@@ -379,7 +383,7 @@ export default function StudioCanvas({
   const onFieldPointerMove = (e: React.PointerEvent) => {
     if (panDrag.current) {
       const drag = panDrag.current;
-      setPan([Math.max(-100, Math.min(100, drag.origin[0] - (e.clientX - drag.x) / scale)), Math.max(-FIELD_H, Math.min(FIELD_H, drag.origin[1] + (e.clientY - drag.y) / scale))]);
+      setPan([Math.max(-100, Math.min(100, drag.origin[0] - (e.clientX - drag.x) / scale)), Math.max(-FIELD_H, Math.min(FIELD_H, drag.origin[1] - (e.clientY - drag.y) / scale))]);
       return;
     }
     if (pending || extendId || zoneStart) setHover(toCanvas(e));
@@ -564,7 +568,7 @@ export default function StudioCanvas({
       ? lineEnd(call.lines.find((l) => l.id === extendId) ?? { anchor: "", points: [] })
       : null;
 
-  const offenseRadius = 3.1 * scale / 2;
+  const offenseRadius = PLAYER_SIZE * scale / 2;
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
@@ -600,7 +604,7 @@ export default function StudioCanvas({
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
-        <svg viewBox={`${cameraLeft} ${cameraTop - viewHeight} ${viewWidth} ${viewHeight}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
+        <svg viewBox={`${cameraLeft} ${cameraTop} ${viewWidth} ${viewHeight}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
             <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
               <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#36393C" strokeWidth="0.12" />
@@ -609,8 +613,8 @@ export default function StudioCanvas({
               <rect width="100" height={FIELD_H} fill="white" />
               {structure.slots.map((_, i) => {
                 const [x, y] = defPos(i);
-                const halfWidth = (labelFor(i).length * 6 + 3) * (scale / 10) * viewWidth / fieldWidth;
-                const halfHeight = 11 * (scale / 10) * viewHeight / fieldHeight;
+                const halfWidth = (labelFor(i).length * DEF_FONT_SIZE * 0.35 + 0.3) * scale * viewWidth / fieldWidth;
+                const halfHeight = DEF_FONT_SIZE * 0.5 * scale * viewHeight / fieldHeight;
                 return <rect key={`def-${i}`} x={x - halfWidth} y={y - halfHeight} width={halfWidth * 2} height={halfHeight * 2} fill="black" />;
               })}
               {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 0.2 * scale) * viewWidth / fieldWidth} ry={(offenseRadius + 0.2 * scale) * viewHeight / fieldHeight} fill="black" />)}
@@ -622,15 +626,15 @@ export default function StudioCanvas({
             ))}
           </defs>
 
-          <g transform={`translate(0 ${2 * cameraTop - viewHeight}) scale(1 -1)`}>
-          <rect x={cameraLeft} y={cameraTop - viewHeight} width={viewWidth} height={viewHeight} fill={`url(#${pathMaskId}-grid)`} />
+          <g>
+          <rect x={cameraLeft} y={cameraTop} width={viewWidth} height={viewHeight} fill={`url(#${pathMaskId}-grid)`} />
           {yardLines.map((yl) => (
             <g key={yl.y}>
               <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#686E72"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
-                  <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`translate(0 ${2 * yl.y}) scale(1 -1) rotate(-90 14 ${yl.y})`}>{yl.label}</text>
-                  <text x="86" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`translate(0 ${2 * yl.y}) scale(1 -1) rotate(90 86 ${yl.y})`}>{yl.label}</text>
+                  <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
+                  <text x="86" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(90 86 ${yl.y})`}>{yl.label}</text>
                 </>
               )}
             </g>
@@ -681,7 +685,7 @@ export default function StudioCanvas({
             // Keep the attached start handle just outside the player so it is reachable.
             const dx = pts[1][0] - pts[0][0], dy = pts[1][1] - pts[0][1];
             const defIndex = l.anchor.startsWith("def:") ? Number(l.anchor.slice(4)) : null;
-            const halfWidth = (defIndex !== null ? Math.max(2.2, labelFor(defIndex).length * 0.6 + 0.5) * scale : offenseRadius + 0.3 * scale) * viewWidth / fieldWidth;
+            const halfWidth = (defIndex !== null ? Math.max(2.2, labelFor(defIndex).length * DEF_FONT_SIZE * 0.35 + 0.3) * scale : offenseRadius + 0.3 * scale) * viewWidth / fieldWidth;
             const halfHeight = (defIndex !== null ? 2.2 * scale : offenseRadius + 0.3 * scale) * viewHeight / fieldHeight;
             const edge = Math.min(halfWidth / (Math.abs(dx) || 0.0001), halfHeight / (Math.abs(dy) || 0.0001));
             const startHandle: Pt = l.anchor === "free" ? pts[0] : [pts[0][0] + dx * (edge + 1.4 / (Math.hypot(dx, dy) || 1)), pts[0][1] + dy * (edge + 1.4 / (Math.hypot(dx, dy) || 1))];
@@ -736,12 +740,12 @@ export default function StudioCanvas({
                   }}
                 />
                 <path
-                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={selected ? 0.48 : 0.38}
+                  mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.35 : 1)}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
                   markerEnd={showArrow ? `url(#sarr-${(selected ? "#f59e0b" : rawColor).slice(1)})` : undefined}
                   style={{ pointerEvents: "none" }}
                 />
-                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={selected ? 0.5 : 0.4} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * (selected ? 1.45 : 1.1)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
                     <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
@@ -806,15 +810,15 @@ export default function StudioCanvas({
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
             const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
             return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
-              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth="0.38" strokeLinejoin="round" strokeLinecap="round"
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH} strokeLinejoin="round" strokeLinecap="round"
                 strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
                 markerEnd={tool !== "block" && tool !== "line" ? `url(#sarr-${c.slice(1)})` : undefined} />
-              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={fieldColor(c)} strokeWidth="0.4" />}
+              {tool === "block" && <line x1={end[0] - nx * 1.9} y1={end[1] - ny * 1.9} x2={end[0] + nx * 1.9} y2={end[1] + ny * 1.9} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * 1.1} />}
               {draft.points.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="0.5" fill={fieldColor(c)} />)}
             </g>;
           })()}
           {extendId && ghostFrom && hover && (
-            <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={fieldColor(INK)} strokeOpacity="0.35" strokeWidth="0.35" strokeDasharray="0.9 0.9" />
+            <line x1={ghostFrom[0]} y1={ghostFrom[1]} x2={hover[0]} y2={hover[1]} stroke={fieldColor(INK)} strokeOpacity="0.35" strokeWidth={PATH_WIDTH} strokeDasharray="0.9 0.9" />
           )}
           {zoneStart && hover && (
             <ellipse
@@ -854,7 +858,7 @@ export default function StudioCanvas({
               className="group absolute -translate-x-1/2 -translate-y-1/2"
               style={{ ...screenPosition(x, y) }}
             >
-              <span style={{ width: 4 * scale, height: 4 * scale, fontSize: 1.7 * scale }} className={`grid place-items-center font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
+              <span style={{ width: 4 * scale, height: 4 * scale, fontSize: DEF_FONT_SIZE * scale }} className={`grid place-items-center font-extrabold whitespace-nowrap ${sel || armed ? "text-[#BFA46F]" : "text-[#E8EAEB]"}`}>
                 {labelFor(i)}
               </span>
             </button>
@@ -871,7 +875,7 @@ export default function StudioCanvas({
               title={`${o.label}${o.ptype ? ` · ${o.ptype}` : ""}${isOffensiveLineman(o) ? " · Drag the line together; Shift-drag this player" : " · Drag to align"}`}
               onPointerDown={(e) => beginMarkerDrag(e, "off", o.id)}
               className={`group absolute aspect-square -translate-x-1/2 -translate-y-1/2 ${tool === "select" ? "cursor-grab" : "cursor-crosshair"}`}
-              style={{ ...screenPosition(o.x, o.y), width: 3.1 * scale }}
+              style={{ ...screenPosition(o.x, o.y), width: PLAYER_SIZE * scale }}
             >
               <span className="pointer-events-none absolute -inset-1 rounded-lg border-2 border-grass opacity-0 transition group-hover:opacity-100" />
               <svg viewBox="0 0 40 40" className={`pointer-events-none h-full w-full ${sel || armed ? "ring-2 ring-[#BFA46F] rounded-sm" : ""}`}>
