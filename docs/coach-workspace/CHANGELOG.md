@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Darken the gray background
+- **Asked for:** Make the grey darker.
+- **Changed:** Darkened the main background to #CCD0D4 and navigation to #BFC5CA, with darker secondary navigation text for readability.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Off-white cards and red/gold accents remain unchanged. Earlier palettes remain available in Git history.
+
 ## 2026-09-23 — Explore the light gray, deep red, and muted gold theme
 - **Asked for:** Use a light gray base, off-white cards, deep red primary accents, and sparing muted gold highlights.
 - **Changed:** Updated shared software colors, navigation, dropdowns, forms, active tabs, and status treatments for a light theme with charcoal text and gray borders. Darkened small gold text for readability.

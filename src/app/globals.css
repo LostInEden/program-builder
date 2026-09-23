@@ -2,7 +2,7 @@
 
 /* CounterScheme's light gray, deep red, and muted gold palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #E5E7E9;
+  --color-pitch: #CCD0D4;
   --color-panel: #F7F7F5;
   --color-card: #F7F7F5;
   --color-line: #C9CCCF;
@@ -11,7 +11,7 @@
   --color-grass: #AA0000;
   --color-grass-deep: #850000;
   --color-navy: #AA0000;
-  --color-slate-brand: #D9DCDF;
+  --color-slate-brand: #BFC5CA;
   --color-sky: #B3995D;
   --color-ember: #B3995D;
   --color-success: #2E8B57;
@@ -76,7 +76,8 @@ body {
 
 /* Light navigation and off-white dropdown panels. */
 .theme-navigation {
-  background-color: #D9DCDF;
+  background-color: #BFC5CA;
+  --color-dim: #555555;
   color: var(--color-ink);
 }
 
