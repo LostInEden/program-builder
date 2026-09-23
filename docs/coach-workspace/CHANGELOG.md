@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Explore the light gray, deep red, and muted gold theme
+- **Asked for:** Use a light gray base, off-white cards, deep red primary accents, and sparing muted gold highlights.
+- **Changed:** Updated shared software colors, navigation, dropdowns, forms, active tabs, and status treatments for a light theme with charcoal text and gray borders. Darkened small gold text for readability.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Previous red/gold/graphite theme is preserved at 89c7831553d16ec160f52ec237e5f9abde0780c2. Drawing fields retain their dedicated contrast treatment; saved play colors and data are unchanged.
+
 ## 2026-09-22 — Enlarge labels inside player symbols
 - **Asked for:** Make the letter bigger inside the circle.
 - **Changed:** Increased single-character labels from 14 to 22 SVG units and two-character labels to 19 units, keeping them centered in player symbols in the canvas and print view.
