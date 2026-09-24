@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Search, Bell, ChevronDown } from "lucide-react";
 import { useStore, useHydrated, initialsOf } from "@/lib/store";
@@ -33,9 +34,7 @@ export default function TopNav() {
     <header className="sticky top-0 z-50 border-b border-line theme-navigation">
       <div className="flex items-center gap-3 px-4 h-[52px]">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <span className="grid size-8 place-items-center rounded-lg bg-navy text-white font-extrabold text-sm">
-            CS
-          </span>
+          <Image src="/brand/counterscheme-classic.png" alt="" width={1227} height={1282} sizes="44px" className="h-11 w-auto shrink-0 object-contain" />
           <span className="display text-lg font-extrabold tracking-tight text-navy">CounterScheme</span>
         </Link>
 

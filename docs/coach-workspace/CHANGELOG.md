@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Add the selected classic CounterScheme logo
+- **Asked for:** Use the third logo and put it on the website.
+- **Changed:** Added the classic serif C/S logo as a transparent local asset, replaced the header CS badge with it, and placed a larger version on the home page. Header text remains readable at small sizes.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Prepared with built-in image generation from the chosen concept: isolate the third classic logo, retain lettering and blocking detail, remove comparison labels, use a transparent background. Asset: public/brand/counterscheme-classic.png.
+
 ## 2026-09-23 — Apply the navy and steel blue palette
 - **Asked for:** Light gray dominant software with deep navy branding, steel blue interactions, and muted status colors.
 - **Changed:** Updated shared backgrounds, cards, navigation, borders, typography colors, primary buttons and hover states, selected backgrounds, links, and status colors to the requested palette.
