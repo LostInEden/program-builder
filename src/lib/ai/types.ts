@@ -65,6 +65,8 @@ export type ChatContext = SchemeContext & {
   week?: number | null;
   /** Where he typed it: "/scheme", "/matchup", "/chat". */
   page?: string;
+  /** The recent thread, oldest first — a remote model needs it to follow along. */
+  history?: { role: "coach" | "counterscheme"; text: string }[];
 };
 
 /** What the reply asks the app to do — filing concepts, remembering a word. */
