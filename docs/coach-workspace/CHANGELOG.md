@@ -22,6 +22,13 @@ Entry format:
 - **Status:** On coach
 - **Notes:** Prepared with built-in image generation from the chosen concept: isolate the third classic logo, retain lettering and blocking detail, remove comparison labels, use a transparent background. Asset: public/brand/counterscheme-classic.png.
 
+## 2026-09-23 — Real AI model connected (engineering)
+- **Asked for:** REQUESTS #4, a real conversational staff-meeting AI.
+- **Changed:** Merged master into coach. It adds the OpenAI model behind `/api/ai`, used by Ask CounterScheme, Talk It Through, and Teach. Talk It Through's footer now says whether the model or the rules engine answered.
+- **Commit:** 16e25ad
+- **Status:** On coach (also on master)
+- **Notes:** `src/server/`, `src/app/api/` and `src/lib/ai/` are engineering-only. Setup is in `docs/AI-SETUP.md`. REQUESTS #4 can close once the coach confirms the replies are useful.
+
 ## 2026-09-23 — Apply the navy and steel blue palette
 - **Asked for:** Light gray dominant software with deep navy branding, steel blue interactions, and muted status colors.
 - **Changed:** Updated shared backgrounds, cards, navigation, borders, typography colors, primary buttons and hover states, selected backgrounds, links, and status colors to the requested palette.

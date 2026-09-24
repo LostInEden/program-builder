@@ -8,7 +8,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useStore, type ChatMessage, type Opponent } from "@/lib/store";
 import { usePractice } from "@/lib/usePractice";
-import { ai, AI_LABEL, COACH_QUESTIONS } from "@/lib/ai";
+import { ai, AI_IS_MODEL, AI_LABEL, COACH_QUESTIONS } from "@/lib/ai";
 
 /** Who we're talking about: the last opponent he opened, else the next game. */
 export function useCurrentOpponent(): Opponent | null {
@@ -77,6 +77,7 @@ export function useChat(page?: string): ChatSession {
       setBusy(true);
       const s = useStore.getState();
       const where = fromPage ?? page;
+      const history = s.chat.slice(-12).map((m) => ({ role: m.role, text: m.text }));
       try {
         s.appendChat({ role: "coach", text, context: { page: where, opponentId: opponent?.id } });
         const res = await ai.chat(text, {
@@ -93,6 +94,7 @@ export function useChat(page?: string): ChatSession {
           practiceSelection: opponent ? s.practice[opponent.id] : undefined,
           week: opponent?.week ?? null,
           page: where,
+          history,
         });
 
         // Side effects: file what he taught, remember the word, keep the
@@ -132,7 +134,9 @@ export function useChat(page?: string): ChatSession {
     opponent,
     busy,
     contextLine,
-    engineLine: `CounterScheme · ${AI_LABEL.toLowerCase()} — a real model plugs in later`,
+    engineLine: AI_IS_MODEL
+      ? `CounterScheme · ${AI_LABEL} — answers from your saved data; the call is yours`
+      : `CounterScheme · ${AI_LABEL.toLowerCase()} — a real model plugs in later`,
     send,
     clear: store.clearChat,
   };

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useStore, useHydrated, type Opponent, type StaffMeeting, type MeetingAnswer, type MeetingDecision } from "@/lib/store";
 import { opponentOverview } from "@/lib/opponentOverview";
 import { answerFor, makeKit } from "@/lib/plan";
-import { ai, AI_LABEL } from "@/lib/ai";
+import { ai, AI_IS_MODEL, AI_LABEL } from "@/lib/ai";
 import { approveDecision, approvedPlan, decisionGroups, decisionText, emptyMeeting, PLAN_CATEGORIES } from "@/lib/meeting";
 import TalkTypeInput from "@/components/TalkTypeInput";
 import PlanNavigation from "@/components/PlanNavigation";
@@ -77,7 +77,7 @@ function PriorityMeeting({ opponent, priority, meeting, update }: { opponent: Op
     <section className={card}>
       <h2 className="font-bold">{talking ? "Talk It Through" : "Staff discussion"}</h2>
       <p className="mt-2 text-sm text-dim">{saved ? "Does this answer still fit our personnel and the opponent’s evidence?" : `Who owns the key and the fit against ${priority.title}? What check do you want if they change the look?`}</p>
-      <p className="mt-3 text-xs text-dim">{AI_LABEL}: rules-based suggestions, not a connected conversational model. Review football reasoning with your staff.</p>
+      <p className="mt-3 text-xs text-dim">{AI_IS_MODEL ? `${AI_LABEL}: answers from your saved scheme, team and opponent data. It suggests; you decide what goes in the plan.` : `${AI_LABEL}: rules-based suggestions, not a connected conversational model. Review football reasoning with your staff.`}</p>
       {!talking ? <button className={`${button} mt-4`} onClick={() => setTalking(true)}>Talk It Through</button> : <>
         <div className="mt-4 space-y-3 max-h-[420px] overflow-y-auto" aria-live="polite">{messages.map((m, i) => <div key={i} className={`rounded-lg p-3 text-sm ${m.role === "coach" ? "bg-panel" : "border border-line"}`}><p className="text-xs font-bold text-gold mb-1">{m.role === "coach" ? "Coach" : "CounterScheme"}</p><p className="whitespace-pre-wrap">{m.text}</p><button className="mt-2 text-gold text-xs font-semibold hover:underline" onClick={() => { patch({ point: m.text }); setEditing(true); }}>Use in decision draft</button></div>)}</div>
         <form className="mt-4 space-y-2" onSubmit={e => { e.preventDefault(); void send(); }}><TalkTypeInput value={question} onChange={setQuestion} label="Discuss this priority" disabled={busy} /><button className={primary} disabled={busy || !question.trim()}>{busy ? "Thinking…" : "Send"}</button></form>
