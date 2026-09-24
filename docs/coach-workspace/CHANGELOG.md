@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Apply the navy and steel blue palette
+- **Asked for:** Light gray dominant software with deep navy branding, steel blue interactions, and muted status colors.
+- **Changed:** Updated shared backgrounds, cards, navigation, borders, typography colors, primary buttons and hover states, selected backgrounds, links, and status colors to the requested palette.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Earlier themes remain saved in Git history. Dedicated field rendering and saved player/drawing colors are unchanged. Small warning labels use a darker gold for readability.
+
 ## 2026-09-23 — Darken the gray background
 - **Asked for:** Make the grey darker.
 - **Changed:** Darkened the main background to #CCD0D4 and navigation to #BFC5CA, with darker secondary navigation text for readability.

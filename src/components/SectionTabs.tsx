@@ -65,7 +65,7 @@ function SectionTabsInner() {
             <div className="relative" key={section.href}>
               {section.children ? <>
                 <button type="button" aria-expanded={expanded} aria-controls={`section-menu-${index}`}
-                  className={`${tabClass} ${active || expanded ? "border-b-grass text-grass" : "text-dim hover:bg-slate-50 hover:text-ink"}`}
+                  className={`${tabClass} ${active || expanded ? "border-b-grass text-navy" : "text-dim hover:bg-slate-50 hover:text-ink"}`}
                   onClick={() => { setOpenedAt(location); setOpen(expanded ? null : section.href); }}>
                   {label}<ChevronDown size={14} className={expanded ? "rotate-180" : ""} />
                 </button>
@@ -73,15 +73,15 @@ function SectionTabsInner() {
                   {[{ href: section.href, label: "Overview" }, ...section.children].map((child) => <Link
                     key={child.href} href={opponentHref(child.href)} aria-current={current(child.href) ? "page" : undefined}
                     onClick={() => setOpen(null)}
-                    className={`block rounded-lg px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-grass ${current(child.href) ? "bg-slate-100 text-grass font-semibold" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>
+                    className={`block rounded-lg px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-grass ${current(child.href) ? "bg-slate-100 text-navy font-semibold" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>
                     {child.label}
                   </Link>)}
                 </div>}
-              </> : <Link href={section.href} aria-current={active ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${active ? "border-b-grass text-grass" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>{label}</Link>}
+              </> : <Link href={section.href} aria-current={active ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${active ? "border-b-grass text-navy" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>{label}</Link>}
             </div>
           );
         })}
-        <Link href="/settings" aria-current={pathname === "/settings" ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${pathname === "/settings" ? "border-b-grass text-grass" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>Settings</Link>
+        <Link href="/settings" aria-current={pathname === "/settings" ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${pathname === "/settings" ? "border-b-grass text-navy" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>Settings</Link>
       </div>
 
     </nav>

@@ -1,67 +1,68 @@
 @import "tailwindcss";
 
-/* CounterScheme's light gray, deep red, and muted gold palette. Historical token names remain shared. */
+/* CounterScheme's light gray, deep navy, and steel blue palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #CCD0D4;
-  --color-panel: #F7F7F5;
-  --color-card: #F7F7F5;
-  --color-line: #C9CCCF;
-  --color-ink: #262626;
-  --color-dim: #6B6B6B;
-  --color-grass: #AA0000;
-  --color-grass-deep: #850000;
-  --color-navy: #AA0000;
-  --color-slate-brand: #BFC5CA;
-  --color-sky: #B3995D;
-  --color-ember: #B3995D;
-  --color-success: #2E8B57;
-  --color-alert: #AA0000;
-  --color-gold: #B3995D;
-  --color-metallic: #9DA3A6;
+  --color-pitch: #E4E7E9;
+  --color-panel: #F5F6F6;
+  --color-card: #F5F6F6;
+  --color-line: #C5CBD0;
+  --color-ink: #20262B;
+  --color-dim: #68737C;
+  --color-grass: #17324D;
+  --color-grass-deep: #244C70;
+  --color-navy: #17324D;
+  --color-slate-brand: #D5DADD;
+  --color-sky: #3976A8;
+  --color-ember: #3976A8;
+  --color-success: #47705A;
+  --color-alert: #A44343;
+  --color-gold: #3976A8;
+  --color-metallic: #68737C;
+  --color-charcoal: #263238;
   --color-mind: #7c3aed;
-  --color-slate-50: #D9DCDF;
-  --color-slate-100: #D9DCDF;
-  --color-slate-200: #C9CCCF;
-  --color-emerald-400: #2E8B57;
-  --color-emerald-500: #2E8B57;
-  --color-emerald-600: #2E8B57;
-  --color-emerald-700: #2E8B57;
-  --color-emerald-50: color-mix(in srgb, #2E8B57 8%, white);
-  --color-emerald-200: color-mix(in srgb, #2E8B57 30%, white);
-  --color-emerald-300: color-mix(in srgb, #2E8B57 55%, white);
-  --color-emerald-800: color-mix(in srgb, #2E8B57 70%, #17212B);
-  --color-green-400: #2E8B57;
-  --color-green-500: #2E8B57;
-  --color-green-600: #2E8B57;
-  --color-green-700: #2E8B57;
-  --color-green-50: color-mix(in srgb, #2E8B57 8%, white);
-  --color-green-200: color-mix(in srgb, #2E8B57 30%, white);
-  --color-green-300: color-mix(in srgb, #2E8B57 55%, white);
-  --color-green-800: color-mix(in srgb, #2E8B57 70%, #17212B);
-  --color-amber-400: #B3995D;
-  --color-amber-500: #B3995D;
-  --color-amber-600: #B3995D;
-  --color-amber-700: #B3995D;
-  --color-amber-50: color-mix(in srgb, #B3995D 8%, white);
-  --color-amber-200: color-mix(in srgb, #B3995D 30%, white);
-  --color-amber-300: color-mix(in srgb, #B3995D 55%, white);
-  --color-amber-800: color-mix(in srgb, #B3995D 70%, #17212B);
-  --color-yellow-400: #B3995D;
-  --color-yellow-500: #B3995D;
-  --color-yellow-600: #B3995D;
-  --color-yellow-700: #B3995D;
-  --color-yellow-50: color-mix(in srgb, #B3995D 8%, white);
-  --color-yellow-200: color-mix(in srgb, #B3995D 30%, white);
-  --color-yellow-300: color-mix(in srgb, #B3995D 55%, white);
-  --color-yellow-800: color-mix(in srgb, #B3995D 70%, #17212B);
-  --color-red-400: #AA0000;
-  --color-red-500: #AA0000;
-  --color-red-600: #AA0000;
-  --color-red-700: #AA0000;
-  --color-red-50: color-mix(in srgb, #AA0000 8%, white);
-  --color-red-200: color-mix(in srgb, #AA0000 30%, white);
-  --color-red-300: color-mix(in srgb, #AA0000 55%, white);
-  --color-red-800: color-mix(in srgb, #AA0000 70%, #17212B);
+  --color-slate-50: #DCE6ED;
+  --color-slate-100: #DCE6ED;
+  --color-slate-200: #C5CBD0;
+  --color-emerald-400: #47705A;
+  --color-emerald-500: #47705A;
+  --color-emerald-600: #47705A;
+  --color-emerald-700: #47705A;
+  --color-emerald-50: color-mix(in srgb, #47705A 8%, white);
+  --color-emerald-200: color-mix(in srgb, #47705A 30%, white);
+  --color-emerald-300: color-mix(in srgb, #47705A 55%, white);
+  --color-emerald-800: color-mix(in srgb, #47705A 70%, #263238);
+  --color-green-400: #47705A;
+  --color-green-500: #47705A;
+  --color-green-600: #47705A;
+  --color-green-700: #47705A;
+  --color-green-50: color-mix(in srgb, #47705A 8%, white);
+  --color-green-200: color-mix(in srgb, #47705A 30%, white);
+  --color-green-300: color-mix(in srgb, #47705A 55%, white);
+  --color-green-800: color-mix(in srgb, #47705A 70%, #263238);
+  --color-amber-400: #A57C3D;
+  --color-amber-500: #A57C3D;
+  --color-amber-600: #A57C3D;
+  --color-amber-700: #A57C3D;
+  --color-amber-50: color-mix(in srgb, #A57C3D 8%, white);
+  --color-amber-200: color-mix(in srgb, #A57C3D 30%, white);
+  --color-amber-300: color-mix(in srgb, #A57C3D 55%, white);
+  --color-amber-800: color-mix(in srgb, #A57C3D 70%, #263238);
+  --color-yellow-400: #A57C3D;
+  --color-yellow-500: #A57C3D;
+  --color-yellow-600: #A57C3D;
+  --color-yellow-700: #A57C3D;
+  --color-yellow-50: color-mix(in srgb, #A57C3D 8%, white);
+  --color-yellow-200: color-mix(in srgb, #A57C3D 30%, white);
+  --color-yellow-300: color-mix(in srgb, #A57C3D 55%, white);
+  --color-yellow-800: color-mix(in srgb, #A57C3D 70%, #263238);
+  --color-red-400: #A44343;
+  --color-red-500: #A44343;
+  --color-red-600: #A44343;
+  --color-red-700: #A44343;
+  --color-red-50: color-mix(in srgb, #A44343 8%, white);
+  --color-red-200: color-mix(in srgb, #A44343 30%, white);
+  --color-red-300: color-mix(in srgb, #A44343 55%, white);
+  --color-red-800: color-mix(in srgb, #A44343 70%, #263238);
   --font-display: var(--font-inter), "Segoe UI", sans-serif;
   --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
@@ -76,16 +77,14 @@ body {
 
 /* Light navigation and off-white dropdown panels. */
 .theme-navigation {
-  background-color: #BFC5CA;
-  --color-dim: #555555;
+  background-color: #D5DADD;
   color: var(--color-ink);
 }
 
 @media screen {
   .bg-white { background-color: var(--color-card); }
-  .text-navy { color: var(--color-ink); }
-  /* Gold remains an accent; its text variant is darker for readable small labels. */
-  .text-gold, .text-ember { color: #756139; }
+  /* Historical accent classes now use steel blue for links and highlights. */
+  .text-grass { color: var(--color-sky); }
   :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #756139; }
   :is(button, a, input, select, textarea):focus-visible {
     outline: 2px solid var(--color-grass);
@@ -111,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: rgba(179, 153, 93, 0.3);
+  background: rgba(57, 118, 168, 0.22);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -161,7 +160,7 @@ select optgroup {
   :root {
     --color-pitch: #ffffff;
     --color-panel: #ffffff;
-    --color-ink: #17212B;
+    --color-ink: #263238;
     --color-dim: #667685;
     --color-card: #ffffff;
     --color-line: #DCE2E7;
