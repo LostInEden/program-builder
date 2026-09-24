@@ -675,6 +675,8 @@ export default function StudioCanvas({
           </defs>
 
           <g>
+          {/* Field markings sit behind play art and stop beneath player symbols. */}
+          <g mask={`url(#${pathMaskId})`}>
           {yardLines.map((yl) => (
             <g key={yl.y}>
               <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#D5D9DC"} strokeWidth={yl.goal ? 0.5 : 0.14} />
@@ -696,6 +698,7 @@ export default function StudioCanvas({
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(157,163,166,0.65)" strokeWidth="0.8" />)}
           <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#D4AAAA" strokeWidth="0.16" />
 
+          </g>
           {call.zones.map((z) => (
             <g key={z.id}>
               <ellipse
@@ -787,6 +790,9 @@ export default function StudioCanvas({
                     setExtendId(null);
                   }}
                 />
+                {/* White separation keeps field markings from crossing through drawings. */}
+                <path mask={`url(#${pathMaskId})`} d={d} fill="none" stroke="white" strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1) + 0.28} strokeLinejoin="round" strokeLinecap="round" style={{ pointerEvents: "none" }} />
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke="white" strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.2 : 0.9) + 0.28} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 <path
                   mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1)}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
@@ -859,6 +865,7 @@ export default function StudioCanvas({
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
             const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
             return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke="white" strokeWidth={PATH_WIDTH * thicknessFactor(thickness) + 0.28} strokeLinejoin="round" strokeLinecap="round" />
               <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(thickness) * (tool === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
                 strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
                 markerEnd={tool !== "block" && tool !== "line" && tool !== "freehand" ? `url(#sarr-${c.slice(1)})` : undefined} />

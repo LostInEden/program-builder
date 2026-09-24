@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Keep players and drawings above field markings
+- **Asked for:** Drawn lines and players need to show above the field.
+- **Changed:** Field markings now mask out beneath player symbols and defender labels. Added narrow white separation beneath saved paths, block bars, and drawing previews so field lines do not visually cross through play art.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves saved colors, geometry, line thickness, and drawing interactions.
+
 ## 2026-09-23 — Soften the Play Art line of scrimmage
 - **Asked for:** Make the line of scrimmage less prominent as well.
 - **Changed:** Lightened the line of scrimmage to muted red #D4AAAA and reduced its stroke from 0.4 to 0.16 field units.
