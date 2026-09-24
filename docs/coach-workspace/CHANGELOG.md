@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Remove the custom header logo
+- **Asked for:** Take the logo out.
+- **Changed:** Removed the logo image from the top bar, retaining the CounterScheme text link.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Logo assets remain saved for future use.
+
+## 2026-09-23 — Restore the earlier light gray and red theme
+- **Asked for:** Revert to the light grey and red theme from earlier today.
+- **Changed:** Restored the original #E5E7E9 background, #F7F7F5 cards, #D9DCDF navigation, #AA0000 actions, charcoal text, and muted gold accents from d0f87fa. Restored that version's field color treatments and red active navigation.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Only presentation is restored; newer functionality and saved data remain intact. Drawing fields retain the prior contrast treatment.
+
 ## 2026-09-23 — Lighten all software surfaces to medium gray
 - **Asked for:** Medium grey, not so dark; include all components.
 - **Changed:** Set the main background to #484C50, navigation to #42474B, cards to #555A5F, and raised panels to #61666B. Updated shared borders and secondary text for contrast. Depth chart and Play Art now use the shared medium-gray card surface, with brighter Play Art yard lines.

@@ -1,27 +1,27 @@
 @import "tailwindcss";
 
-/* CounterScheme's medium gray, red, and gold palette. Historical token names remain shared. */
+/* CounterScheme's light gray, deep red, and muted gold palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #484C50;
-  --color-panel: #61666B;
-  --color-card: #555A5F;
-  --color-line: #7C8288;
-  --color-ink: #F2F4F5;
-  --color-dim: #D0D3D6;
-  --color-grass: #C62828;
-  --color-grass-deep: #8F1D22;
-  --color-navy: #42474B;
-  --color-slate-brand: #42474B;
-  --color-sky: #BFA46F;
-  --color-ember: #BFA46F;
+  --color-pitch: #E5E7E9;
+  --color-panel: #F7F7F5;
+  --color-card: #F7F7F5;
+  --color-line: #C9CCCF;
+  --color-ink: #262626;
+  --color-dim: #6B6B6B;
+  --color-grass: #AA0000;
+  --color-grass-deep: #850000;
+  --color-navy: #AA0000;
+  --color-slate-brand: #D9DCDF;
+  --color-sky: #B3995D;
+  --color-ember: #B3995D;
   --color-success: #2E8B57;
-  --color-alert: #C62828;
-  --color-gold: #BFA46F;
+  --color-alert: #AA0000;
+  --color-gold: #B3995D;
   --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
-  --color-slate-50: #61666B;
-  --color-slate-100: #61666B;
-  --color-slate-200: #7C8288;
+  --color-slate-50: #D9DCDF;
+  --color-slate-100: #D9DCDF;
+  --color-slate-200: #C9CCCF;
   --color-emerald-400: #2E8B57;
   --color-emerald-500: #2E8B57;
   --color-emerald-600: #2E8B57;
@@ -38,35 +38,35 @@
   --color-green-200: color-mix(in srgb, #2E8B57 30%, white);
   --color-green-300: color-mix(in srgb, #2E8B57 55%, white);
   --color-green-800: color-mix(in srgb, #2E8B57 70%, #17212B);
-  --color-amber-400: #BFA46F;
-  --color-amber-500: #BFA46F;
-  --color-amber-600: #BFA46F;
-  --color-amber-700: #BFA46F;
-  --color-amber-50: color-mix(in srgb, #BFA46F 8%, white);
-  --color-amber-200: color-mix(in srgb, #BFA46F 30%, white);
-  --color-amber-300: color-mix(in srgb, #BFA46F 55%, white);
-  --color-amber-800: color-mix(in srgb, #BFA46F 70%, #17212B);
-  --color-yellow-400: #BFA46F;
-  --color-yellow-500: #BFA46F;
-  --color-yellow-600: #BFA46F;
-  --color-yellow-700: #BFA46F;
-  --color-yellow-50: color-mix(in srgb, #BFA46F 8%, white);
-  --color-yellow-200: color-mix(in srgb, #BFA46F 30%, white);
-  --color-yellow-300: color-mix(in srgb, #BFA46F 55%, white);
-  --color-yellow-800: color-mix(in srgb, #BFA46F 70%, #17212B);
-  --color-red-400: #C62828;
-  --color-red-500: #C62828;
-  --color-red-600: #C62828;
-  --color-red-700: #C62828;
-  --color-red-50: color-mix(in srgb, #C62828 8%, white);
-  --color-red-200: color-mix(in srgb, #C62828 30%, white);
-  --color-red-300: color-mix(in srgb, #C62828 55%, white);
-  --color-red-800: color-mix(in srgb, #C62828 70%, #17212B);
+  --color-amber-400: #B3995D;
+  --color-amber-500: #B3995D;
+  --color-amber-600: #B3995D;
+  --color-amber-700: #B3995D;
+  --color-amber-50: color-mix(in srgb, #B3995D 8%, white);
+  --color-amber-200: color-mix(in srgb, #B3995D 30%, white);
+  --color-amber-300: color-mix(in srgb, #B3995D 55%, white);
+  --color-amber-800: color-mix(in srgb, #B3995D 70%, #17212B);
+  --color-yellow-400: #B3995D;
+  --color-yellow-500: #B3995D;
+  --color-yellow-600: #B3995D;
+  --color-yellow-700: #B3995D;
+  --color-yellow-50: color-mix(in srgb, #B3995D 8%, white);
+  --color-yellow-200: color-mix(in srgb, #B3995D 30%, white);
+  --color-yellow-300: color-mix(in srgb, #B3995D 55%, white);
+  --color-yellow-800: color-mix(in srgb, #B3995D 70%, #17212B);
+  --color-red-400: #AA0000;
+  --color-red-500: #AA0000;
+  --color-red-600: #AA0000;
+  --color-red-700: #AA0000;
+  --color-red-50: color-mix(in srgb, #AA0000 8%, white);
+  --color-red-200: color-mix(in srgb, #AA0000 30%, white);
+  --color-red-300: color-mix(in srgb, #AA0000 55%, white);
+  --color-red-800: color-mix(in srgb, #AA0000 70%, #17212B);
   --font-display: var(--font-inter), "Segoe UI", sans-serif;
   --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
 
-html { color-scheme: dark; }
+html { color-scheme: light; }
 body {
   background-color: var(--color-pitch);
   color: var(--color-ink);
@@ -74,37 +74,20 @@ body {
 }
 .stadium-bg { background: var(--color-pitch); }
 
-/* Medium-gray navigation with raised dropdown panels. */
+/* Light navigation and off-white dropdown panels. */
 .theme-navigation {
-  --color-ink: #F2F4F5;
-  --color-dim: #D0D3D6;
-  --color-panel: #61666B;
-  --color-line: #7C8288;
-  --color-slate-50: #61666B;
-  --color-slate-100: #61666B;
-  --color-slate-200: #61666B;
-  background-color: #42474B;
-  color: #F2F4F5;
+  background-color: #D9DCDF;
+  color: var(--color-ink);
 }
-.theme-navigation .text-navy { color: #FFFFFF; }
-.theme-navigation .bg-white { background-color: #61666B; }
 
 @media screen {
   .bg-white { background-color: var(--color-card); }
   .text-navy { color: var(--color-ink); }
-  .text-grass { color: var(--color-gold); }
-  :root {
-    --color-emerald-50: color-mix(in srgb, #2E8B57 18%, #555A5F);
-    --color-green-50: color-mix(in srgb, #2E8B57 18%, #555A5F);
-    --color-amber-50: color-mix(in srgb, #BFA46F 14%, #555A5F);
-    --color-yellow-50: color-mix(in srgb, #BFA46F 14%, #555A5F);
-    --color-red-50: color-mix(in srgb, #C62828 18%, #555A5F);
-  }
-  :is(.text-emerald-600, .text-emerald-700, .text-green-600, .text-green-700) { color: #8AD1A8; }
-  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #BFA46F; }
-  :is(.text-red-500, .text-red-600, .text-red-700) { color: #EE9696; }
+  /* Gold remains an accent; its text variant is darker for readable small labels. */
+  .text-gold, .text-ember { color: #756139; }
+  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #756139; }
   :is(button, a, input, select, textarea):focus-visible {
-    outline: 2px solid #BFA46F;
+    outline: 2px solid var(--color-grass);
     outline-offset: 3px;
   }
 }
@@ -127,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: rgba(191, 164, 111, 0.3);
+  background: rgba(179, 153, 93, 0.3);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -145,7 +128,7 @@ input[type="number"] {
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: dark;
+  color-scheme: light;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;

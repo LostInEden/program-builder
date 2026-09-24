@@ -651,14 +651,14 @@ export default function StudioCanvas({
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
         style={{ cursor: panMode ? "grab" : undefined }}
-        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-card touch-none select-none ${
+        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-[#252729] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
         <svg viewBox={`${cameraLeft} ${cameraTop} ${viewWidth} ${viewHeight}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
             <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
-              <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="var(--color-panel)" strokeWidth="0.12" />
+              <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#36393C" strokeWidth="0.12" />
             </pattern>
             <mask id={pathMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={FIELD_H}>
               <rect width="100" height={FIELD_H} fill="white" />
@@ -671,7 +671,7 @@ export default function StudioCanvas({
               })}
               {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 0.2 * scale) * viewWidth / fieldWidth} ry={(offenseRadius + 0.2 * scale) * viewHeight / fieldHeight} fill="black" />)}
             </mask>
-            {[...new Set([...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), DEF_INK, "#BFA46F"])].map((c) => (
+            {[...new Set([...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), DEF_INK, "#f59e0b"])].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
                 <path d="M0,0 L6,3 L0,6 z" fill={fieldColor(c)} />
               </marker>
@@ -682,7 +682,7 @@ export default function StudioCanvas({
           <rect x={cameraLeft} y={cameraTop} width={viewWidth} height={viewHeight} fill={`url(#${pathMaskId}-grid)`} />
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#9DA3A6"} strokeWidth={yl.goal ? 0.5 : 0.24} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#686E72"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
                   <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
@@ -706,7 +706,7 @@ export default function StudioCanvas({
               <ellipse
                 cx={z.x} cy={z.y} rx={z.rx} ry={z.ry}
                 fill={z.id === selZoneId ? "rgba(245,158,11,0.12)" : z.side === "def" ? "rgba(56,189,248,0.08)" : "rgba(248,113,113,0.08)"}
-                stroke={z.id === selZoneId ? "#BFA46F" : z.side === "def" ? "rgba(191,164,111,0.55)" : "rgba(198,40,40,0.55)"}
+                stroke={z.id === selZoneId ? "#f59e0b" : z.side === "def" ? "rgba(56,189,248,0.55)" : "rgba(248,113,113,0.55)"}
                 strokeWidth="0.3" strokeDasharray="1.4 1"
                 style={{ pointerEvents: tool === "select" ? "all" : "none", cursor: "move" }}
                 onPointerDown={(e) => {
@@ -720,7 +720,7 @@ export default function StudioCanvas({
               />
               {z.id === selZoneId && (
                 <rect
-                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#ffffff" stroke="#BFA46F" strokeWidth="0.25"
+                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#ffffff" stroke="#d97706" strokeWidth="0.25"
                   style={{ pointerEvents: "all", cursor: "nwse-resize" }}
                   onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "zone-resize", id: z.id, moved: false }; }}
                 />
@@ -802,7 +802,7 @@ export default function StudioCanvas({
                 {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.2 : 0.9)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
-                    <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#BFA46F" strokeWidth="0.3"
+                    <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
                       style={{ pointerEvents: "all", cursor: "grab" }}
                       onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "start", lineId: l.id, moved: false }; }}>
                       <title>Drag start (detaches from player)</title>
@@ -812,7 +812,7 @@ export default function StudioCanvas({
                       const i = l.anchor === "free" ? vertexIndex + 1 : vertexIndex;
                       return vertexIndex === pts.length - 2 && !extendId ? null : ( // tip is the + button
                       <circle
-                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="#BFA46F" strokeWidth="0.3"
+                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="#d97706" strokeWidth="0.3"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
                         onDoubleClick={(e) => {
@@ -831,7 +831,7 @@ export default function StudioCanvas({
                     {/* midpoint bend handles (hollow) — drag to bend like Excalidraw */}
                     {midpoints.map((m, i) => (
                       <circle
-                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(255,255,255,0.85)" stroke="#BFA46F" strokeWidth="0.22" strokeDasharray="0.5 0.4"
+                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(255,255,255,0.85)" stroke="#f59e0b" strokeWidth="0.22" strokeDasharray="0.5 0.4"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
@@ -983,7 +983,7 @@ export default function StudioCanvas({
             className={`rounded-lg px-2.5 py-2 transition ${style === s.id && !selLineId ? "bg-grass/15 ring-1 ring-grass/40" : "hover:bg-slate-100"}`}
           >
             <svg width="26" height="4" viewBox="0 0 26 4">
-              <line x1="1" y1="2" x2="25" y2="2" stroke="#A7ADB1" strokeWidth={s.id === "solid" ? 2.4 : 2} strokeDasharray={s.id === "dashed" ? "5 3" : s.id === "dotted" ? "1.6 2.6" : undefined} strokeLinecap="round" />
+              <line x1="1" y1="2" x2="25" y2="2" stroke="#5b6b7c" strokeWidth={s.id === "solid" ? 2.4 : 2} strokeDasharray={s.id === "dashed" ? "5 3" : s.id === "dotted" ? "1.6 2.6" : undefined} strokeLinecap="round" />
             </svg>
           </button>
         ))}
