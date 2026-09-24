@@ -36,7 +36,7 @@ Design language today: light theme, blue accent, navy chips, Inter, white cards 
 - Add small presentational components in `src/components/`.
 
 **You MAY NOT (send these to the engineering side instead — see §5):**
-- Change anything in `src/lib/` — the store (`store.ts`: data shapes, migrations, actions), the engines (`tendencies.ts`, `plan.ts`, `practice.ts`, `analyze.ts`, `knowledge.ts`, `skills.ts`, `callsheet.ts`, `principles.ts`, `football.ts`, `recognize.ts`, `coverages.ts`, `pdfRoster.ts`), or the AI layer (`src/lib/ai/*`).
+- Change anything in `src/lib/` — the store (`store.ts`: data shapes, migrations, actions), the engines (`tendencies.ts`, `plan.ts`, `practice.ts`, `analyze.ts`, `knowledge.ts`, `skills.ts`, `callsheet.ts`, `principles.ts`, `football.ts`, `recognize.ts`, `coverages.ts`, `pdfRoster.ts`), or the AI layer (`src/lib/ai/*`, the server model code in `src/server/`, and the `/api/ai` route in `src/app/api/`). Never add or reference API keys.
 - Change what data is saved, how it's computed, what the AI says, how imports parse files, or how the game plan / scouting report / call sheet / practice pool decide their content.
 - Add, remove, or upgrade dependencies (`package.json`), or change `next.config.ts`, `vercel.json`, `.claude/`, or `scripts/`.
 - Delete a page, a feature, or a piece of data. Hiding something behind a collapsed section is fine; removing it is not.
