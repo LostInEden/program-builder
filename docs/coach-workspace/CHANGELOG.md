@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Give Play Art a white drawing surface
+- **Asked for:** Make Play Art more distinct from the background, possibly white.
+- **Changed:** Set the drawing surface to pure white so it stands apart from the surrounding light-gray workspace.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Keeps gray field markings, charcoal default players/routes, red line of scrimmage, and saved custom colors unchanged.
+
 ## 2026-09-23 — Match depth chart and Play Art to the light theme
 - **Asked for:** The depth chart and Play Art need to match the light gray and red theme.
 - **Changed:** Both fields now use light gray surfaces, gray markings, and red lines of scrimmage. Play Art default players, labels, and routes use charcoal; selection controls use red/gold. Depth chart uses red position chips and gold selections with readable labels.
