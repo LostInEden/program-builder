@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
-/* CounterScheme's red, gold, and graphite palette. Historical token names remain shared. */
+/* CounterScheme's medium gray, red, and gold palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #121212;
-  --color-panel: #36393C;
-  --color-card: #252729;
-  --color-line: color-mix(in srgb, #9DA3A6 45%, #252729);
-  --color-ink: #E8EAEB;
-  --color-dim: #A7ADB1;
+  --color-pitch: #484C50;
+  --color-panel: #61666B;
+  --color-card: #555A5F;
+  --color-line: #7C8288;
+  --color-ink: #F2F4F5;
+  --color-dim: #D0D3D6;
   --color-grass: #C62828;
   --color-grass-deep: #8F1D22;
-  --color-navy: #121212;
-  --color-slate-brand: #252729;
+  --color-navy: #42474B;
+  --color-slate-brand: #42474B;
   --color-sky: #BFA46F;
   --color-ember: #BFA46F;
   --color-success: #2E8B57;
@@ -19,9 +19,9 @@
   --color-gold: #BFA46F;
   --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
-  --color-slate-50: #36393C;
-  --color-slate-100: #36393C;
-  --color-slate-200: color-mix(in srgb, #9DA3A6 45%, #252729);
+  --color-slate-50: #61666B;
+  --color-slate-100: #61666B;
+  --color-slate-200: #7C8288;
   --color-emerald-400: #2E8B57;
   --color-emerald-500: #2E8B57;
   --color-emerald-600: #2E8B57;
@@ -74,31 +74,31 @@ body {
 }
 .stadium-bg { background: var(--color-pitch); }
 
-/* Charcoal navigation with raised dropdown panels. */
+/* Medium-gray navigation with raised dropdown panels. */
 .theme-navigation {
-  --color-ink: #E8EAEB;
-  --color-dim: #A7ADB1;
-  --color-panel: #36393C;
-  --color-line: color-mix(in srgb, #9DA3A6 45%, #252729);
-  --color-slate-50: #36393C;
-  --color-slate-100: #36393C;
-  --color-slate-200: #36393C;
-  background-color: #121212;
-  color: #E8EAEB;
+  --color-ink: #F2F4F5;
+  --color-dim: #D0D3D6;
+  --color-panel: #61666B;
+  --color-line: #7C8288;
+  --color-slate-50: #61666B;
+  --color-slate-100: #61666B;
+  --color-slate-200: #61666B;
+  background-color: #42474B;
+  color: #F2F4F5;
 }
 .theme-navigation .text-navy { color: #FFFFFF; }
-.theme-navigation .bg-white { background-color: #36393C; }
+.theme-navigation .bg-white { background-color: #61666B; }
 
 @media screen {
   .bg-white { background-color: var(--color-card); }
   .text-navy { color: var(--color-ink); }
   .text-grass { color: var(--color-gold); }
   :root {
-    --color-emerald-50: color-mix(in srgb, #2E8B57 18%, #252729);
-    --color-green-50: color-mix(in srgb, #2E8B57 18%, #252729);
-    --color-amber-50: color-mix(in srgb, #BFA46F 14%, #252729);
-    --color-yellow-50: color-mix(in srgb, #BFA46F 14%, #252729);
-    --color-red-50: color-mix(in srgb, #C62828 18%, #252729);
+    --color-emerald-50: color-mix(in srgb, #2E8B57 18%, #555A5F);
+    --color-green-50: color-mix(in srgb, #2E8B57 18%, #555A5F);
+    --color-amber-50: color-mix(in srgb, #BFA46F 14%, #555A5F);
+    --color-yellow-50: color-mix(in srgb, #BFA46F 14%, #555A5F);
+    --color-red-50: color-mix(in srgb, #C62828 18%, #555A5F);
   }
   :is(.text-emerald-600, .text-emerald-700, .text-green-600, .text-green-700) { color: #8AD1A8; }
   :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #BFA46F; }

@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Lighten all software surfaces to medium gray
+- **Asked for:** Medium grey, not so dark; include all components.
+- **Changed:** Set the main background to #484C50, navigation to #42474B, cards to #555A5F, and raised panels to #61666B. Updated shared borders and secondary text for contrast. Depth chart and Play Art now use the shared medium-gray card surface, with brighter Play Art yard lines.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves red/gold accents, the red/gold header-only logo, saved player colors and diagram coordinates. Shared tokens cover toolbars, dropdowns, forms, and dialogs; print remains white.
+
 ## 2026-09-23 — Restore the dark graphite, red, and gold theme
 - **Asked for:** Revert to dark grey with 49er accents.
 - **Changed:** Restored the saved near-black/graphite surfaces, light text, red primary actions, gold highlights, and dark navigation.

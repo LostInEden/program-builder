@@ -651,14 +651,14 @@ export default function StudioCanvas({
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
         style={{ cursor: panMode ? "grab" : undefined }}
-        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-[#252729] touch-none select-none ${
+        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-[#9DA3A6]/60 bg-card touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
         <svg viewBox={`${cameraLeft} ${cameraTop} ${viewWidth} ${viewHeight}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
           <defs>
             <pattern id={`${pathMaskId}-grid`} width={YD} height={YD} patternUnits="userSpaceOnUse">
-              <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="#36393C" strokeWidth="0.12" />
+              <path d={`M ${YD} 0 H 0 V ${YD}`} fill="none" stroke="var(--color-panel)" strokeWidth="0.12" />
             </pattern>
             <mask id={pathMaskId} maskUnits="userSpaceOnUse" x="0" y="0" width="100" height={FIELD_H}>
               <rect width="100" height={FIELD_H} fill="white" />
@@ -682,7 +682,7 @@ export default function StudioCanvas({
           <rect x={cameraLeft} y={cameraTop} width={viewWidth} height={viewHeight} fill={`url(#${pathMaskId}-grid)`} />
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#686E72"} strokeWidth={yl.goal ? 0.5 : 0.24} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#9DA3A6"} strokeWidth={yl.goal ? 0.5 : 0.24} />
               {yl.label && (
                 <>
                   <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>

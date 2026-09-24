@@ -82,7 +82,7 @@ export default function DepthChartCanvas({
   return (
     <div className="overflow-x-auto rounded-xl" role="region" aria-label="Depth chart field" tabIndex={0}>
     <div
-      className={`relative rounded-xl border border-line bg-[#252729] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
+      className={`relative rounded-xl border border-line bg-card w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
       style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
