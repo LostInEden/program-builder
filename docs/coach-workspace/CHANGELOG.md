@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Soften the Play Art line of scrimmage
+- **Asked for:** Make the line of scrimmage less prominent as well.
+- **Changed:** Lightened the line of scrimmage to muted red #D4AAAA and reduced its stroke from 0.4 to 0.16 field units.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Keeps its position and subtle red distinction while allowing players and routes to stand out.
+
 ## 2026-09-23 — Soften Play Art five-yard lines
 - **Asked for:** Make the five-yard lines less prominent so lines and icons are visible over them.
 - **Changed:** Lightened regular yard lines to #D5D9DC and reduced their stroke from 0.24 to 0.14 field units.
