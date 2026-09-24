@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Match depth chart and Play Art to the light theme
+- **Asked for:** The depth chart and Play Art need to match the light gray and red theme.
+- **Changed:** Both fields now use light gray surfaces, gray markings, and red lines of scrimmage. Play Art default players, labels, and routes use charcoal; selection controls use red/gold. Depth chart uses red position chips and gold selections with readable labels.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Saved custom player/route colors and football coordinates remain unchanged. Print styling remains separate.
+
 ## 2026-09-23 — Remove the custom header logo
 - **Asked for:** Take the logo out.
 - **Changed:** Removed the logo image from the top bar, retaining the CounterScheme text link.

@@ -82,33 +82,33 @@ export default function DepthChartCanvas({
   return (
     <div className="overflow-x-auto rounded-xl" role="region" aria-label="Depth chart field" tabIndex={0}>
     <div
-      className={`relative rounded-xl border border-line bg-[#121212] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
-      style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
+      className={`relative rounded-xl border border-line bg-pitch w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
+      style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(38,38,38,0.025) 21%, rgba(38,38,38,0.025) 42%)" }}
     >
-      <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-dim/50" />
       {/* Opponent territory: the 40 at the top, with the line of scrimmage at their 20. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none">
         {[0, 5, 10, 15, 20].map((yard) => (
           <div key={yard} className="absolute inset-x-2" style={{ top: `${8 + yard * 4.2}%` }}>
-            <div className="absolute inset-x-0 h-px bg-white/50" />
+            <div className="absolute inset-x-0 h-px bg-dim/40" />
             {yard % 10 === 0 && (
               <>
-                <span className="absolute left-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:left-4 sm:text-lg">{40 - yard}</span>
-                <span className="absolute right-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-white/70 sm:right-4 sm:text-lg">{40 - yard}</span>
+                <span className="absolute left-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-dim sm:left-4 sm:text-lg">{40 - yard}</span>
+                <span className="absolute right-2 -translate-y-full pb-1 text-sm font-bold tabular-nums text-dim sm:right-4 sm:text-lg">{40 - yard}</span>
               </>
             )}
           </div>
         ))}
         {Array.from({ length: 19 }, (_, i) => i + 1).filter((yard) => yard % 5 !== 0).map((yard) => (
           <div key={yard} className="absolute inset-x-0" style={{ top: `${8 + yard * 4.2}%` }}>
-            <span className="absolute left-[37%] h-px w-2 bg-white/45" />
-            <span className="absolute right-[37%] h-px w-2 bg-white/45" />
+            <span className="absolute left-[37%] h-px w-2 bg-dim/45" />
+            <span className="absolute right-[37%] h-px w-2 bg-dim/45" />
           </div>
         ))}
       </div>
 
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-[92%] border-t-2 border-gold">
-        <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wider text-gold">OPPONENT’S 20 · LINE OF SCRIMMAGE</span>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-2 top-[92%] border-t-2 border-grass">
+        <span className="absolute left-1/2 top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold tracking-wider text-grass">OPPONENT’S 20 · LINE OF SCRIMMAGE</span>
       </div>
 
       {structure.slots.map((slot, i) => {
@@ -130,9 +130,9 @@ export default function DepthChartCanvas({
             style={{ left: `clamp(68px, ${leftFor(i)}%, calc(100% - 68px))`, top: `${isSafety ? 42 : topFor(slot.level, slot.y)}%` }}
           >
             <span
-              className={`display relative z-10 rounded-[4px] px-2.5 py-[3px] text-[10.5px] font-bold tracking-wide text-white transition-colors ${
-                selected ? "bg-ember" : ids.length > 0 ? "bg-navy" : "bg-dim/70"
-              } ${onSlotClick ? "hover:bg-ember" : ""}`}
+              className={`display relative z-10 rounded-[4px] px-2.5 py-[3px] text-[10.5px] font-bold tracking-wide transition-colors ${
+                selected ? "bg-gold text-ink" : ids.length > 0 ? "bg-grass text-white" : "bg-dim text-white"
+              } ${onSlotClick ? "hover:bg-gold hover:text-ink" : ""}`}
             >
               {label}
             </span>
