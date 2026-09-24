@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "motion/react";
 import { Users, Shield, ShieldCheck, Binoculars, ClipboardList, ListChecks, ChevronRight, Check, Circle } from "lucide-react";
 import { useStore, useHydrated, baseGroupFor, effectiveSlots } from "@/lib/store";
@@ -70,7 +69,6 @@ export default function Home() {
 
   return (
     <div className="px-6 py-10 max-w-6xl mx-auto">
-      <Image src="/brand/counterscheme-classic.png" alt="CounterScheme" width={1227} height={1282} sizes="(max-width: 640px) 92px, 120px" className="mb-5 h-24 sm:h-32 w-auto object-contain" />
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight">

@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Keep the logo in the top bar only
+- **Asked for:** The logo should only be at the top of the screen and scale to that bar.
+- **Changed:** Removed the large home-page logo and fitted the header logo proportionally to 48px within the existing 52px top bar.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preserves the selected logo design and compact navigation height.
+
 ## 2026-09-23 — Add the selected classic CounterScheme logo
 - **Asked for:** Use the third logo and put it on the website.
 - **Changed:** Added the classic serif C/S logo as a transparent local asset, replaced the header CS badge with it, and placed a larger version on the home page. Header text remains readable at small sizes.
