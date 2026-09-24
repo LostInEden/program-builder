@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Soften Play Art five-yard lines
+- **Asked for:** Make the five-yard lines less prominent so lines and icons are visible over them.
+- **Changed:** Lightened regular yard lines to #D5D9DC and reduced their stroke from 0.24 to 0.14 field units.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Players, routes, line of scrimmage, sidelines, hashes, and saved diagrams are unchanged.
+
 ## 2026-09-23 — Remove the tiled grid from Play Art
 - **Asked for:** The white does not need to be tiles.
 - **Changed:** Removed the decorative square-grid pattern from the white drawing surface, retaining football yard lines, hashes, sidelines, and the line of scrimmage.

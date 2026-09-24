@@ -677,7 +677,7 @@ export default function StudioCanvas({
           <g>
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#686E72"} strokeWidth={yl.goal ? 0.5 : 0.24} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#D5D9DC"} strokeWidth={yl.goal ? 0.5 : 0.14} />
               {yl.label && (
                 <>
                   <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
