@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Remove the tiled grid from Play Art
+- **Asked for:** The white does not need to be tiles.
+- **Changed:** Removed the decorative square-grid pattern from the white drawing surface, retaining football yard lines, hashes, sidelines, and the line of scrimmage.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Drawing coordinates, snapping, players, and routes are unchanged.
+
 ## 2026-09-23 — Give Play Art a white drawing surface
 - **Asked for:** Make Play Art more distinct from the background, possibly white.
 - **Changed:** Set the drawing surface to pure white so it stands apart from the surrounding light-gray workspace.
