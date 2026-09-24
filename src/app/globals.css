@@ -1,73 +1,72 @@
 @import "tailwindcss";
 
-/* CounterScheme's light gray, deep navy, and steel blue palette. Historical token names remain shared. */
+/* CounterScheme's red, gold, and graphite palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #E4E7E9;
-  --color-panel: #F5F6F6;
-  --color-card: #F5F6F6;
-  --color-line: #C5CBD0;
-  --color-ink: #20262B;
-  --color-dim: #68737C;
-  --color-grass: #17324D;
-  --color-grass-deep: #244C70;
-  --color-navy: #17324D;
-  --color-slate-brand: #D5DADD;
-  --color-sky: #3976A8;
-  --color-ember: #3976A8;
-  --color-success: #47705A;
-  --color-alert: #A44343;
-  --color-gold: #3976A8;
-  --color-metallic: #68737C;
-  --color-charcoal: #263238;
+  --color-pitch: #121212;
+  --color-panel: #36393C;
+  --color-card: #252729;
+  --color-line: color-mix(in srgb, #9DA3A6 45%, #252729);
+  --color-ink: #E8EAEB;
+  --color-dim: #A7ADB1;
+  --color-grass: #C62828;
+  --color-grass-deep: #8F1D22;
+  --color-navy: #121212;
+  --color-slate-brand: #252729;
+  --color-sky: #BFA46F;
+  --color-ember: #BFA46F;
+  --color-success: #2E8B57;
+  --color-alert: #C62828;
+  --color-gold: #BFA46F;
+  --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
-  --color-slate-50: #DCE6ED;
-  --color-slate-100: #DCE6ED;
-  --color-slate-200: #C5CBD0;
-  --color-emerald-400: #47705A;
-  --color-emerald-500: #47705A;
-  --color-emerald-600: #47705A;
-  --color-emerald-700: #47705A;
-  --color-emerald-50: color-mix(in srgb, #47705A 8%, white);
-  --color-emerald-200: color-mix(in srgb, #47705A 30%, white);
-  --color-emerald-300: color-mix(in srgb, #47705A 55%, white);
-  --color-emerald-800: color-mix(in srgb, #47705A 70%, #263238);
-  --color-green-400: #47705A;
-  --color-green-500: #47705A;
-  --color-green-600: #47705A;
-  --color-green-700: #47705A;
-  --color-green-50: color-mix(in srgb, #47705A 8%, white);
-  --color-green-200: color-mix(in srgb, #47705A 30%, white);
-  --color-green-300: color-mix(in srgb, #47705A 55%, white);
-  --color-green-800: color-mix(in srgb, #47705A 70%, #263238);
-  --color-amber-400: #A57C3D;
-  --color-amber-500: #A57C3D;
-  --color-amber-600: #A57C3D;
-  --color-amber-700: #A57C3D;
-  --color-amber-50: color-mix(in srgb, #A57C3D 8%, white);
-  --color-amber-200: color-mix(in srgb, #A57C3D 30%, white);
-  --color-amber-300: color-mix(in srgb, #A57C3D 55%, white);
-  --color-amber-800: color-mix(in srgb, #A57C3D 70%, #263238);
-  --color-yellow-400: #A57C3D;
-  --color-yellow-500: #A57C3D;
-  --color-yellow-600: #A57C3D;
-  --color-yellow-700: #A57C3D;
-  --color-yellow-50: color-mix(in srgb, #A57C3D 8%, white);
-  --color-yellow-200: color-mix(in srgb, #A57C3D 30%, white);
-  --color-yellow-300: color-mix(in srgb, #A57C3D 55%, white);
-  --color-yellow-800: color-mix(in srgb, #A57C3D 70%, #263238);
-  --color-red-400: #A44343;
-  --color-red-500: #A44343;
-  --color-red-600: #A44343;
-  --color-red-700: #A44343;
-  --color-red-50: color-mix(in srgb, #A44343 8%, white);
-  --color-red-200: color-mix(in srgb, #A44343 30%, white);
-  --color-red-300: color-mix(in srgb, #A44343 55%, white);
-  --color-red-800: color-mix(in srgb, #A44343 70%, #263238);
+  --color-slate-50: #36393C;
+  --color-slate-100: #36393C;
+  --color-slate-200: color-mix(in srgb, #9DA3A6 45%, #252729);
+  --color-emerald-400: #2E8B57;
+  --color-emerald-500: #2E8B57;
+  --color-emerald-600: #2E8B57;
+  --color-emerald-700: #2E8B57;
+  --color-emerald-50: color-mix(in srgb, #2E8B57 8%, white);
+  --color-emerald-200: color-mix(in srgb, #2E8B57 30%, white);
+  --color-emerald-300: color-mix(in srgb, #2E8B57 55%, white);
+  --color-emerald-800: color-mix(in srgb, #2E8B57 70%, #17212B);
+  --color-green-400: #2E8B57;
+  --color-green-500: #2E8B57;
+  --color-green-600: #2E8B57;
+  --color-green-700: #2E8B57;
+  --color-green-50: color-mix(in srgb, #2E8B57 8%, white);
+  --color-green-200: color-mix(in srgb, #2E8B57 30%, white);
+  --color-green-300: color-mix(in srgb, #2E8B57 55%, white);
+  --color-green-800: color-mix(in srgb, #2E8B57 70%, #17212B);
+  --color-amber-400: #BFA46F;
+  --color-amber-500: #BFA46F;
+  --color-amber-600: #BFA46F;
+  --color-amber-700: #BFA46F;
+  --color-amber-50: color-mix(in srgb, #BFA46F 8%, white);
+  --color-amber-200: color-mix(in srgb, #BFA46F 30%, white);
+  --color-amber-300: color-mix(in srgb, #BFA46F 55%, white);
+  --color-amber-800: color-mix(in srgb, #BFA46F 70%, #17212B);
+  --color-yellow-400: #BFA46F;
+  --color-yellow-500: #BFA46F;
+  --color-yellow-600: #BFA46F;
+  --color-yellow-700: #BFA46F;
+  --color-yellow-50: color-mix(in srgb, #BFA46F 8%, white);
+  --color-yellow-200: color-mix(in srgb, #BFA46F 30%, white);
+  --color-yellow-300: color-mix(in srgb, #BFA46F 55%, white);
+  --color-yellow-800: color-mix(in srgb, #BFA46F 70%, #17212B);
+  --color-red-400: #C62828;
+  --color-red-500: #C62828;
+  --color-red-600: #C62828;
+  --color-red-700: #C62828;
+  --color-red-50: color-mix(in srgb, #C62828 8%, white);
+  --color-red-200: color-mix(in srgb, #C62828 30%, white);
+  --color-red-300: color-mix(in srgb, #C62828 55%, white);
+  --color-red-800: color-mix(in srgb, #C62828 70%, #17212B);
   --font-display: var(--font-inter), "Segoe UI", sans-serif;
   --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
 
-html { color-scheme: light; }
+html { color-scheme: dark; }
 body {
   background-color: var(--color-pitch);
   color: var(--color-ink);
@@ -75,19 +74,37 @@ body {
 }
 .stadium-bg { background: var(--color-pitch); }
 
-/* Light navigation and off-white dropdown panels. */
+/* Charcoal navigation with raised dropdown panels. */
 .theme-navigation {
-  background-color: #D5DADD;
-  color: var(--color-ink);
+  --color-ink: #E8EAEB;
+  --color-dim: #A7ADB1;
+  --color-panel: #36393C;
+  --color-line: color-mix(in srgb, #9DA3A6 45%, #252729);
+  --color-slate-50: #36393C;
+  --color-slate-100: #36393C;
+  --color-slate-200: #36393C;
+  background-color: #121212;
+  color: #E8EAEB;
 }
+.theme-navigation .text-navy { color: #FFFFFF; }
+.theme-navigation .bg-white { background-color: #36393C; }
 
 @media screen {
   .bg-white { background-color: var(--color-card); }
-  /* Historical accent classes now use steel blue for links and highlights. */
-  .text-grass { color: var(--color-sky); }
-  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #756139; }
+  .text-navy { color: var(--color-ink); }
+  .text-grass { color: var(--color-gold); }
+  :root {
+    --color-emerald-50: color-mix(in srgb, #2E8B57 18%, #252729);
+    --color-green-50: color-mix(in srgb, #2E8B57 18%, #252729);
+    --color-amber-50: color-mix(in srgb, #BFA46F 14%, #252729);
+    --color-yellow-50: color-mix(in srgb, #BFA46F 14%, #252729);
+    --color-red-50: color-mix(in srgb, #C62828 18%, #252729);
+  }
+  :is(.text-emerald-600, .text-emerald-700, .text-green-600, .text-green-700) { color: #8AD1A8; }
+  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #BFA46F; }
+  :is(.text-red-500, .text-red-600, .text-red-700) { color: #EE9696; }
   :is(button, a, input, select, textarea):focus-visible {
-    outline: 2px solid var(--color-grass);
+    outline: 2px solid #BFA46F;
     outline-offset: 3px;
   }
 }
@@ -110,7 +127,7 @@ body {
 }
 
 ::selection {
-  background: rgba(57, 118, 168, 0.22);
+  background: rgba(191, 164, 111, 0.3);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -128,7 +145,7 @@ input[type="number"] {
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: light;
+  color-scheme: dark;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -160,7 +177,7 @@ select optgroup {
   :root {
     --color-pitch: #ffffff;
     --color-panel: #ffffff;
-    --color-ink: #263238;
+    --color-ink: #17212B;
     --color-dim: #667685;
     --color-card: #ffffff;
     --color-line: #DCE2E7;

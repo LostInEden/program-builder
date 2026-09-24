@@ -82,7 +82,7 @@ export default function DepthChartCanvas({
   return (
     <div className="overflow-x-auto rounded-xl" role="region" aria-label="Depth chart field" tabIndex={0}>
     <div
-      className={`relative rounded-xl border border-line bg-[#121212] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
+      className={`relative rounded-xl border border-line bg-[#252729] w-full min-w-[840px] aspect-[12/5] min-h-[440px] overflow-hidden ${className}`}
       style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0%, transparent 21%, rgba(255,255,255,0.04) 21%, rgba(255,255,255,0.04) 42%)" }}
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-2 rounded-md border border-white/40" />
@@ -130,9 +130,9 @@ export default function DepthChartCanvas({
             style={{ left: `clamp(68px, ${leftFor(i)}%, calc(100% - 68px))`, top: `${isSafety ? 42 : topFor(slot.level, slot.y)}%` }}
           >
             <span
-              className={`display relative z-10 rounded-[4px] px-2.5 py-[3px] text-[10.5px] font-bold tracking-wide text-white transition-colors ${
-                selected ? "bg-ember" : ids.length > 0 ? "bg-navy" : "bg-dim/70"
-              } ${onSlotClick ? "hover:bg-ember" : ""}`}
+              className={`display relative z-10 rounded-[4px] px-2.5 py-[3px] text-[10.5px] font-bold tracking-wide transition-colors ${
+                selected ? "bg-gold text-[#121212]" : ids.length > 0 ? "bg-grass text-white" : "bg-panel text-ink"
+              } ${onSlotClick ? "hover:bg-gold hover:text-[#121212]" : ""}`}
             >
               {label}
             </span>

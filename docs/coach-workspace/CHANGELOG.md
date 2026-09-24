@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-09-23 — Restore the dark graphite, red, and gold theme
+- **Asked for:** Revert to dark grey with 49er accents.
+- **Changed:** Restored the saved near-black/graphite surfaces, light text, red primary actions, gold highlights, and dark navigation.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Restores the palette from 89c7831 without reverting later functionality.
+
+## 2026-09-23 — Match the header logo to red and gold
+- **Asked for:** Include the logo in this color theme.
+- **Changed:** Added a transparent red/gold version of the selected classic logo and used it only in the top bar, proportionally scaled to 48px.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Built-in image edit prompt: recolor the existing logo gold/red, preserving its geometry and transparent background. Asset: public/brand/counterscheme-classic-red-gold.png. Original navy asset retained.
+
+## 2026-09-23 — Theme the depth chart and Play Art
+- **Asked for:** Include the depth chart and Play Art in this color theme.
+- **Changed:** Depth chart now uses a graphite field, red position chips and gold selections. Play Art keeps its graphite field and gold line of scrimmage, with red/gold zone outlines and gold editing handles. Shared toolbars use the restored dark theme.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Saved player colors, routes, coordinates, and print rendering remain unchanged.
+
 ## 2026-09-23 — Keep the logo in the top bar only
 - **Asked for:** The logo should only be at the top of the screen and scale to that bar.
 - **Changed:** Removed the large home-page logo and fitted the header logo proportionally to 48px within the existing 52px top bar.
