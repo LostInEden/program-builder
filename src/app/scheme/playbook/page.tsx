@@ -160,9 +160,10 @@ export default function PlaybookPage() {
           {call ? (
             <motion.div key={call.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex min-h-0 flex-1 flex-col">
               <details className="absolute right-2 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-12px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
-                <summary className="cursor-pointer truncate text-sm font-semibold">{call.name} · Play details & formation</summary>
+                <summary className="cursor-pointer truncate text-sm font-semibold">{call.name} · {call.section} · Play details & formation</summary>
               <div className="mb-2 mt-3 flex flex-wrap items-center gap-2">
                 <input
+                  aria-label="Drawing name"
                   value={call.name}
                   onChange={(e) => updateCall(call.id, { name: e.target.value })}
                   className="display rounded-lg border border-line bg-slate-50 px-3 py-1.5 text-2xl font-bold min-w-0 w-52"
@@ -220,7 +221,22 @@ export default function PlaybookPage() {
                 </div>
               </div>
 
-              <label className="mb-3 block text-xs text-dim">Scheme Library item
+              <div className="mb-3 rounded-lg border border-line bg-panel p-3">
+                <label htmlFor="drawing-category" className="block text-sm font-semibold">Drawing category</label>
+                <select id="drawing-category" value={call.section}
+                  onChange={e => {
+                    const next = e.target.value as PlaybookSection;
+                    const linked = diagramConcept(call, concepts);
+                    updateCall(call.id, { section: next,
+                      ...(linked && diagramSection[linked.kind] !== next ? { schemeConceptId: "" } : {}) });
+                    setSection("Playbook");
+                  }} className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm">
+                  {SECTIONS.map(category => <option key={category} value={category}>{category}</option>)}
+                </select>
+                <p className="mt-2 text-xs text-dim">Automatically appears in Scheme Library under {call.section}.</p>
+                <Link href={`/scheme/concepts?kind=${Object.entries(diagramSection).find(([, value]) => value === call.section)?.[0] ?? "front"}`} className="mt-2 inline-block text-xs font-semibold text-grass">View {call.section} in Scheme Library →</Link>
+              </div>
+              <label className="mb-3 block text-xs text-dim">Link to an existing scheme item (optional)
                 <select aria-label="Scheme Library item" value={diagramConcept(call, concepts)?.id ?? ""}
                   onChange={e => {
                     const item = concepts.find(c => c.id === e.target.value);
@@ -228,7 +244,7 @@ export default function PlaybookPage() {
                     setSection("Playbook");
                   }} className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink">
                   <option value="">Choose scheme item…</option>
-                  {concepts.map(c => <option key={c.id} value={c.id}>{c.name} · {c.kind}</option>)}
+                  {concepts.filter(c => diagramSection[c.kind] === call.section).map(c => <option key={c.id} value={c.id}>{c.name} · {c.kind}</option>)}
                 </select>
               </label>
               <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

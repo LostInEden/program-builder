@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-25 — Categorize each Play Art drawing
+- **Asked for:** Name a drawing Eagle, choose front, and have it go there in Scheme Library.
+- **Changed:** Added a Drawing category selector in Play details for Fronts, Coverages, Pressures, and Checks & Adjustments. The selection saves automatically and files the drawing in that library category, with a direct link to view it. Existing scheme-item linking is now explicitly optional and filtered to the chosen category.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Uses the existing drawing section field. Changing categories removes only incompatible scheme-item links, preserving the drawing and keeping it open.
+
 ## 2026-09-25 — Connect Play Art drawings to Scheme Library
 - **Asked for:** Drawings made for a front are not displaying under Scheme Library; fix that.
 - **Changed:** Added saved drawing previews to each library category and linked scheme-item details. Drawing from a scheme item creates a linked play; existing exact-name matches appear automatically when unambiguous. Play details includes a Scheme Library item selector for explicit linking.
