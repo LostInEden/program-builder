@@ -2,6 +2,9 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { createDeviceStorage } from "./deviceStorage";
+import { reportSaveStatus } from "./saveStatus";
+import { diagramConcept } from "./schemeDiagrams";
 import { useEffect, useState } from "react";
 import {
   getStructure,
@@ -394,6 +397,7 @@ export type PlaybookSection = "Fronts" | "Coverages" | "Pressures" | "Checks & A
 
 export type Call = {
   id: string;
+  schemeConceptId?: string; // stable link to a Scheme Library item
   section: PlaybookSection;
   name: string;
   offForm: string;
@@ -1302,7 +1306,7 @@ export const useStore = create<Store>()(
         return id;
       },
       updateCall: (id, patch) =>
-        set((s) => ({ calls: s.calls.map((c) => (c.id === id ? { ...c, ...patch } : c)) })),
+        set((s) => ({ calls: s.calls.map((c) => (c.id === id ? { ...c, schemeConceptId: c.schemeConceptId ?? diagramConcept(c, s.concepts)?.id, ...patch } : c)) })),
       duplicateCall: (id) => {
         const c = get().calls.find((x) => x.id === id);
         if (!c) return;
@@ -1395,6 +1399,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: "program-builder-v3",
+      storage: typeof window === "undefined" ? undefined : createDeviceStorage(() => window.localStorage, reportSaveStatus),
       version: 14,
       migrate: (persisted, version) => {
         const state = persisted as {

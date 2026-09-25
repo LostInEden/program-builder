@@ -1,15 +1,23 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight, PencilRuler } from "lucide-react";
-import type { Concept } from "@/lib/store";
+import { useStore, type Concept } from "@/lib/store";
+
+import { diagramConcept } from "@/lib/schemeDiagrams";
+import PlayCardSVG from "./PlayCardSVG";
 
 export default function SchemeConceptCard({ concept: c, href }: { concept: Concept; href: string }) {
+  const { calls, concepts, groups, activeGroupId, overrides } = useStore();
+  const diagram = calls.find(call => diagramConcept(call, concepts)?.id === c.id);
+  const structureId = groups.find(g => g.id === activeGroupId)?.structureId ?? "3-4";
   return <Link href={href} className="overflow-hidden rounded-xl border border-line bg-card transition hover:border-grass focus-visible:outline-2 focus-visible:outline-grass">
     <div className="flex flex-wrap items-center justify-between gap-2 p-4">
       <h2 className="font-extrabold">{c.name}</h2>
       {c.isBase && <span className="rounded-full bg-grass/10 px-2 py-1 text-xs font-bold text-grass">Base {c.kind}</span>}
     </div>
     <div className="flex h-32 flex-col items-center justify-center gap-2 border-y border-line bg-panel text-dim">
-      <PencilRuler size={22} strokeWidth={1.5} /><span className="text-xs">No diagram linked</span>
+      {diagram ? <div className="h-full w-full overflow-hidden bg-[#FFFFFF] [&>svg]:h-full [&>svg]:w-full"><PlayCardSVG call={diagram} structureId={structureId} overrides={overrides} defStyle="letters" /></div> : <><PencilRuler size={22} strokeWidth={1.5} /><span className="text-xs">No diagram linked</span></>}
     </div>
     <div className="p-4">
       <p className="min-h-10 line-clamp-2 text-sm text-dim">{c.summary || (c.kind === 'adjustment' && c.trigger ? [c.trigger, c.action, c.result].filter(Boolean).join(' → ') : 'Open for rules and coaching notes.')}</p>

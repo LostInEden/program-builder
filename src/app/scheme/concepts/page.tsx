@@ -9,6 +9,7 @@ import {
   type Concept, type ConceptKind, type ConceptStatus, type Responsibility,
 } from "@/lib/store";
 import CoachObservation from "@/components/CoachObservation";
+import SchemeDiagrams from "@/components/SchemeDiagrams";
 import SchemeTabs from "@/components/SchemeTabs";
 import SchemeConceptCard from "@/components/SchemeConceptCard";
 import { COVERAGES } from "@/lib/coverages";
@@ -78,6 +79,7 @@ function ConceptsInner() {
         <Link href="/scheme/playbook" className="mt-4 inline-flex rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white">Open Play Art →</Link>
       </section> : <>
       <h2 className="mb-4 text-xl font-bold">{KIND_LABEL[kindParam]}</h2>
+      {!selected && !isNew && <div className="mb-5"><SchemeDiagrams kind={kindParam} /></div>}
       {isNew && <div className={`${card} mb-5 p-4`}>
         <label className="text-sm font-semibold" htmlFor="new-concept-name">New {KIND_LABEL[newKind].replace(/s$/, '')}</label>
         <div className="mt-2 flex gap-2">
@@ -134,7 +136,7 @@ function ConceptDetails(props: Parameters<typeof Editor>[0]) {
         <p className="mt-3 whitespace-pre-wrap">{c.summary || 'No summary saved.'}</p>
         {c.kind === 'adjustment' && <dl className="mt-4 grid gap-3 sm:grid-cols-3">{[['Trigger', c.trigger], ['Action', c.action], ['Result', c.result]].map(([label, value]) => <div key={label}><dt className="text-xs text-dim">{label}</dt><dd className="mt-1 whitespace-pre-wrap font-semibold">{value || 'Not set'}</dd></div>)}</dl>}
       </div>
-      <div className={`${card} p-5`}><h3 className="font-bold">Diagram</h3><p className="mt-2 text-sm text-dim">No diagram linked to this scheme item.</p><Link href="/scheme/playbook" className="mt-3 inline-block text-sm font-semibold text-grass">Open Play Art →</Link></div>
+      <SchemeDiagrams concept={c} kind={c.kind} />
       <div className={`${card} p-5`}><h3 className="mb-3 font-bold">Responsibilities & Rules</h3>{c.responsibilities.length ? <dl className="divide-y divide-line">{c.responsibilities.map(r => <div key={r.id} className="grid gap-1 py-3 sm:grid-cols-[120px_1fr]"><dt className="font-semibold">{r.role}</dt><dd className="whitespace-pre-wrap text-sm leading-relaxed text-dim">{r.job}</dd></div>)}</dl> : <p className="text-sm text-dim">No responsibilities saved.</p>}</div>
       {c.libraryId && <div className={`${card} p-5`}><h3 className="font-bold">Coverage Reference</h3><p className="mt-2 text-sm text-dim">{COVERAGES.find(x => x.id === c.libraryId)?.name || c.libraryId}</p><Link href="/scheme/coverages" className="mt-2 inline-block text-sm text-grass">Open Coverage Reference →</Link></div>}
       <div className={`${card} p-5`}><h3 className="font-bold">Coaching Notes</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-dim">{c.notes || 'No notes saved.'}</p></div>

@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-09-25 — Connect Play Art drawings to Scheme Library
+- **Asked for:** Drawings made for a front are not displaying under Scheme Library; fix that.
+- **Changed:** Added saved drawing previews to each library category and linked scheme-item details. Drawing from a scheme item creates a linked play; existing exact-name matches appear automatically when unambiguous. Play details includes a Scheme Library item selector for explicit linking.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Adds an optional schemeConceptId to drawings without deleting or migrating existing data. Opening a preview edits the same saved drawing.
+
+## 2026-09-25 — Confirm actual Play Art saves
+- **Asked for:** Add a saved indicator so coaches know their play is saved.
+- **Changed:** Replaced the static autosaved label with a visible live status below Saved diagrams. Shows Saved on this device only after reading or successfully writing browser storage; reports saving and warns Not saved — keep this tab open on failure.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Retains the existing storage key, schema, and synchronous persistence. Failed writes keep edits in memory; the next successful write clears the warning. This is device storage, not cloud backup.
+
 ## 2026-09-23 — Keep players and drawings above field markings
 - **Asked for:** Drawn lines and players need to show above the field.
 - **Changed:** Field markings now mask out beneath player symbols and defender labels. Added narrow white separation beneath saved paths, block bars, and drawing previews so field lines do not visually cross through play art.

@@ -10,6 +10,8 @@ import {
   offensivePresets,
 } from "@/lib/football";
 import { recognizeFormation, formationLabel } from "@/lib/recognize";
+import { diagramConcept, diagramSection } from "@/lib/schemeDiagrams";
+import SaveIndicator from "@/components/SaveIndicator";
 import SchemeTabs from "@/components/SchemeTabs";
 import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
@@ -39,7 +41,7 @@ export default function PlaybookPage() {
     };
   }, []);
   const {
-    calls, activeCallId, setActiveCall, addCall, updateCall, duplicateCall, deleteCall,
+    concepts, calls, activeCallId, setActiveCall, addCall, updateCall, duplicateCall, deleteCall,
     groups, activeGroupId, players, overrides, strengthRule, formationTerms,
     formationTemplates, saveFormationTemplate, addPresetCall,
   } = useStore();
@@ -103,7 +105,7 @@ export default function PlaybookPage() {
       <div className="flex min-h-0 flex-1 flex-col">
         {/* Call list */}
         <details className="absolute left-1/3 top-2 z-30 max-h-[75dvh] w-[calc(33.333%-8px)] overflow-y-auto rounded-lg border border-line bg-card p-2">
-          <summary className="cursor-pointer truncate text-sm font-semibold">Saved diagrams · {call?.name ?? "Choose or create a diagram"} <span className="text-dim font-normal">({sectionCalls.length}) · autosaved</span></summary>
+          <summary className="cursor-pointer truncate text-sm font-semibold">Saved diagrams · {call?.name ?? "Choose or create a diagram"} <span className="text-dim font-normal">({sectionCalls.length})</span><SaveIndicator /></summary>
           <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
           {sectionCalls.map((c) => (
             <button
@@ -218,6 +220,17 @@ export default function PlaybookPage() {
                 </div>
               </div>
 
+              <label className="mb-3 block text-xs text-dim">Scheme Library item
+                <select aria-label="Scheme Library item" value={diagramConcept(call, concepts)?.id ?? ""}
+                  onChange={e => {
+                    const item = concepts.find(c => c.id === e.target.value);
+                    updateCall(call.id, { schemeConceptId: item?.id ?? "", ...(item ? { section: diagramSection[item.kind] } : {}) });
+                    setSection("Playbook");
+                  }} className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink">
+                  <option value="">Choose scheme item…</option>
+                  {concepts.map(c => <option key={c.id} value={c.id}>{c.name} · {c.kind}</option>)}
+                </select>
+              </label>
               <div className="mb-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {([
                   ["offForm", "Offensive formation", "Trips Right"],
