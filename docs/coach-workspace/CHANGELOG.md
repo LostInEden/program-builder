@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Explain defensive scheme strengths and personnel fit
+- **Asked for:** Explain why schemes are sound or not, why they fit personnel, their weaknesses and strengths, and what can improve.
+- **Changed:** Added an assessment for each confirmed active scheme item with strengths, attack points, soundness limitations, named starter skill evidence and improvement steps. The detail panel displays each section. Removed broad man-fit conclusions based on secondary averages and stopped labeling saved names/rules alone as sound.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Deterministic coaching guidance, not film simulation. Family considerations are explicitly inferred from names; custom calls disclose limits. Missing grades remain unknown. Tests cover missing data, individual weaknesses, strong grades and excluded calls. Coverage context cross-checked against USA Football articles on perimeter support and Cover 3 simulated pressures (https://blogs.usafootball.com/blog/2778/communicating-perimeter-support-with-three-and-four-down-linemen and https://blogs.usafootball.com/blog/7544/how-to-play-cover-3-behind-a-simulated-pressure).
+
 ## 2026-09-28 — Defense Analysis coaching dashboard
 - **Asked for:** Preview the coaching dashboard with a detail panel.
 - **Changed:** Added concise concern cards, filterable findings with counts, and a side-by-side detail panel for explanations, examples, rules, and adjustments. Compact independently scrolling panels reduce page length; mobile selections jump to details.

@@ -31,7 +31,10 @@ function FindingDetails({ f, accent }: { f: Finding; accent: string }) {
     <p className="mt-2 text-sm leading-relaxed text-dim">{f.detail}</p>
     {!!f.affected?.length && <div className="mt-3 flex flex-wrap gap-2">{[...new Set(f.affected)].map(a => <span key={a} className="rounded-md border border-line bg-panel px-2 py-1 text-xs font-semibold">{a}</span>)}</div>}
     <div className="mt-5 space-y-5 border-t border-line pt-5 text-sm">
-          {f.why && <Section title="See why"><p className="leading-relaxed">{f.why}</p></Section>}
+      {f.basis && <p className="rounded-lg bg-panel p-3 text-xs leading-relaxed text-dim">{f.basis}</p>}
+      {([["Scheme strengths", f.strengths], ["Weaknesses & ways to attack it", f.weaknesses], ["Fit with your personnel", f.personnel], ["What to improve", f.improvements]] as [string, string[] | undefined][]).map(([title, items]) => !!items?.length && <Section key={title} title={title}><ul className="space-y-2">{items.map(item => <li key={item} className="rounded-lg border border-line p-3 leading-relaxed">{item}</li>)}</ul></Section>)}
+
+          {f.why && <Section title="Soundness & evidence"><p className="leading-relaxed">{f.why}</p></Section>}
           {f.examples && f.examples.length > 0 && (
             <Section title="Situational examples">
               <ul className="list-disc pl-4 text-ink/80 leading-relaxed">{f.examples.map((e) => <li key={e}>{e}</li>)}</ul>

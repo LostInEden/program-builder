@@ -13,7 +13,8 @@ import {
   type Overrides,
   type Concept,
 } from "@/lib/store";
-import { gradeTrend } from "@/lib/skills";
+import { positionTypeOfConcept } from "@/lib/skills";
+import { assessScheme } from "./schemeAssessment";
 import {
   avgGrade, callLoad, masteryNote, physicalityLine, runStopLine, TACKLE_SKILL_KEYS,
 } from "@/lib/principles";
@@ -29,6 +30,11 @@ export type Finding = {
   why?: string; // deeper explanation
   examples?: string[]; // situational examples
   breakdown?: string[]; // rule / fit breakdown
+  strengths?: string[];
+  weaknesses?: string[];
+  personnel?: string[];
+  improvements?: string[];
+  basis?: string;
   suggestion?: string; // small adjustment using what the coach already carries
 };
 
@@ -49,7 +55,7 @@ const has = (text: string | undefined, ...words: string[]) =>
 export const SITUATIONS: { key: string; label: string; words: string[]; category: string; fallback: string }[] = [
   { key: "motion", label: "Motion (jet / across / orbit)", words: ["motion", "jet", "orbit", "across"], category: "vs Motions", fallback: "Motion Bump — bump the second level, corners stay, no rotation." },
   { key: "trips", label: "Trips / 3x1", words: ["trips", "3x1", "3 x 1", "bunch"], category: "vs Formations", fallback: "Quarters Match with Special/Solo or Poach rules (Coverage Library) handles 3x1 without leaving the backside corner alone." },
-  { key: "empty", label: "Empty (5 wide)", words: ["empty", "5 wide", "five wide"], category: "vs Formations", fallback: "Declare the 5 immediate threats: Cover 3 Match or Quarters keeps 5 underneath eyes on the QB." },
+  { key: "empty", label: "Empty (5 wide)", words: ["empty", "5 wide", "five wide"], category: "vs Formations", fallback: "Declare the 5 immediate threats: verify how your chosen coverage distributes all five; underneath numbers depend on the rush and coverage call." },
   { key: "12", label: "12 / 2-TE personnel", words: ["12", "two te", "2 te", "te + 2", "tight end", "heavy", "unbalanced"], category: "vs Personnel", fallback: "Over/Under front check to the TE side puts the 3-tech in the B gap they want to run through." },
   { key: "3rdlong", label: "3rd & long", words: ["3rd & long", "3rd and long", "3rd & 7", "3rd and 7", "third and long", "3rd & 10", "long yardage"], category: "Situational Rules", fallback: "A 3rd Down Call pressure with Cover 1 Robber or Tampa 2 Match behind it." },
   { key: "redzone", label: "Red zone / goal line", words: ["red zone", "redzone", "inside the", "goal line", "goalline"], category: "Special Situations", fallback: "A five-man front (Bear) inside the 10 and a match coverage that stays on top of fades." },
@@ -79,9 +85,9 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
     findings.push({
       id: "base",
       check: "Base defense",
-      status: "Sound",
+      status: "Needs Review",
       detail: `${scheme.structureName} · ${baseFront.name} front · ${baseCov.name}. ${fronts.length} fronts, ${coverages.length} coverages, ${pressures.length} pressures, ${adjustments.length} adjustments saved.`,
-      why: "The engine can only reason about what is saved. A named base front and base coverage give every other check something to compare against.",
+      why: "The base identity is documented. That establishes what to review, but does not prove the front and coverage are sound together. Review the scheme breakdowns for assignments, vulnerabilities and personnel demands.",
       breakdown: [`Base front: ${baseFront.name} — ${baseFront.summary || "no summary"}`, `Base coverage: ${baseCov.name} — ${baseCov.summary || "no summary"}`],
     });
   } else {
@@ -108,10 +114,10 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
     findings.push({
       id: "answers",
       check: "Stored answers",
-      status: "Sound",
+      status: "Needs Review",
       detail: `${covered.length} of ${SITUATIONS.length} common situations have a saved rule.`,
       breakdown: covered,
-      why: "Each of these is a Trigger → Action → Result the players can execute without a timeout.",
+      why: "These names or triggers match a situation. Verify that each has a complete action and result; a keyword match does not prove the adjustment works.",
     });
   }
   for (const s of missing) {
@@ -123,7 +129,7 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
       affected: [s.category],
       why: "Offenses use motion, personnel, and formation strength to force late decisions. A stored rule is what lets the software — and your players — answer automatically.",
       examples: [`Opponent shows ${s.label.toLowerCase()} on 2nd & 6 at midfield — what's the call?`],
-      suggestion: `Using what you carry: ${s.fallback}`,
+      suggestion: `Possible approach to evaluate (confirm it is in your package): ${s.fallback}`,
     });
   }
 
@@ -133,7 +139,7 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
     findings.push({
       id: "cov-rules",
       check: "Coverage responsibilities",
-      status: "Sound",
+      status: "Needs Review",
       detail: `Every saved coverage has per-position responsibilities written down.`,
       why: "Match coverage lives or dies on who takes #2 vertical and who owns the post — those rules are what the analyst checks fits against.",
     });
@@ -161,10 +167,10 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
   findings.push({
     id: "pressure",
     check: "Pressure package",
-    status: pressures.length === 0 ? "Needs Review" : thirdDown ? "Sound" : "Needs Review",
+    status: "Needs Review",
     detail:
       pressures.length === 0
-        ? "No pressures saved — the offense never has to account for a fifth rusher."
+        ? "No pressures saved. The system cannot assess your pressure plan or the coverage behind it."
         : `${pressures.length} pressures across ${groupsUsed.length} group${groupsUsed.length === 1 ? "" : "s"} (${groupsUsed.join(", ")}).${thirdDown ? "" : " No dedicated 3rd-down call."}`,
     affected: pressures.length === 0 ? ["Pressures"] : thirdDown ? undefined : ["3rd Down Calls"],
     why: "Negative plays come from pressure the protection didn't expect. Variety by origin (edge, A gap, field) is what keeps it unexpected.",
@@ -180,7 +186,7 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
   const starters = Object.entries(slots)
     .filter(([, ids]) => ids.length > 0)
     .map(([k, ids]) => ({ slot: Number(k), pl: byId.get(ids[0]) }))
-    .filter((e) => e.pl) as { slot: number; pl: Player }[];
+    .filter((e) => e.pl && structure.slots[e.slot]) as { slot: number; pl: Player }[];
   // Grades are keyed by skill-category id now (lib/skills). Take the first id
   // the coach actually kept — his categories are his to rename or remove.
   const skill = (p: Player, ...keys: string[]) => {
@@ -190,55 +196,9 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
     }
     return null;
   };
-  const COVERAGE_KEYS = ["manCoverage", "coverage", "zoneDrops"];
-  const TACKLE_KEYS = ["tackling", "runFit", "runSupport"];
-  // A quiet trend only ever explains a finding — it never moves anybody (Q10).
-  const strugglingNote = (pl: Player) => {
-    const t = gradeTrend(pl.weeklyGrades);
-    return t && t.trend === "struggling"
-      ? ` Weekly grades have him trending down (${t.avg}/5 over weeks ${t.weeks.join(", ")}) — worth a look, not an automatic change.`
-      : "";
-  };
-  const dbStarters = starters.filter((e) => ["deep"].includes(structure.slots[e.slot].level));
-  const covGrades = dbStarters.map((e) => skill(e.pl, ...COVERAGE_KEYS)).filter((v): v is number => v != null);
-  const manHeavy = coverages.filter((c) => has(c.name, "cover 1", "cover 0", "man", "meg", "2-man", "robber"));
-  if (covGrades.length >= 2 && manHeavy.length) {
-    const avg = covGrades.reduce((a, b) => a + b, 0) / covGrades.length;
-    const weak = dbStarters.filter((e) => (skill(e.pl, ...COVERAGE_KEYS) ?? 5) <= 2);
-    findings.push({
-      id: "man-fit",
-      check: "Man coverage vs your corners",
-      status: avg < 3 ? "Potential Conflict" : "Sound",
-      detail:
-        avg < 3
-          ? `Starting secondary averages ${avg.toFixed(1)}/5 in coverage, but you carry ${manHeavy.map((c) => c.name).join(", ")}. ${weak.map((e) => `${label(e.slot)} ${e.pl.name}`).join(", ")} would be isolated.${weak.map((e) => strugglingNote(e.pl)).join("")}`
-          : `Secondary averages ${avg.toFixed(1)}/5 in coverage — good enough to carry ${manHeavy.map((c) => c.name).join(", ")}.`,
-      affected: avg < 3 ? weak.map((e) => label(e.slot)) : undefined,
-      why: "Man coverages put a defender alone on a receiver with limited help. Skill ratings are the only thing that tells the engine whether that's a strength or a liability.",
-      examples: ["3rd & 8, opponent's best WR isolated on the boundary corner in Cover 1."],
-      suggestion: avg < 3 ? "Keep the man calls for your strongest matchups and lean on Cover 3 Match / Quarters (help inside) as the default." : undefined,
-    });
-  }
-  const boxStarters = starters.filter((e) => structure.slots[e.slot].level !== "deep");
-  const tackleGrades = boxStarters.map((e) => skill(e.pl, ...TACKLE_KEYS)).filter((v): v is number => v != null);
-  if (tackleGrades.length >= 3) {
-    const avg = tackleGrades.reduce((a, b) => a + b, 0) / tackleGrades.length;
-    const runFirst = has(scheme.philosophy, "run");
-    findings.push({
-      id: "run-fit",
-      check: "Box tackling vs philosophy",
-      status: runFirst && avg < 3 ? "Needs Review" : "Sound",
-      detail:
-        runFirst && avg < 3
-          ? `Your philosophy leads with the run but the box averages ${avg.toFixed(1)}/5 in tackling and run fits.${boxStarters
-              .filter((e) => (skill(e.pl, ...TACKLE_KEYS) ?? 5) <= 2)
-              .map((e) => strugglingNote(e.pl))
-              .join("")}`
-          : `Box averages ${avg.toFixed(1)}/5 tackling — consistent with ${runFirst ? "a run-first identity" : "the stated philosophy"}.`,
-      why: "Gap integrity is only as good as the tackle at the end of it. Missed tackles turn sound fits into explosives.",
-      suggestion: runFirst && avg < 3 ? "Practice emphasis: tackling circuit for the second level; consider Tite to keep the ends in the B gaps and shorten the LBs' runs." : undefined,
-    });
-  }
+  const dbStarters = starters.filter(e => positionTypeOfConcept(structure.slots[e.slot].concept) === "DB");
+  const boxStarters = starters.filter(e => positionTypeOfConcept(structure.slots[e.slot].concept) !== "DB");
+  findings.unshift(...assessScheme(confirmed, starters.map(e => ({ label: label(e.slot), unit: positionTypeOfConcept(structure.slots[e.slot].concept), player: e.pl }))));
   const rated = players.filter((p) => p.skills && Object.values(p.skills).some((v) => v != null)).length;
   if (rated < Math.min(6, players.length)) {
     findings.push({
@@ -264,7 +224,7 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
   findings.push({
     id: "fundamentals",
     check: "Fundamentals",
-    status: load.over || (boxAvgAll != null && boxAvgAll < 3) || physical ? "Needs Review" : "Sound",
+    status: load.over || (boxAvgAll != null && boxAvgAll < 3) || physical || boxAvgAll == null || dbAvgAll == null ? "Needs Review" : "Sound",
     detail: [masteryNote(load), runStopLine(boxAvgAll, runFront), physical].filter(Boolean).join(" "),
     affected: load.over ? ["Fronts", "Coverages", "Pressures", "Adjustments"] : physical ? ["Secondary"] : undefined,
     why: "Coverage, pressure and adjustments are built on top of execution. Volume is the first thing that takes reps away from it.",
@@ -318,10 +278,10 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
   } else {
     findings.push({
       id: "depth",
-      check: "Depth chart",
+      check: "Depth chart readiness",
       status: "Sound",
       detail: `All ${structure.slots.length} spots in ${group.name} filled, no duplicate or unavailable starters.`,
-      why: "The people layer under the scheme is complete.",
+      why: "All current positions have unique, healthy starters. This confirms roster readiness only; it does not establish scheme soundness or matchup fit.",
     });
   }
 
