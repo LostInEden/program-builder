@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { Star, AlertTriangle, Wrench, ChevronDown } from "lucide-react";
+import { Star, AlertTriangle, Wrench, ChevronRight } from "lucide-react";
 import { useStore, useHydrated } from "@/lib/store";
 import { computeFindings, type Finding, type Status } from "@/lib/analyze";
 import SchemeTabs from "@/components/SchemeTabs";
-import { AI_LABEL } from "@/lib/ai";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
 
@@ -26,26 +24,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function FindingCard({ f, accent }: { f: Finding; accent: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <button onClick={() => setOpen((o) => !o)} className={`${card} w-full p-4 text-left transition hover:border-dim`}>
-      <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="font-bold text-[15px]">{f.check}</div>
-          <p className="text-sm text-dim leading-relaxed mt-0.5">{f.detail}</p>
-        </div>
-        <ChevronDown size={15} className={`shrink-0 mt-1 text-dim transition-transform ${open ? "rotate-180" : ""}`} />
-      </div>
-      {f.affected && f.affected.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {[...new Set(f.affected)].map((a) => (
-            <span key={a} className="rounded-full border border-line bg-slate-50 px-2 py-0.5 text-[11px] font-bold">{a}</span>
-          ))}
-        </div>
-      )}
-      {open && (
-        <div className="mt-3 border-t border-line pt-3 flex flex-col gap-3 text-sm">
+function FindingDetails({ f, accent }: { f: Finding; accent: string }) {
+  return <section id="finding-details" aria-label="Finding details" className={`${card} p-5 lg:max-h-[65dvh] lg:overflow-y-auto`}>
+    <p className={`mb-2 text-xs font-bold uppercase tracking-wider ${accent}`}>{buckets.find(b => b.key === f.status)?.title}</p>
+    <h2 className="text-xl font-extrabold">{f.check}</h2>
+    <p className="mt-2 text-sm leading-relaxed text-dim">{f.detail}</p>
+    {!!f.affected?.length && <div className="mt-3 flex flex-wrap gap-2">{[...new Set(f.affected)].map(a => <span key={a} className="rounded-md border border-line bg-panel px-2 py-1 text-xs font-semibold">{a}</span>)}</div>}
+    <div className="mt-5 space-y-5 border-t border-line pt-5 text-sm">
           {f.why && <Section title="See why"><p className="leading-relaxed">{f.why}</p></Section>}
           {f.examples && f.examples.length > 0 && (
             <Section title="Situational examples">
@@ -60,59 +45,59 @@ function FindingCard({ f, accent }: { f: Finding; accent: string }) {
           {f.suggestion && (
             <Section title="Suggested adjustment"><p className={`leading-relaxed font-medium ${accent}`}>{f.suggestion}</p></Section>
           )}
-        </div>
-      )}
-    </button>
-  );
+    </div>
+    <Link href="/scheme" className="mt-5 inline-block text-sm font-semibold text-grass">Review my scheme →</Link>
+  </section>;
 }
 
 export default function AnalysisPage() {
   const hydrated = useHydrated();
   const { groups, activeGroupId, players, scheme, overrides, concepts } = useStore();
+  const [filter, setFilter] = useState<Status | "All">("All");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
 
   const { findings, groupName, structureName } = computeFindings({ groups, activeGroupId, players, scheme, overrides, concepts });
   const confirmed = concepts.filter((c) => c.confirmed).length;
 
-  return (
-    <div className="px-6 py-8 max-w-6xl mx-auto">
-      <Link href="/scheme" className="mb-3 inline-block text-sm text-dim hover:text-ink">← My Scheme</Link>
-      <div className="mb-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1>
-        <p className="text-dim mt-0.5">How your saved fronts, coverages, pressures, and adjustments work together.</p>
-        <p className="text-dim mt-2 text-sm">
-          Your saved defense — {confirmed} concepts, {groupName} ({structureName}) — checked against personnel, formations,
-          motions, run and pass concepts, coverage responsibilities, numbers, and situational football. Considerations, not corrections.
-        </p>
-      </div>
-
-      <SchemeTabs active="analysis" />
-      <div className="grid gap-5 lg:grid-cols-3 items-start">
-        {buckets.map(({ key, title, sub, icon: Icon, accent, head }, bi) => {
-          const list = findings.filter((f) => f.status === key);
-          return (
-            <motion.div key={key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: bi * 0.06 }} className="flex flex-col gap-3">
-              <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${head}`}>
-                <Icon size={18} className={accent} />
-                <div>
-                  <div className={`font-extrabold ${accent}`}>{title}</div>
-                  <div className="text-xs text-dim">{sub}</div>
-                </div>
-                <span className={`ml-auto text-xl font-extrabold tabular-nums ${accent}`}>{list.length}</span>
-              </div>
-              {list.map((f) => <FindingCard key={f.id} f={f} accent={accent} />)}
-              {list.length === 0 && (
-                <div className="rounded-xl border border-dashed border-line px-4 py-6 text-center text-sm text-dim">Nothing here right now.</div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-
-      <p className="mt-6 text-sm text-dim">
-        Click a card for why, situational examples, the rule/fit breakdown, and a suggested adjustment. Engine: {AI_LABEL}.{" "}
-        <Link href="/scheme" className="text-grass font-semibold hover:underline">Adjust the scheme →</Link>
-      </p>
+  const ordered = (["Potential Conflict", "Needs Review", "Sound"] as Status[]).flatMap(status => findings.filter(f => f.status === status));
+  const visible = filter === "All" ? ordered : ordered.filter(f => f.status === filter);
+  const selected = visible.find(f => f.id === selectedId) ?? visible[0];
+  const concerns = ordered.filter(f => f.status === "Potential Conflict").slice(0, 3);
+  const choose = (id: string) => {
+    setSelectedId(id);
+    if (window.matchMedia("(max-width: 1023px)").matches) requestAnimationFrame(() => document.getElementById("finding-details")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  return <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">How your defense fits together. What to review next.</p></div>
+      <p className="text-xs text-dim">{groupName} · {structureName} · {confirmed} confirmed concepts</p>
     </div>
-  );
+    <SchemeTabs active="analysis" />
+    <section aria-label="Concerns to review" className="mb-5">
+      <div className="mb-2 flex items-center justify-between gap-3"><h2 className="text-sm font-bold">Start here</h2><span className="text-xs text-dim">Concerns from your saved defense</span></div>
+      {concerns.length ? <div className="grid gap-3 md:grid-cols-3">{concerns.map(f => <button key={f.id} onClick={() => { setFilter("All"); choose(f.id); }} className={`${card} border-l-4 border-l-grass p-4 text-left hover:border-grass focus-visible:outline-2 focus-visible:outline-grass`}>
+        <h3 className="text-sm font-bold">{f.check} <span className="text-grass">↗</span></h3><p className="mt-1 line-clamp-2 text-xs leading-relaxed text-dim">{f.detail}</p>
+      </button>)}</div> : <div className={`${card} p-4 text-sm text-dim`}>No concerns flagged by the current checks. Review recommendations and strengths below.</div>}
+    </section>
+    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <section className={`${card} overflow-hidden`} aria-label="Analysis findings">
+        <div className="border-b border-line p-4">
+          <div className="mb-3 flex items-center justify-between"><h2 className="font-bold">Your defense</h2><button onClick={() => setFilter("All")} aria-pressed={filter === "All"} className={`rounded-md px-2 py-1 text-xs font-semibold ${filter === "All" ? "bg-grass/10 text-grass" : "text-dim"}`}>All {findings.length}</button></div>
+          <div className="grid grid-cols-3 gap-2">{[buckets[1], buckets[2], buckets[0]].map(({ key, title, icon: Icon, accent }) => <button key={key} onClick={() => setFilter(key)} aria-pressed={filter === key} className={`min-w-0 rounded-lg border p-2 text-left focus-visible:outline-2 focus-visible:outline-grass ${filter === key ? "border-grass bg-grass/5" : "border-line hover:bg-panel"}`}>
+            <div className={`mb-1 flex items-center justify-between ${accent}`}><Icon size={15} /><span className="text-lg font-extrabold">{findings.filter(f => f.status === key).length}</span></div><span className="block break-words text-[11px] font-semibold">{title}</span>
+          </button>)}</div>
+        </div>
+        <div className="max-h-80 overflow-y-auto lg:max-h-[45dvh]">{visible.map(f => {
+          const bucket = buckets.find(b => b.key === f.status)!;
+          const Icon = bucket.icon;
+          return <button key={f.id} aria-pressed={selected?.id === f.id} aria-controls="finding-details" onClick={() => choose(f.id)} className={`flex w-full items-start gap-3 border-b border-line p-4 text-left last:border-0 focus-visible:outline-2 focus-visible:outline-grass ${selected?.id === f.id ? "bg-grass/5 border-l-4 border-l-grass" : "hover:bg-panel"}`}>
+            <Icon size={16} className={`mt-0.5 shrink-0 ${bucket.accent}`} /><div className="min-w-0 flex-1"><h3 className="text-sm font-bold">{f.check}</h3><p className="mt-1 line-clamp-1 text-xs text-dim">{f.detail}</p></div><ChevronRight size={15} className="mt-1 shrink-0 text-dim" />
+          </button>;
+        })}{!visible.length && <p className="p-6 text-sm text-dim">No findings in this category.</p>}</div>
+      </section>
+      {selected ? <FindingDetails f={selected} accent={buckets.find(b => b.key === selected.status)!.accent} /> : <section id="finding-details" className={`${card} p-6 text-sm text-dim`}>Choose another category to explore your defense.</section>}
+    </div>
+    <p className="mt-4 text-xs text-dim">Based on your saved scheme and personnel. Review these considerations with your coaching staff.</p>
+  </div>;
 }

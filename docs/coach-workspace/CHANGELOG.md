@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Defense Analysis coaching dashboard
+- **Asked for:** Preview the coaching dashboard with a detail panel.
+- **Changed:** Added concise concern cards, filterable findings with counts, and a side-by-side detail panel for explanations, examples, rules, and adjustments. Compact independently scrolling panels reduce page length; mobile selections jump to details.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing analysis engine and saved data are unchanged. All finding details remain accessible; concern cards use existing finding order, not a new severity score.
+
 ## 2026-09-28 — Three previews per row
 - **Asked for:** Change the Scheme Library layout to three per row.
 - **Changed:** Scheme cards and linked diagram lists now use three desktop columns across all categories.
