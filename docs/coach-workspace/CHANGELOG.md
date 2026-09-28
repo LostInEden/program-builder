@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Compact four-column Scheme Library
+- **Asked for:** Make previews more concise and show four in a row so coaches scroll less.
+- **Changed:** Scheme cards and linked diagram lists now show four columns on desktop, two on smaller screens, and one on phones. Reduced preview height, card padding, and spacing while retaining the clearer drawing rendering.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Applies across Fronts, Coverages, Pressures, and Adjustments. Saved drawings are unchanged.
+
 ## 2026-09-28 — Clearer diagram previews throughout Scheme Library
 - **Asked for:** Make previews like Okie easier to see and more visually appealing, across all My Scheme sections.
 - **Changed:** Enlarged scheme cards to two columns with framed white drawing areas, fit previews around the drawn alignment and routes, and improved defender label contrast. Applied the same treatment to linked diagrams on Fronts, Coverages, Pressures, and Adjustments detail pages.

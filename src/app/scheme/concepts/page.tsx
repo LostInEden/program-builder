@@ -103,7 +103,7 @@ function ConceptsInner() {
             </div>
           )}
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {list.map(c => <SchemeConceptCard key={c.id} concept={c} href={`/scheme/concepts?kind=${kindParam}${cat ? `&cat=${encodeURIComponent(cat)}` : ''}&id=${encodeURIComponent(c.id)}`} />)}
           </div>
           {list.length === 0 && <div className={`${card} p-8 text-center text-sm text-dim`}>No {KIND_LABEL[kindParam].toLowerCase()} in this view. Add one or choose another category.</div>}
