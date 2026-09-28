@@ -233,7 +233,7 @@ export default function PlaybookPage() {
                   }} className="mt-1 w-full rounded-lg border border-line bg-card px-3 py-2 text-sm">
                   {SECTIONS.map(category => <option key={category} value={category}>{category}</option>)}
                 </select>
-                <p className="mt-2 text-xs text-dim">Automatically appears in Scheme Library under {call.section}.</p>
+                <p className="mt-2 text-xs text-dim">Saved in Play Art under {call.section}. Link a scheme item below to show the drawing with that item.</p>
                 <Link href={`/scheme/concepts?kind=${Object.entries(diagramSection).find(([, value]) => value === call.section)?.[0] ?? "front"}`} className="mt-2 inline-block text-xs font-semibold text-grass">View {call.section} in Scheme Library →</Link>
               </div>
               <label className="mb-3 block text-xs text-dim">Link to an existing scheme item (optional)

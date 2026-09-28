@@ -79,7 +79,6 @@ function ConceptsInner() {
         <Link href="/scheme/playbook" className="mt-4 inline-flex rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white">Open Play Art →</Link>
       </section> : <>
       <h2 className="mb-4 text-xl font-bold">{KIND_LABEL[kindParam]}</h2>
-      {!selected && !isNew && <div className="mb-5"><SchemeDiagrams kind={kindParam} /></div>}
       {isNew && <div className={`${card} mb-5 p-4`}>
         <label className="text-sm font-semibold" htmlFor="new-concept-name">New {KIND_LABEL[newKind].replace(/s$/, '')}</label>
         <div className="mt-2 flex gap-2">

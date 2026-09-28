@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Remove Saved Play Art gallery from Scheme Library
+- **Asked for:** Remove Saved Play Art under Scheme Library.
+- **Changed:** Removed the standalone Saved Play Art gallery from library category pages and clarified the category helper text in Play Art.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Saved drawings remain in Play Art. Diagrams linked to individual scheme items remain available on those items; no stored drawings or categories were deleted.
+
 ## 2026-09-25 — Categorize each Play Art drawing
 - **Asked for:** Name a drawing Eagle, choose front, and have it go there in Scheme Library.
 - **Changed:** Added a Drawing category selector in Play details for Fronts, Coverages, Pressures, and Checks & Adjustments. The selection saves automatically and files the drawing in that library category, with a direct link to view it. Existing scheme-item linking is now explicitly optional and filtered to the chosen category.
