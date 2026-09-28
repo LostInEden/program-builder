@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Three previews per row
+- **Asked for:** Change the Scheme Library layout to three per row.
+- **Changed:** Scheme cards and linked diagram lists now use three desktop columns across all categories.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Retains compact cards and responsive two-column and single-column layouts on smaller screens.
+
 ## 2026-09-28 — Compact four-column Scheme Library
 - **Asked for:** Make previews more concise and show four in a row so coaches scroll less.
 - **Changed:** Scheme cards and linked diagram lists now show four columns on desktop, two on smaller screens, and one on phones. Reduced preview height, card padding, and spacing while retaining the clearer drawing rendering.

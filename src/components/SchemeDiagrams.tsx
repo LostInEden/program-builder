@@ -21,7 +21,7 @@ export default function SchemeDiagrams({ concept, kind }: { concept?: Concept; k
     <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{concept ? "Diagrams" : "Saved Play Art"}</h3>
       <button onClick={create} className="text-sm font-semibold text-grass">Draw {concept ? concept.name : "a diagram"} →</button></div>
     {!diagrams.length && <p className="mt-2 text-sm text-dim">{concept ? "No diagram linked yet. Draw this scheme item, or link an existing drawing in Play details." : "No drawings in this category yet."}</p>}
-    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{diagrams.map(call => <button key={call.id} onClick={() => {
+    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{diagrams.map(call => <button key={call.id} onClick={() => {
       if (concept && !call.schemeConceptId) updateCall(call.id, { schemeConceptId: concept.id });
       open(call.id);
     }} className="overflow-hidden rounded-lg border border-line text-left hover:border-grass">
