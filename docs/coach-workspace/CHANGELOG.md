@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Clearer diagram previews throughout Scheme Library
+- **Asked for:** Make previews like Okie easier to see and more visually appealing, across all My Scheme sections.
+- **Changed:** Enlarged scheme cards to two columns with framed white drawing areas, fit previews around the drawn alignment and routes, and improved defender label contrast. Applied the same treatment to linked diagrams on Fronts, Coverages, Pressures, and Adjustments detail pages.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Preview-only framing and label styling; saved coordinates, Play Art editing, and printed diagrams remain unchanged.
+
 ## 2026-09-28 — Remove Saved Play Art gallery from Scheme Library
 - **Asked for:** Remove Saved Play Art under Scheme Library.
 - **Changed:** Removed the standalone Saved Play Art gallery from library category pages and clarified the category helper text in Play Art.

@@ -21,11 +21,11 @@ export default function SchemeDiagrams({ concept, kind }: { concept?: Concept; k
     <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{concept ? "Diagrams" : "Saved Play Art"}</h3>
       <button onClick={create} className="text-sm font-semibold text-grass">Draw {concept ? concept.name : "a diagram"} →</button></div>
     {!diagrams.length && <p className="mt-2 text-sm text-dim">{concept ? "No diagram linked yet. Draw this scheme item, or link an existing drawing in Play details." : "No drawings in this category yet."}</p>}
-    <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{diagrams.map(call => <button key={call.id} onClick={() => {
+    <div className="mt-3 grid gap-4 md:grid-cols-2">{diagrams.map(call => <button key={call.id} onClick={() => {
       if (concept && !call.schemeConceptId) updateCall(call.id, { schemeConceptId: concept.id });
       open(call.id);
     }} className="overflow-hidden rounded-lg border border-line text-left hover:border-grass">
-      <div className="bg-[#FFFFFF] p-2"><PlayCardSVG call={call} structureId={structureId} overrides={overrides} defStyle="letters" /></div>
+      <div className="h-64 bg-[#FFFFFF] p-3"><PlayCardSVG call={call} structureId={structureId} overrides={overrides} defStyle="letters" preview /></div>
       <div className="px-3 py-2 text-sm font-semibold">{call.name}<span className="block text-xs font-normal text-dim">Edit in Play Art →</span></div>
     </button>)}</div>
   </section>;

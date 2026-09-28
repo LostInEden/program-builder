@@ -27,11 +27,13 @@ export default function PlayCardSVG({
   call,
   structureId,
   overrides,
+  preview = false,
 }: {
   call: Call;
   structureId: string;
   overrides: Overrides;
   defStyle: "letters" | "triangles";
+  preview?: boolean;
 }) {
   const structure = getStructure(structureId);
   const preset = FIELD_PRESETS.find((p) => p.id === (call.fieldPreset ?? "midfield")) ?? FIELD_PRESETS[0];
@@ -68,8 +70,25 @@ export default function PlayCardSVG({
 
   const arrId = (c: string) => `pa-${c.replace("#", "")}-${call.id}`;
 
+  // Frame the actual drawing rather than squeezing an entire field into a card.
+  const points: [number, number][] = [
+    ...call.offLook.map(o => [o.x, o.y] as [number, number]),
+    ...structure.slots.flatMap((_, i) => call.defAppearance?.[i]?.hidden ? [] : [defPos(i)]),
+    ...(call.texts ?? []).map(t => [t.x, t.y] as [number, number]),
+    ...call.zones.flatMap(z => [[z.x - z.rx, z.y - z.ry], [z.x + z.rx, z.y + z.ry]] as [number, number][]),
+    ...call.lines.flatMap(l => {
+      const a = anchorPos(l.anchor);
+      return !a ? [] : l.anchor === "free" ? l.points : [a, ...l.points.map(([x, y]) => [a[0] + x, a[1] + y] as [number, number])];
+    }),
+  ];
+  const left = Math.min(0, ...points.map(p => p[0] - 5));
+  const right = Math.max(100, ...points.map(p => p[0] + 5));
+  const top = Math.min(LOS_Y - 8, ...points.map(p => p[1] - 6));
+  const bottom = Math.max(LOS_Y + 8, ...points.map(p => p[1] + 6));
+  const viewBox = preview ? `${left} ${top} ${right - left} ${bottom - top}` : `0 0 100 ${FIELD_H}`;
+
   return (
-    <svg viewBox={`0 0 100 ${FIELD_H}`} className="w-full h-auto rounded border border-gray-300 bg-white">
+    <svg viewBox={viewBox} role="img" aria-label={`${call.name} play diagram`} className={preview ? "h-full w-full" : "w-full h-auto rounded border border-gray-300 bg-white"}>
       <rect width="100" height={FIELD_H} fill="#FFFFFF" />
       <defs>
         {[...new Set([OFF, DEF, ...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), "#6b7280"])].map((c) => (
@@ -98,7 +117,7 @@ export default function PlayCardSVG({
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="#9ca3af" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke={INKC} strokeWidth="0.4" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke={preview ? "#D4AAAA" : INKC} strokeWidth={preview ? 0.18 : 0.4} />
 
       {call.zones.map((z) => (
         <ellipse
@@ -129,6 +148,7 @@ export default function PlayCardSVG({
         }
         return (
           <g key={l.id}>
+            {preview && <path d={d} fill="none" stroke="#FFFFFF" strokeWidth="0.95" strokeLinejoin="round" strokeLinecap="round" />}
             <path
               d={d} fill="none" stroke={color} strokeWidth={3.1 * 0.09 * thicknessFactor(l.thickness) * (l.kind === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
               strokeDasharray={lineDash(l)}
@@ -146,7 +166,7 @@ export default function PlayCardSVG({
         const [x, y] = defPos(i);
         const label = shortLabel(appearance.displayLabel ?? slotLabelOf(overrides, structureId, i));
         const symbol = appearance.symbol ?? "letters";
-        return symbol === "letters" ? <text key={`d${i}`} x={x} y={y} dominantBaseline="middle" textAnchor="middle" fontSize="1.84" fontWeight="800" fill={appearance.color ?? DEF}>{label}</text> :
+        return symbol === "letters" ? <text key={`d${i}`} x={x} y={y} dominantBaseline="middle" textAnchor="middle" fontSize={preview ? 2.5 : 1.84} fontWeight="800" fill={appearance.color ?? (preview ? OFF : DEF)} stroke={preview ? "#FFFFFF" : undefined} strokeWidth={preview ? 0.5 : undefined} paintOrder="stroke">{label}</text> :
           <svg key={`d${i}`} x={x - 1.55} y={y - 1.55} width="3.1" height="3.1" viewBox="0 0 40 40"><PlayerGlyph appearance={appearance} label={label} symbol={symbol} defaultColor={DEF} /></svg>;
       })}
 
