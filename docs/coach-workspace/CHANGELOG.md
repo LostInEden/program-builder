@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Scheme-by-scheme Defense Analysis layout
+- **Asked for:** Try the scheme-by-scheme layout.
+- **Changed:** Added Fronts, Coverages, Pressures, and Adjustments selectors with named scheme lists and a wider categorized analysis panel. Each scheme links to its library item. Overall Defense preserves the existing package, situation and roster checks.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Layout only; analysis logic and saved scheme data are unchanged. Smaller screens stack the selector and details.
+
 ## 2026-09-28 — Explain defensive scheme strengths and personnel fit
 - **Asked for:** Explain why schemes are sound or not, why they fit personnel, their weaknesses and strengths, and what can improve.
 - **Changed:** Added an assessment for each confirmed active scheme item with strengths, attack points, soundness limitations, named starter skill evidence and improvement steps. The detail panel displays each section. Removed broad man-fit conclusions based on secondary averages and stopped labeling saved names/rules alone as sound.
