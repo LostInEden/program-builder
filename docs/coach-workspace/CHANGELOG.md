@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-28 — Efficient preparation homepage tagline
+- **Asked for:** Use the third tagline option about efficiency.
+- **Changed:** Replaced the homepage tagline with “Efficient preparation. Clear decisions.”
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Text-only change; existing headline styling retained.
+
 ## 2026-09-28 — Scheme-by-scheme Defense Analysis layout
 - **Asked for:** Try the scheme-by-scheme layout.
 - **Changed:** Added Fronts, Coverages, Pressures, and Adjustments selectors with named scheme lists and a wider categorized analysis panel. Each scheme links to its library item. Overall Defense preserves the existing package, situation and roster checks.

@@ -72,7 +72,7 @@ export default function Home() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight">
-            You call the shots. <span className="text-grass">AI does the homework.</span>
+            Efficient preparation. <span className="text-grass">Clear decisions.</span>
           </h1>
           <p className="text-dim mt-2 max-w-2xl">
             The week is <span className="font-semibold text-ink">Scouting Report → Game Plan</span>: what they do,
