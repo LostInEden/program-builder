@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-09-29 — Simplify scheme analysis
+- **Asked for:** Keep scheme analysis simple and efficient.
+- **Changed:** Replaced the long default breakdown with four short cards: Strengths, Watch for, Personnel fit, and Improve next. Full evidence, ratings, and coaching explanations sit behind one View details control.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Analysis logic and saved data are unchanged. Missing ratings remain explicit; full explanations are preserved.
+
 ## 2026-09-28 — Efficient preparation homepage tagline
 - **Asked for:** Use the third tagline option about efficiency.
 - **Changed:** Replaced the homepage tagline with “Efficient preparation. Clear decisions.”

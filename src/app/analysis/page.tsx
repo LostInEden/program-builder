@@ -25,33 +25,36 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function FindingDetails({ f, accent }: { f: Finding; accent: string }) {
-  return <section id="finding-details" aria-label="Finding details" className={`${card} p-5`}>
-    <p className={`mb-2 text-xs font-bold uppercase tracking-wider ${accent}`}>{buckets.find(b => b.key === f.status)?.title}</p>
-    <h2 className="text-xl font-extrabold">{f.check.replace(" — scheme & personnel", "")}</h2>
-    <p className="mt-2 text-sm leading-relaxed text-dim">{f.detail}</p>
-    {!!f.affected?.length && <div className="mt-3 flex flex-wrap gap-2">{[...new Set(f.affected)].map(a => <span key={a} className="rounded-md border border-line bg-panel px-2 py-1 text-xs font-semibold">{a}</span>)}</div>}
-    <div className="mt-5 space-y-5 border-t border-line pt-5 text-sm">
-      {f.basis && <p className="rounded-lg bg-panel p-3 text-xs leading-relaxed text-dim">{f.basis}</p>}
-      <div className="grid items-start gap-4 xl:grid-cols-2">
-        {([["Scheme strengths", f.strengths], ["Weaknesses & ways to attack it", f.weaknesses], ["Fit with your personnel", f.personnel], ["What to improve", f.improvements]] as [string, string[] | undefined][]).map(([title, items]) => !!items?.length && <div key={title} className="rounded-xl border border-line bg-panel/30 p-4"><Section title={title}><ul className="max-h-64 space-y-2 overflow-y-auto pr-1">{items.map(item => <li key={item} className="text-sm leading-relaxed">{item}</li>)}</ul></Section></div>)}
-      </div>
-
-          {f.why && <Section title="Soundness & evidence"><p className="leading-relaxed">{f.why}</p></Section>}
-          {f.examples && f.examples.length > 0 && (
-            <Section title="Situational examples">
-              <ul className="list-disc pl-4 text-ink/80 leading-relaxed">{f.examples.map((e) => <li key={e}>{e}</li>)}</ul>
-            </Section>
-          )}
-          {f.breakdown && f.breakdown.length > 0 && (
-            <Section title="Rule / fit breakdown">
-              <ul className="flex flex-col gap-1">{f.breakdown.map((b) => <li key={b} className="rounded-md bg-slate-50 px-2.5 py-1.5 text-[13px]">{b}</li>)}</ul>
-            </Section>
-          )}
-          {f.suggestion && (
-            <Section title="Suggested adjustment"><p className={`leading-relaxed font-medium ${accent}`}>{f.suggestion}</p></Section>
-          )}
+  const short = (text?: string) => text?.match(/^.*?[.!?](?:\s|$)/)?.[0].trim() || text;
+  const missing = f.personnel?.filter(p => p.includes("not rated") || p.includes("no assigned starter")).length ?? 0;
+  const needsWork = f.personnel?.filter(p => p.includes("development need")) ?? [];
+  const personnel = !f.personnel?.length ? undefined : needsWork.length
+    ? `${needsWork.length} skill checks need work. Review the named players in details.${missing ? " Some ratings are still missing." : ""}`
+    : missing ? "Add the missing player ratings before judging personnel fit."
+    : "No low ratings flagged in these checks. Confirm the fit against the matchup.";
+  const summaries = f.strengths ? [
+    ["Strengths", short(f.strengths[0])],
+    ["Watch for", short(f.weaknesses?.[0])],
+    ["Personnel fit", personnel],
+    ["Improve next", short(f.improvements?.[0])],
+  ] : [["What we see", f.detail], ["Why it matters", short(f.why)], ["Next step", f.suggestion]];
+  return <section id="finding-details" aria-label="Finding details" className={`${card} p-4 sm:p-5`}>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="text-xl font-extrabold">{f.check.replace(" — scheme & personnel", "")}</h2>
+      <span className={`text-xs font-semibold ${accent}`}>{f.status === "Potential Conflict" ? "Needs attention" : f.status === "Sound" ? "Check passed" : "Review needed"}</span>
     </div>
-    <Link href="/scheme" className="mt-5 inline-block text-sm font-semibold text-grass">Review my scheme →</Link>
+    {f.strengths && <p className="mt-1 text-xs text-dim">Scheme guidance — confirm assignments and player fit.</p>}
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">{summaries.filter(([, text]) => text).map(([title, text]) => <div key={title} className="rounded-lg border border-line p-3"><h3 className="mb-1 text-sm font-bold">{title}</h3><p className="text-sm leading-relaxed text-dim">{text}</p></div>)}</div>
+    <details className="mt-4 border-t border-line pt-3">
+      <summary className="cursor-pointer text-sm font-semibold text-grass">View details</summary>
+      <div className="mt-4 space-y-4 text-sm">
+        <p className="text-dim">{f.detail}</p>
+        {f.why && <Section title="Soundness & evidence"><p className="leading-relaxed">{f.why}</p></Section>}
+        {([["Full strengths", f.strengths], ["Weaknesses", f.weaknesses], ["Player ratings", f.personnel], ["Improvements", f.improvements], ["Situational examples", f.examples], ["Rules & fits", f.breakdown]] as [string, string[] | undefined][]).map(([title, items]) => !!items?.length && <Section key={title} title={title}><ul className="list-disc space-y-2 pl-4">{items.map(item => <li key={item} className="leading-relaxed">{item}</li>)}</ul></Section>)}
+        {f.suggestion && <Section title="Suggested adjustment"><p>{f.suggestion}</p></Section>}
+        {f.basis && <p className="text-xs text-dim">{f.basis}</p>}
+      </div>
+    </details>
   </section>;
 }
 
@@ -82,7 +85,7 @@ export default function AnalysisPage() {
   };
   return <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">Choose a scheme. See how it works, where it is vulnerable, and how your players fit.</p></div>
+      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">Pick a scheme. See what works and what to improve.</p></div>
       <p className="text-xs text-dim">{groupName} · {structureName}</p>
     </div>
     <SchemeTabs active="analysis" />
