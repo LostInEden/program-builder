@@ -73,7 +73,7 @@ const PATH_WIDTH = PLAYER_SIZE * 0.09;
 const BLOCK_BAR_HALF = 1.1;
 // Display defaults match the light field without changing saved player colors.
 const fieldColor = (color: string) => ({
-  "#1e2a3a": "#262626", "#17212B": "#262626",
+  "#1e2a3a": "#17191B", "#17212B": "#17191B",
 }[color] ?? color);
 // legacy stored colors from the light-theme build
 const legacy = (c?: string) =>
@@ -667,7 +667,7 @@ export default function StudioCanvas({
               })}
               {call.offLook.map((m) => <ellipse key={m.id} cx={m.x} cy={m.y} rx={(offenseRadius + 0.2 * scale) * viewWidth / fieldWidth} ry={(offenseRadius + 0.2 * scale) * viewHeight / fieldHeight} fill="black" />)}
             </mask>
-            {[...new Set([...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), DEF_INK, "#B3995D"])].map((c) => (
+            {[...new Set([...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), DEF_INK, "#315EFB"])].map((c) => (
               <marker key={c} id={`sarr-${c.slice(1)}`} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
                 <path d="M0,0 L6,3 L0,6 z" fill={fieldColor(c)} />
               </marker>
@@ -696,15 +696,15 @@ export default function StudioCanvas({
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(157,163,166,0.65)" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#D4AAAA" strokeWidth="0.16" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#BCC9EC" strokeWidth="0.16" />
 
           </g>
           {call.zones.map((z) => (
             <g key={z.id}>
               <ellipse
                 cx={z.x} cy={z.y} rx={z.rx} ry={z.ry}
-                fill={z.id === selZoneId ? "rgba(179,153,93,0.12)" : z.side === "def" ? "rgba(179,153,93,0.08)" : "rgba(170,0,0,0.06)"}
-                stroke={z.id === selZoneId ? "#B3995D" : z.side === "def" ? "rgba(179,153,93,0.65)" : "rgba(170,0,0,0.55)"}
+                fill={z.id === selZoneId ? "rgba(49,94,251,0.12)" : z.side === "def" ? "rgba(49,94,251,0.08)" : "rgba(49,94,251,0.06)"}
+                stroke={z.id === selZoneId ? "#315EFB" : z.side === "def" ? "rgba(49,94,251,0.65)" : "rgba(49,94,251,0.55)"}
                 strokeWidth="0.3" strokeDasharray="1.4 1"
                 style={{ pointerEvents: tool === "select" ? "all" : "none", cursor: "move" }}
                 onPointerDown={(e) => {
@@ -718,7 +718,7 @@ export default function StudioCanvas({
               />
               {z.id === selZoneId && (
                 <rect
-                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#ffffff" stroke="#B3995D" strokeWidth="0.25"
+                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#ffffff" stroke="#315EFB" strokeWidth="0.25"
                   style={{ pointerEvents: "all", cursor: "nwse-resize" }}
                   onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "zone-resize", id: z.id, moved: false }; }}
                 />
@@ -803,7 +803,7 @@ export default function StudioCanvas({
                 {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.2 : 0.9)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
-                    <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#B3995D" strokeWidth="0.3"
+                    <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#315EFB" strokeWidth="0.3"
                       style={{ pointerEvents: "all", cursor: "grab" }}
                       onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "start", lineId: l.id, moved: false }; }}>
                       <title>Drag start (detaches from player)</title>
@@ -813,7 +813,7 @@ export default function StudioCanvas({
                       const i = l.anchor === "free" ? vertexIndex + 1 : vertexIndex;
                       return vertexIndex === pts.length - 2 && !extendId ? null : ( // tip is the + button
                       <circle
-                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="#B3995D" strokeWidth="0.3"
+                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="#315EFB" strokeWidth="0.3"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
                         onDoubleClick={(e) => {
@@ -832,7 +832,7 @@ export default function StudioCanvas({
                     {/* midpoint bend handles (hollow) — drag to bend like Excalidraw */}
                     {midpoints.map((m, i) => (
                       <circle
-                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(255,255,255,0.85)" stroke="#B3995D" strokeWidth="0.22" strokeDasharray="0.5 0.4"
+                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(255,255,255,0.85)" stroke="#315EFB" strokeWidth="0.22" strokeDasharray="0.5 0.4"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
@@ -880,7 +880,7 @@ export default function StudioCanvas({
             <ellipse
               cx={(zoneStart[0] + hover[0]) / 2} cy={(zoneStart[1] + hover[1]) / 2}
               rx={Math.abs(hover[0] - zoneStart[0]) / 2} ry={Math.abs(hover[1] - zoneStart[1]) / 2}
-              fill="rgba(170,0,0,0.06)" stroke="rgba(170,0,0,0.5)" strokeWidth="0.3" strokeDasharray="1.4 1"
+              fill="rgba(49,94,251,0.06)" stroke="rgba(49,94,251,0.5)" strokeWidth="0.3" strokeDasharray="1.4 1"
             />
           )}
           </g>
@@ -912,8 +912,8 @@ export default function StudioCanvas({
             title={`${defLabel(i) || "Defender"} · drag to align`} aria-label={`Defender ${defLabel(i) || i + 1}`}
             className={`absolute -translate-x-1/2 -translate-y-1/2 ${selected ? "ring-1 ring-gold rounded" : ""}`}
             style={{ ...screenPosition(x, y), width: PLAYER_SIZE * scale, height: PLAYER_SIZE * scale }}>
-            {symbol === "letters" ? <span style={{ color: appearance.color ?? "#262626", fontSize: DEF_FONT_SIZE * scale, ...(appearance.color === "#000000" ? { textShadow: "0 0 2px white" } : {}) }} className="font-extrabold whitespace-nowrap">{defLabel(i)}</span> :
-              <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="#262626" appearance={appearance} label={defLabel(i)} symbol={symbol} /></svg>}
+            {symbol === "letters" ? <span style={{ color: appearance.color ?? "#17191B", fontSize: DEF_FONT_SIZE * scale, ...(appearance.color === "#000000" ? { textShadow: "0 0 2px white" } : {}) }} className="font-extrabold whitespace-nowrap">{defLabel(i)}</span> :
+              <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="#17191B" appearance={appearance} label={defLabel(i)} symbol={symbol} /></svg>}
           </button>;
         })}
         {call.offLook.map(o => {
@@ -922,7 +922,7 @@ export default function StudioCanvas({
             onPointerDown={e => beginMarkerDrag(e, "off", o.id)}
             className={`absolute aspect-square -translate-x-1/2 -translate-y-1/2 cursor-grab ${selected ? "ring-1 ring-gold rounded" : ""}`}
             style={{ ...screenPosition(o.x, o.y), width: PLAYER_SIZE * scale }}>
-            <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="#262626" appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} /></svg>
+            <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="#17191B" appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} /></svg>
           </span>;
         })}
 

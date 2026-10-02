@@ -128,10 +128,10 @@ function SideNavInner() {
               <Link
                 href={sec.href}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] font-semibold transition-colors ${
-                  active ? "bg-slate-100 text-ink" : "text-ink/80 hover:bg-slate-50 hover:text-ink"
+                  active ? "bg-grass text-on-dark" : "text-on-dark hover:bg-slate-50 hover:text-ink"
                 }`}
               >
-                <sec.icon size={17} strokeWidth={2} className={active ? "text-grass" : "text-dim"} />
+                <sec.icon size={17} strokeWidth={2} className="text-current" />
                 <span className="flex-1">{sec.label}</span>
                 {badge && (
                   <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
@@ -144,7 +144,7 @@ function SideNavInner() {
                   <Link
                     href={sec.href}
                     className={`ml-5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                      onOverview ? "bg-grass/10 text-grass" : "text-dim hover:text-ink hover:bg-slate-50"
+                      onOverview ? "bg-grass text-on-dark" : "text-on-dark hover:text-ink hover:bg-slate-50"
                     }`}
                   >
                     Overview
@@ -156,7 +156,7 @@ function SideNavInner() {
                         key={c.href}
                         href={c.href}
                         className={`ml-5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                          cur ? "bg-grass/10 text-grass" : "text-dim hover:text-ink hover:bg-slate-50"
+                          cur ? "bg-grass text-on-dark" : "text-on-dark hover:text-ink hover:bg-slate-50"
                         }`}
                       >
                         {c.label}
@@ -174,10 +174,10 @@ function SideNavInner() {
         <Link
           href="/settings"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[14px] font-semibold transition-colors ${
-            pathname.startsWith("/settings") ? "bg-slate-100 text-ink" : "text-ink/80 hover:bg-slate-50"
+            pathname.startsWith("/settings") ? "bg-grass text-on-dark" : "text-on-dark hover:bg-slate-50 hover:text-ink"
           }`}
         >
-          <Settings size={17} strokeWidth={2} className={pathname.startsWith("/settings") ? "text-grass" : "text-dim"} />
+          <Settings size={17} strokeWidth={2} className="text-current" />
           Settings
         </Link>
       </div>

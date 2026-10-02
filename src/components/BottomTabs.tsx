@@ -29,7 +29,7 @@ export default function BottomTabs() {
               key={href}
               href={href}
               className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-semibold ${
-                active ? "text-grass" : "text-dim"
+                active ? "bg-grass text-on-dark" : "text-on-dark"
               }`}
             >
               <Icon size={19} strokeWidth={2} />

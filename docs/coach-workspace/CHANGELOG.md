@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-02 — Black and royal blue theme
+- **Asked for:** Apply the supplied black navigation, light gray workspace, white cards, and royal blue accent palette; styling only.
+- **Changed:** Updated shared theme tokens, dark navigation contrast, button and selection states, and Play Art selection/field accents to the supplied palette.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Layout, wording, functionality, stored diagram colors, data, and backend behavior are unchanged. Success/warning/error colors remain semantic indicators.
+
 ## 2026-10-02 — Keep chat controls in view
 - **Asked for:** Add AI voice chat like ChatGPT.
 - **Changed:** Chat workspace measures the available viewport after navigation so voice controls remain visible, including when the mobile keyboard changes the viewport.

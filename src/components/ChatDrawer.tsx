@@ -25,7 +25,7 @@ export default function ChatDrawer() {
       <button
         onClick={() => (window.innerWidth < 1024 ? router.push("/chat") : setOpen((o) => !o))}
         className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
-          open ? "border-grass bg-grass/10 text-grass" : "border-line text-ink hover:border-dim"
+          open ? "border-grass bg-grass/10 text-grass" : "border-line text-on-dark hover:border-grass"
         }`}
         aria-label="Ask CounterScheme"
       >
@@ -36,7 +36,7 @@ export default function ChatDrawer() {
       {open && (
         <>
           <div className="fixed inset-0 z-[60] bg-navy/20" onClick={() => setOpen(false)} aria-hidden />
-          <aside className="fixed right-0 top-0 z-[61] flex h-screen w-full max-w-[420px] flex-col border-l border-line bg-pitch shadow-2xl">
+          <aside className="fixed right-0 top-0 z-[61] flex h-screen w-full max-w-[420px] flex-col border-l border-line bg-pitch text-ink shadow-2xl">
             <div className="flex shrink-0 items-center gap-3 border-b border-line bg-white px-4 h-[60px]">
               <span className="grid size-8 place-items-center rounded-lg bg-navy text-white text-[11px] font-extrabold">CS</span>
               <div className="font-extrabold">CounterScheme</div>

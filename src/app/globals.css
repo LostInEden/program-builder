@@ -1,27 +1,28 @@
 @import "tailwindcss";
 
-/* CounterScheme's light gray, deep red, and muted gold palette. Historical token names remain shared. */
+/* CounterScheme's black, light gray, and royal blue palette. Historical token names remain shared. */
 @theme {
-  --color-pitch: #E5E7E9;
-  --color-panel: #F7F7F5;
-  --color-card: #F7F7F5;
-  --color-line: #C9CCCF;
-  --color-ink: #262626;
-  --color-dim: #6B6B6B;
-  --color-grass: #AA0000;
-  --color-grass-deep: #850000;
-  --color-navy: #AA0000;
-  --color-slate-brand: #D9DCDF;
-  --color-sky: #B3995D;
-  --color-ember: #B3995D;
+  --color-on-dark: #F7F8FA;
+  --color-pitch: #ECEDEF;
+  --color-panel: #FFFFFF;
+  --color-card: #FFFFFF;
+  --color-line: #C4C8CC;
+  --color-ink: #17191B;
+  --color-dim: #626870;
+  --color-grass: #315EFB;
+  --color-grass-deep: #244AC7;
+  --color-navy: #15171A;
+  --color-slate-brand: #DDE0E3;
+  --color-sky: #315EFB;
+  --color-ember: #315EFB;
   --color-success: #2E8B57;
   --color-alert: #AA0000;
-  --color-gold: #B3995D;
+  --color-gold: #315EFB;
   --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
-  --color-slate-50: #D9DCDF;
-  --color-slate-100: #D9DCDF;
-  --color-slate-200: #C9CCCF;
+  --color-slate-50: #DDE0E3;
+  --color-slate-100: #DDE0E3;
+  --color-slate-200: #C4C8CC;
   --color-emerald-400: #2E8B57;
   --color-emerald-500: #2E8B57;
   --color-emerald-600: #2E8B57;
@@ -74,17 +75,16 @@ body {
 }
 .stadium-bg { background: var(--color-pitch); }
 
-/* Light navigation and off-white dropdown panels. */
+/* Dark navigation, light workspace, and white content panels. */
 .theme-navigation {
-  background-color: #D9DCDF;
-  color: var(--color-ink);
+  background-color: #15171A;
+  color: #F7F8FA;
 }
 
 @media screen {
   .bg-white { background-color: var(--color-card); }
   .text-navy { color: var(--color-ink); }
-  /* Gold remains an accent; its text variant is darker for readable small labels. */
-  .text-gold, .text-ember { color: #756139; }
+  .text-gold, .text-ember { color: var(--color-grass); }
   :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #756139; }
   :is(button, a, input, select, textarea):focus-visible {
     outline: 2px solid var(--color-grass);
@@ -110,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: rgba(179, 153, 93, 0.3);
+  background: rgba(49, 94, 251, 0.22);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -244,4 +244,11 @@ select optgroup {
   .sheet-root .sheet-head-note {
     font-size: 7.5pt;
   }
+}
+
+/* Shared interactive theme states; status colors retain their meaning. */
+@media screen {
+  :is(button, a).bg-grass:hover { background-color: var(--color-grass-deep); }
+  :is(button, a).bg-grass:active { background-color: var(--color-grass-deep); }
+  input[type="checkbox"], input[type="radio"] { accent-color: var(--color-grass); }
 }

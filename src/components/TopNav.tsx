@@ -33,7 +33,7 @@ export default function TopNav() {
     <header className="sticky top-0 z-50 border-b border-line theme-navigation">
       <div className="flex items-center gap-3 px-4 h-[52px]">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
-          <span className="display text-lg font-extrabold tracking-tight text-navy">CounterScheme</span>
+          <span className="display text-lg font-extrabold tracking-tight text-on-dark">CounterScheme</span>
         </Link>
 
         <div className="ml-auto flex items-center gap-2">
@@ -44,10 +44,10 @@ export default function TopNav() {
               onChange={(e) => setQ(e.target.value)}
               onBlur={() => setTimeout(() => setQ(""), 200)}
               placeholder="Search players..."
-              className="w-56 rounded-md border border-line bg-panel pl-9 pr-3 py-2 text-sm placeholder:text-dim/70 focus:outline-none focus:border-grass"
+              className="w-56 rounded-md border border-line bg-panel text-ink pl-9 pr-3 py-2 text-sm placeholder:text-dim/70 focus:outline-none focus:border-grass"
             />
             {hydrated && matches.length > 0 && (
-              <div className="absolute top-full mt-1 w-full rounded-xl border border-line bg-white shadow-lg overflow-hidden">
+              <div className="absolute top-full mt-1 w-full rounded-xl border border-line bg-white text-ink shadow-lg overflow-hidden">
                 {matches.map((p) => (
                   <button
                     key={p.id}
@@ -70,7 +70,7 @@ export default function TopNav() {
           <div className="relative">
             <button
               onClick={() => setBellOpen((o) => !o)}
-              className="grid size-9 place-items-center rounded-full text-dim hover:text-ink hover:bg-slate-100"
+              className="grid size-9 place-items-center rounded-full text-on-dark hover:text-ink hover:bg-slate-100"
               aria-label="Recent updates"
             >
               <Bell size={18} />
@@ -79,7 +79,7 @@ export default function TopNav() {
               )}
             </button>
             {bellOpen && (
-              <div className="absolute right-0 top-full mt-1 w-72 rounded-xl border border-line bg-white shadow-lg overflow-hidden">
+              <div className="absolute right-0 top-full mt-1 w-72 rounded-xl border border-line bg-white text-ink shadow-lg overflow-hidden">
                 <div className="display uppercase text-[10px] font-bold tracking-[0.15em] text-dim px-4 py-2.5 border-b border-line">
                   Recent updates
                 </div>
@@ -105,7 +105,7 @@ export default function TopNav() {
               {coachName ? initialsOf(coachName) : ""}
             </span>
             <span className="text-sm font-semibold hidden sm:block">{coachName || " "}</span>
-            <ChevronDown size={14} className="text-dim" />
+            <ChevronDown size={14} className="text-on-dark" />
           </Link>
         </div>
       </div>

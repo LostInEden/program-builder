@@ -46,7 +46,7 @@ function SectionTabsInner() {
   const tabClass = "flex items-center gap-1.5 border-b-2 border-transparent px-2 xl:px-3 h-11 text-[13px] font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-grass";
 
   return (
-    <nav ref={nav} aria-label="Main navigation" className="hidden min-[900px]:flex items-center border-t border-line px-4 bg-slate-brand"
+    <nav ref={nav} aria-label="Main navigation" className="hidden min-[900px]:flex items-center border-t border-line px-4 bg-navy"
       onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(null); }}
       onKeyDown={(event) => {
         if (event.key === "Escape" && visibleOpen) {
@@ -65,7 +65,7 @@ function SectionTabsInner() {
             <div className="relative" key={section.href}>
               {section.children ? <>
                 <button type="button" aria-expanded={expanded} aria-controls={`section-menu-${index}`}
-                  className={`${tabClass} ${active || expanded ? "border-b-grass text-grass" : "text-dim hover:bg-slate-50 hover:text-ink"}`}
+                  className={`${tabClass} ${active || expanded ? "border-b-grass bg-grass text-on-dark hover:bg-grass-deep" : "text-on-dark hover:bg-slate-50 hover:text-ink"}`}
                   onClick={() => { setOpenedAt(location); setOpen(expanded ? null : section.href); }}>
                   {label}<ChevronDown size={14} className={expanded ? "rotate-180" : ""} />
                 </button>
@@ -73,15 +73,15 @@ function SectionTabsInner() {
                   {[{ href: section.href, label: "Overview" }, ...section.children].map((child) => <Link
                     key={child.href} href={opponentHref(child.href)} aria-current={current(child.href) ? "page" : undefined}
                     onClick={() => setOpen(null)}
-                    className={`block rounded-lg px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-grass ${current(child.href) ? "bg-slate-100 text-grass font-semibold" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>
+                    className={`block rounded-lg px-3 py-2.5 text-sm focus-visible:outline-2 focus-visible:outline-grass ${current(child.href) ? "bg-grass text-on-dark font-semibold" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>
                     {child.label}
                   </Link>)}
                 </div>}
-              </> : <Link href={section.href} aria-current={active ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${active ? "border-b-grass text-grass" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>{label}</Link>}
+              </> : <Link href={section.href} aria-current={active ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${active ? "border-b-grass bg-grass text-on-dark hover:bg-grass-deep" : "text-on-dark hover:bg-slate-50 hover:text-ink"}`}>{label}</Link>}
             </div>
           );
         })}
-        <Link href="/settings" aria-current={pathname === "/settings" ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${pathname === "/settings" ? "border-b-grass text-grass" : "text-dim hover:bg-slate-50 hover:text-ink"}`}>Settings</Link>
+        <Link href="/settings" aria-current={pathname === "/settings" ? "page" : undefined} onClick={() => setOpen(null)} className={`${tabClass} ${pathname === "/settings" ? "border-b-grass bg-grass text-on-dark hover:bg-grass-deep" : "text-on-dark hover:bg-slate-50 hover:text-ink"}`}>Settings</Link>
       </div>
 
     </nav>
