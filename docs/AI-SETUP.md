@@ -80,3 +80,36 @@ The coach runs `docs/coach-workspace/CHATGPT-EXPORT-PROMPT.md` in his ChatGPT an
 3. Part 7's JSON (concepts + terminology) gets imported into his saved scheme as **unconfirmed** items for him to confirm on My Scheme. There's no importer yet; build it (or file it through Teach) when the export arrives.
 
 Everything the coach confirms in the app becomes part of the FACTS brief automatically. `COACH_KNOWLEDGE` is for the reasoning and philosophy the app's data model doesn't capture.
+
+
+## Live voice conversation
+
+Ask CounterScheme → Voice chat opens a two-way WebRTC voice session. It uses
+OpenAI Realtime, not browser dictation. The existing Dictate button still fills
+the text input. Voice uses the saved scheme, roster, opponent and approved plan
+snapshot at session start, plus recent chat. It cannot inspect diagrams or modify
+the scheme; use Teach to file knowledge. Completed transcripts join the local
+chat thread; raw audio is not saved by this app. Interrupted replies may have
+partial transcripts. Closing the drawer or navigating away ends the session.
+
+Server configuration (never use NEXT_PUBLIC for these):
+
+- `OPENAI_API_KEY`: a project key with access to the Realtime model.
+- `OPENAI_REALTIME_ENABLED=true`: explicitly enable live voice.
+- Optional `OPENAI_REALTIME_MODEL` (default `gpt-realtime-2.1`).
+
+Set these in the deployment environment and redeploy. `/api/voice` reports only
+whether configuration is present, not whether model access/billing works. Test
+a real call with microphone permission: talk, hear the answer, interrupt, mute,
+end, and confirm the microphone indicator turns off. Test on target browsers.
+Voice audio and the contextual brief are sent to OpenAI. API usage is separate
+from a ChatGPT subscription. No credentials are returned to the browser.
+
+Voice is off by default because this prototype has no staff authentication.
+Keep the coach deployment access-controlled when enabling it. Same-origin
+checks and per-instance start limits are not authentication or a hard spend cap.
+Before public release add authenticated sessions, durable quotas and server-side
+call lifecycle controls. The ten-minute client timer is a UX limit, not billing
+enforcement.
+
+Reference: https://developers.openai.com/api/docs/guides/voice-webrtc

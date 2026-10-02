@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-10-02 — Keep chat controls in view
+- **Asked for:** Add AI voice chat like ChatGPT.
+- **Changed:** Chat workspace measures the available viewport after navigation so voice controls remain visible, including when the mobile keyboard changes the viewport.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Shared chat history and existing text controls are preserved.
+
+## 2026-10-01 — Two-way AI voice chat
+- **Asked for:** Add AI voice chat like ChatGPT.
+- **Changed:** Added Voice chat to Ask CounterScheme with live spoken conversation, automatic turn detection and interruption, mute/end controls, connection feedback and local chat transcripts. Added a server-only Realtime connection using existing saved football context.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Requires OPENAI_API_KEY and OPENAI_REALTIME_ENABLED=true in the deployment. Off until configured; no live audio verification without credentials. Voice discussion does not edit scheme data. Configuration and launch limitations are in docs/AI-SETUP.md.
+
 ## 2026-09-29 — Simplify scheme analysis
 - **Asked for:** Keep scheme analysis simple and efficient.
 - **Changed:** Replaced the long default breakdown with four short cards: Strengths, Watch for, Personnel fit, and Improve next. Full evidence, ratings, and coaching explanations sit behind one View details control.

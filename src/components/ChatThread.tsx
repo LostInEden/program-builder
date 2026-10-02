@@ -7,7 +7,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Send, Mic, Trash2, RefreshCw, ChevronDown } from "lucide-react";
+import VoiceChat from "@/components/VoiceChat";
+import { Send, Mic, AudioLines, Trash2, RefreshCw, ChevronDown } from "lucide-react";
 import { useHydrated } from "@/lib/store";
 import { useChat, startDictation, quickChips } from "@/lib/useChat";
 
@@ -22,6 +23,7 @@ export default function ChatThread({
 }) {
   const hydrated = useHydrated();
   const { thread, busy, contextLine, engineLine, send, clear } = useChat(page);
+  const [voice, setVoice] = useState(false);
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -137,7 +139,8 @@ export default function ChatThread({
         <div ref={endRef} />
       </div>
 
-      <div className="shrink-0 border-t border-line bg-white px-3 pt-2.5 pb-3">
+      {voice ? <VoiceChat page={page} onClose={() => setVoice(false)} /> : <div className="shrink-0 border-t border-line bg-white px-3 pt-2.5 pb-3">
+        <button disabled={busy || listening || !hydrated} onClick={() => setVoice(true)} className="mb-2 inline-flex items-center gap-2 rounded-full bg-grass px-3 py-1.5 text-sm font-bold text-white disabled:opacity-50"><AudioLines size={16} /> Voice chat</button>
         <div className="mb-2 flex flex-wrap gap-1.5">
           {quickChips(chipPage).map((c) => (
             <button
@@ -200,7 +203,7 @@ export default function ChatThread({
         </div>
         {note && <p className="mt-1.5 text-[11px] text-red-500">{note}</p>}
         <p className="mt-1.5 text-[11px] text-dim">{engineLine}</p>
-      </div>
+      </div>}
     </div>
   );
 }
