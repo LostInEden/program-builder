@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-06 — Reference diagrams from coaching answers
+- **Asked for:** Let AI draw diagrams to explain answers, mostly for the coach's reference.
+- **Changed:** Added Show reference diagram beneath chat answers. Model output is validated and opened in a temporary Play Art workspace with explanations, assumptions, and editing tools. Save a copy is explicit; simply viewing or editing never updates saved calls or scheme items.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Uses the existing server AI connection and requires OPENAI_API_KEY. Missing scheme details prompt a question. Live model generation requires deployment credentials; schema conversion and rejection paths are tested locally. Voice transcripts can request diagrams after ending voice; live voice tool calls are not implemented.
+
 ## 2026-10-02 — Black and royal blue theme
 - **Asked for:** Apply the supplied black navigation, light gray workspace, white cards, and royal blue accent palette; styling only.
 - **Changed:** Updated shared theme tokens, dark navigation contrast, button and selection states, and Play Art selection/field accents to the supplied palette.

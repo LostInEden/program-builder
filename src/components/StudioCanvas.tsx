@@ -113,6 +113,7 @@ export default function StudioCanvas({
   labelFor,
   selection,
   onSelect,
+  onUpdate,
 }: {
   call: Call;
   structureId: string;
@@ -121,8 +122,10 @@ export default function StudioCanvas({
   labelFor: (i: number) => string;
   selection: Selection;
   onSelect: (s: Selection) => void;
+  onUpdate?: (id: string, patch: Partial<Call>) => void;
 }) {
-  const updateCall = useStore((s) => s.updateCall);
+  const savedUpdateCall = useStore((s) => s.updateCall);
+  const updateCall = onUpdate ?? savedUpdateCall;
   const structure = getStructure(structureId);
   const texts = call.texts ?? [];
   const defAppearance = (i: number) => call.defAppearance?.[i] ?? {};

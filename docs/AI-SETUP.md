@@ -113,3 +113,19 @@ call lifecycle controls. The ten-minute client timer is a UX limit, not billing
 enforcement.
 
 Reference: https://developers.openai.com/api/docs/guides/voice-webrtc
+
+
+## Reference diagrams
+
+Chat answers offer **Show reference diagram**. This uses the existing server
+OpenAI connection (no additional key) to return structured drawing objects.
+Missing specific scheme assignments should produce a clarifying question. General
+illustrations are labeled with assumptions and must be reviewed by the coach.
+The client validates coordinates, labels, counts and line anchors before rendering.
+
+Reference viewing and editing are temporary React state. **Save a copy** explicitly
+adds a categorized Play Art call to local storage. It does not create or approve a
+scheme concept. Existing exact-name/category library linking still applies to saved
+copies. Closing the chat or reloading discards unsaved references. A completed voice
+transcript has the same diagram button after voice ends; live voice cannot invoke
+the drawing tool. Real model output and football correctness need live review.

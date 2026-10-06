@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import ChatReferenceDiagram from "@/components/ChatReferenceDiagram";
 import VoiceChat from "@/components/VoiceChat";
 import { Send, Mic, AudioLines, Trash2, RefreshCw, ChevronDown } from "lucide-react";
 import { useHydrated } from "@/lib/store";
@@ -79,7 +80,7 @@ export default function ChatThread({
         )}
 
         {hydrated &&
-          thread.map((m) => (
+          thread.map((m, index) => (
             <div key={m.id} className={m.role === "coach" ? "flex justify-end" : "flex gap-2.5"}>
               {m.role === "counterscheme" && (
                 <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-navy text-white text-[10px] font-extrabold">
@@ -94,6 +95,7 @@ export default function ChatThread({
                 >
                   {m.text}
                 </div>
+                {m.role === "counterscheme" && !voice && <ChatReferenceDiagram message={m} question={thread.slice(0, index).reverse().find(item => item.role === "coach")?.text ?? m.text} />}
                 {m.role === "counterscheme" && m.deeper && (
                   <div className="mt-1.5">
                     <button
