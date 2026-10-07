@@ -21,3 +21,36 @@ test('Snag has 11 offensive players, no assumed defense, and the three correct r
  assert.ok(ends.y[0]>72 && ends.y[1]>ends.z[1]);assert.ok(ends.b[0]>58 && ends.b[1]<ends.z[1]);
  assert.equal(c.schemeConceptId,undefined);
 });
+
+test('older screenshot reply and natural drawing requests resolve to the checked template',()=>{
+ for(const question of ['Draw a diagram of snag','Can you draw snag for me?','I want to see the snag play','draw snag again']) assert.equal(exports.snagReferenceIntent(question),'standard');
+ assert.equal(exports.snagReferenceIntent('Let me see it', 'Here is a simple Snag sketch, corner, snag and flat.'),'standard');
+ assert.equal(exports.snagReferenceIntent('Draw smash','Snag is also available'),null);
+ assert.equal(exports.snagReferenceIntent('draw Snag from trips'),'custom');
+ const history=[{role:'coach',text:'draw snag from bunch'},{role:'counterscheme',text:'Snag example'},{role:'coach',text:'let me see it'}];
+ assert.equal(exports.referenceQuestion('let me see it',history),'draw snag from bunch');
+});
+test('repeated follow-ups retain Snag intent',()=>{
+ assert.equal(resolveSnagRequest('Show it again',[{role:'coach',text:'draw snag'},{role:'counterscheme',text:'diagram'},{role:'coach',text:'let me see it'}]),true);
+});
+test('server uses canonical Snag geometry without invoking a model, including old clients',async()=>{
+ const server={};
+ vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/server/ai.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
+   exports:server,require:path=>path.includes('snagReference')?exports:path.includes('coachKnowledge')?{COACH_KNOWLEDGE:''}:{REFERENCE_SCHEMA:{}},process:{env:{}},fetch:()=>{throw new Error('Must not call model for Snag');}
+ });
+ const result=await server.runJob({job:'diagram',input:{question:'Let me see it',answer:'Here is a Snag reference.'}});
+ assert.equal(result.referenceConcept,'snag');assert.equal(result.offense.length,11);assert.equal(result.lines.length,3);
+ const direct=await server.runJob({job:'diagram',input:{question:'Draw a diagram of snag'}});
+ assert.equal(JSON.stringify(result),JSON.stringify(direct));
+ const custom=await server.runJob({job:'diagram',input:{question:'draw snag from bunch'}});
+ assert.ok(custom.question);assert.equal(custom.lines.length,0);
+});
+
+test('exact live conversation: definition, request for diagram, follow-up, punctuated command',()=>{
+ const history=[{role:'coach',text:'What is snag?'},{role:'counterscheme',text:'Snag is a quick pass concept.'},{role:'coach',text:'Can you give me a diagram'},{role:'counterscheme',text:'Yes I can sketch Snag.'}];
+ assert.equal(resolveSnagRequest('Can you give me a diagram',history.slice(0,2)),true);
+ assert.equal(resolveSnagRequest('Let me see it',history),true);
+ assert.equal(exports.referenceQuestion('Let me see it',history),'What is snag?');
+ assert.equal(exports.snagReferenceIntent('Can you give me a diagram','Yes I can sketch Snag.'),'standard');
+ assert.equal(isBasicSnagRequest('create. diagram of snag'),true);
+});

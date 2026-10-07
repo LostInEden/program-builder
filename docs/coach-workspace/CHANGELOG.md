@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-07 — Keep all standard Snag entry points consistent
+- **Asked for:** The generated Snag still differed from the presented reference.
+- **Changed:** Broadened Snag intent handling, resolved repeated follow-ups to their original question, and recognized older chat replies without reference metadata. Added a server-side Snag override so the diagram endpoint returns the same fixed geometry instead of asking the model to invent it.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Custom formations/assignments ask for details instead of silently substituting the standard example. Existing saved drawings are not rewritten. Regression checks include the screenshot's Let me see it path and an older-client API request.
+
 ## 2026-10-07 — Draw Snag as a real reference diagram
 - **Asked for:** “Draw snag” returned an inaccurate text sketch instead of clear play art.
 - **Changed:** Basic Snag requests now show an inline field diagram with a fixed standard 2×2 alignment, labeled snag/settle, corner, and flat routes, and an editable Play Art view. “Let me see it” follows the preceding basic Snag request. Chat instructions prohibit ASCII play sketches.

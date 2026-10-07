@@ -6,6 +6,7 @@
 // One vendor today: OpenAI's Responses API with strict structured outputs.
 // Everything vendor-specific lives in callOpenAI().
 
+import { snagReferenceIntent, snagDiagramPayload, SNAG_VARIANT_QUESTION } from "@/lib/snagReference";
 import { REFERENCE_SCHEMA } from "@/lib/referenceDiagram";
 import { COACH_KNOWLEDGE } from "./coachKnowledge";
 
@@ -120,6 +121,11 @@ export const aiConfigured = () => !!process.env.OPENAI_API_KEY;
 export const aiModel = () => process.env.OPENAI_MODEL || "gpt-6-sol";
 
 export async function runJob({ job, input }: AiRequest): Promise<unknown> {
+  if (job === "diagram") {
+    const intent = snagReferenceIntent(typeof input.question === "string" ? input.question : "", typeof input.answer === "string" ? input.answer : "");
+    if (intent === "standard") return snagDiagramPayload();
+    if (intent === "custom") return { title: "Snag variation", explanation: "", assumptions: "", question: SNAG_VARIANT_QUESTION, offense: [], defense: [], lines: [] };
+  }
   const instructions = [
     PERSONA,
     COACH_KNOWLEDGE.trim() ? `The coach's own football knowledge, in his words (authoritative for his scheme and terminology):\n${COACH_KNOWLEDGE.trim()}` : "",

@@ -9,13 +9,14 @@ import { buildBrief } from "@/lib/ai/brief";
 import { approvedPlan } from "@/lib/meeting";
 import { parseReference } from "@/lib/referenceDiagram";
 import PlayCardSVG from "@/components/PlayCardSVG";
-import { isBasicSnagRequest, snagReference } from "@/lib/snagReference";
+import { snagReferenceIntent, SNAG_VARIANT_QUESTION, snagReference } from "@/lib/snagReference";
 import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
 export default function ChatReferenceDiagram({ message, question }: { message: ChatMessage; question: string }) {
   const opponent = useCurrentOpponent();
   const initialStructure = useStore.getState().groups.find(g => g.id === useStore.getState().activeGroupId)?.structureId ?? useStore.getState().groups[0].structureId;
-  const standardSnag = message.referenceConcept === "snag" || isBasicSnagRequest(question);
+  const snagIntent = snagReferenceIntent(question, message.text);
+  const standardSnag = message.referenceConcept === "snag" || snagIntent === "standard";
 
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
@@ -40,6 +41,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
   }, [open]);
 
   async function generate() {
+    if (snagIntent === "custom") { setNote(SNAG_VARIANT_QUESTION); return; }
     if (draft) { setOpen(true); return; }
     if (busy) return;
     setBusy(true); setNote("");
@@ -59,7 +61,10 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
         } }),
       });
       if (!response.ok) throw new Error(response.status === 503 ? "AI diagrams need the site's OpenAI connection enabled. Your saved Play Art is still available." : "Couldn't create the reference diagram. Please try again.");
-      const result = parseReference((await response.json()).result, group.structureId);
+      const payload = (await response.json()).result;
+      const result = payload?.referenceConcept === "snag"
+        ? { call: snagReference(group.structureId), question: "" }
+        : parseReference(payload, group.structureId);
       if (abort.signal.aborted) return;
       if (!result.call) { setNote(result.question); return; }
       setStructureId(group.structureId); setDraft(result.call); setSelection(null); setSaved(false); setOpen(true);

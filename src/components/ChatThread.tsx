@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { referenceQuestion } from "@/lib/snagReference";
 import ChatReferenceDiagram from "@/components/ChatReferenceDiagram";
 import VoiceChat from "@/components/VoiceChat";
 import { Send, Mic, AudioLines, Trash2, RefreshCw, ChevronDown } from "lucide-react";
@@ -95,7 +96,7 @@ export default function ChatThread({
                 >
                   {m.text}
                 </div>
-                {m.role === "counterscheme" && !voice && <ChatReferenceDiagram message={m} question={thread.slice(0, index).reverse().find(item => item.role === "coach")?.text ?? m.text} />}
+                {m.role === "counterscheme" && !voice && <ChatReferenceDiagram message={m} question={referenceQuestion(thread.slice(0, index).reverse().find(item => item.role === "coach")?.text ?? m.text, thread.slice(0, index))} />}
                 {m.role === "counterscheme" && m.deeper && (
                   <div className="mt-1.5">
                     <button
