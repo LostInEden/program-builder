@@ -13,6 +13,8 @@ export function snagReferenceIntent(question: string, answer = ""): "standard" |
   if (!explicit && !inherited) return null;
   // Never substitute a standard example for a requested variant or comparison.
   if (CUSTOM.test(q) || /\b(?:smash|mesh|flood|stick|sail)\b/i.test(q)) return "custom";
+  const remaining = q.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean).filter(word => !['snag','draw','show','sketch','diagram','drawing','picture','illustrate','create','make','a','an','the','of','me','it','that','can','could','you','please','for','again','basic','standard','concept','play','i','want','to','see','what','is','explain'].includes(word));
+  if (explicit && remaining.length) return "custom";
   return "standard";
 }
 export function isBasicSnagRequest(input: string): boolean {

@@ -5,6 +5,9 @@
 // hook, so the thread is the same thread everywhere and the coach never
 // re-explains the situation.
 
+import { referenceQuestion } from "@/lib/snagReference";
+import { savedReference } from "@/lib/footballBlueprint";
+import { catalogReference } from "@/lib/referenceCatalog";
 import { resolveSnagRequest, SNAG_EXPLANATION } from "@/lib/snagReference";
 import { useCallback, useMemo, useState } from "react";
 import { useStore, type ChatMessage, type Opponent } from "@/lib/store";
@@ -81,6 +84,13 @@ export function useChat(page?: string): ChatSession {
       const history = s.chat.slice(-12).map((m) => ({ role: m.role, text: m.text }));
       try {
         s.appendChat({ role: "coach", text, context: { page: where, opponentId: opponent?.id } });
+        const drawingRequest = /\b(?:draw|show|sketch|diagram|illustrate|let me see)\b/i.test(text) && !/\b(?:don't|do not)\b/i.test(text);
+        const subject = referenceQuestion(text, history);
+        const drawing = drawingRequest ? savedReference(subject, s.calls) ?? catalogReference(subject, s.groups.find(g => g.id === s.activeGroupId)?.structureId ?? s.groups[0].structureId) : null;
+        if (drawing && (savedReference(subject, s.calls) || !resolveSnagRequest(text, history))) {
+          const id = s.appendChat({ role: "counterscheme", text: drawing.question || `Here’s ${drawing.call?.name}. Review the assignments beneath the preview, then open it in Play Art to edit or save a copy.`, context: { page: where, opponentId: opponent?.id } });
+          return useStore.getState().chat.find(m => m.id === id) ?? null;
+        }
         if (resolveSnagRequest(text, history)) {
           const id = s.appendChat({ role: "counterscheme", text: SNAG_EXPLANATION, referenceConcept: "snag", context: { page: where, opponentId: opponent?.id } });
           return useStore.getState().chat.find(m => m.id === id) ?? null;

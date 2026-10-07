@@ -36,14 +36,14 @@ test('repeated follow-ups retain Snag intent',()=>{
 test('server uses canonical Snag geometry without invoking a model, including old clients',async()=>{
  const server={};
  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/server/ai.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
-   exports:server,require:path=>path.includes('snagReference')?exports:path.includes('coachKnowledge')?{COACH_KNOWLEDGE:''}:{REFERENCE_SCHEMA:{}},process:{env:{}},fetch:()=>{throw new Error('Must not call model for Snag');}
+   exports:server,AbortSignal,require:path=>path.includes('snagReference')?exports:path.includes('coachKnowledge')?{COACH_KNOWLEDGE:''}:path.includes('referenceCatalog')?{referenceBlueprint:()=>null}:{BLUEPRINT_SCHEMA:{}},process:{env:{}},fetch:()=>{throw new Error('Must not call model for Snag');}
  });
  const result=await server.runJob({job:'diagram',input:{question:'Let me see it',answer:'Here is a Snag reference.'}});
  assert.equal(result.referenceConcept,'snag');assert.equal(result.offense.length,11);assert.equal(result.lines.length,3);
  const direct=await server.runJob({job:'diagram',input:{question:'Draw a diagram of snag'}});
  assert.equal(JSON.stringify(result),JSON.stringify(direct));
- const custom=await server.runJob({job:'diagram',input:{question:'draw snag from bunch'}});
- assert.ok(custom.question);assert.equal(custom.lines.length,0);
+ // Variants now use the broader blueprint/catalog path rather than being blocked.
+ await assert.rejects(server.runJob({job:'diagram',input:{question:'draw snag from bunch'}}),/Must not call model/);
 });
 
 test('exact live conversation: definition, request for diagram, follow-up, punctuated command',()=>{

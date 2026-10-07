@@ -9,22 +9,26 @@ import { buildBrief } from "@/lib/ai/brief";
 import { approvedPlan } from "@/lib/meeting";
 import { parseReference } from "@/lib/referenceDiagram";
 import PlayCardSVG from "@/components/PlayCardSVG";
-import { snagReferenceIntent, SNAG_VARIANT_QUESTION, snagReference } from "@/lib/snagReference";
+import { snagReferenceIntent, snagReference } from "@/lib/snagReference";
+import { renderBlueprint, savedReference } from "@/lib/footballBlueprint";
+import { catalogReference } from "@/lib/referenceCatalog";
 import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
 export default function ChatReferenceDiagram({ message, question }: { message: ChatMessage; question: string }) {
   const opponent = useCurrentOpponent();
   const initialStructure = useStore.getState().groups.find(g => g.id === useStore.getState().activeGroupId)?.structureId ?? useStore.getState().groups[0].structureId;
   const snagIntent = snagReferenceIntent(question, message.text);
+  const savedDrawing = savedReference(question, useStore.getState().calls);
+  const catalog = savedDrawing ?? catalogReference(question, initialStructure);
   const standardSnag = message.referenceConcept === "snag" || snagIntent === "standard";
 
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
-  const [draft, setDraft] = useState<Call | null>(() => standardSnag ? snagReference(initialStructure) : null);
+  const [draft, setDraft] = useState<Call | null>(() => savedDrawing?.call ?? (standardSnag && !savedDrawing ? snagReference(initialStructure) : catalog?.call ?? null));
   const [open, setOpen] = useState(false);
   const [structureId, setStructureId] = useState(initialStructure);
   const [selection, setSelection] = useState<Selection>(null);
-  const [category, setCategory] = useState<PlaybookSection>("Fronts");
+  const [category, setCategory] = useState<PlaybookSection>(draft?.section ?? "Checks & Adjustments");
   const [saved, setSaved] = useState(false);
   const controller = useRef<AbortController | null>(null);
   const opener = useRef<HTMLButtonElement>(null);
@@ -41,7 +45,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
   }, [open]);
 
   async function generate() {
-    if (snagIntent === "custom") { setNote(SNAG_VARIANT_QUESTION); return; }
+    if (savedDrawing?.question) { setNote(savedDrawing.question); return; }
     if (draft) { setOpen(true); return; }
     if (busy) return;
     setBusy(true); setNote("");
@@ -56,6 +60,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
         method: "POST", headers: { "Content-Type": "application/json" }, signal: abort.signal,
         body: JSON.stringify({ job: "diagram", input: {
           facts: buildBrief({ ...s, opponent: contextOpponent, plan: approvedPlan(s.gamePlans.find(p => p.opponentId === contextOpponent?.id)) }, contextOpponent),
+          history: s.chat.slice(0, s.chat.findIndex(m => m.id === message.id)).slice(-8).map(m => ({role:m.role,text:m.text.slice(0,1500)})),
           question: question.slice(0, 3000), answer: message.text.slice(0, 4000),
           slots: structure.slots.map((_, i) => ({ slot: i, label: slotLabelOf(s.overrides, group.structureId, i) })),
         } }),
@@ -64,7 +69,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
       const payload = (await response.json()).result;
       const result = payload?.referenceConcept === "snag"
         ? { call: snagReference(group.structureId), question: "" }
-        : parseReference(payload, group.structureId);
+        : payload?.version === "football-v1" ? renderBlueprint(payload, group.structureId) : parseReference(payload, group.structureId);
       if (abort.signal.aborted) return;
       if (!result.call) { setNote(result.question); return; }
       setStructureId(group.structureId); setDraft(result.call); setSelection(null); setSaved(false); setOpen(true);
@@ -79,15 +84,15 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
     const group = s.groups.find(g => g.id === s.activeGroupId) ?? s.groups[0];
     if (group.structureId !== structureId) { setNote("Your defensive structure changed. Return to that structure before saving this reference."); return; }
     const id = s.addCall(category);
-    s.updateCall(id, { ...draft, id, section: category });
+    s.updateCall(id, { ...draft, id, schemeConceptId: undefined, section: category });
     setSaved(true);
   }
 
   return <>
-    {standardSnag && draft && <div className="mt-3 rounded-lg border border-line bg-white p-2">
-      <div className="mb-1 text-xs font-bold text-ink">Snag · standard 2×2 example · offense attacks ↓</div>
+    {draft && <div className="mt-3 rounded-lg border border-line bg-white p-2">
+      <div className="mb-1 text-xs font-bold text-ink">{draft.name} · offense attacks ↓</div>
       <div className="h-64 sm:h-80"><PlayCardSVG call={draft} structureId={structureId} overrides={overrides} defStyle="letters" preview /></div>
-      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold"><span style={{color:"#315EFB"}}>Z: snag / settle</span><span style={{color:"#7C3AED"}}>Y: corner</span><span style={{color:"#16824B"}}>B: flat</span></div>
+      <details className="mt-1 text-xs text-dim"><summary className="cursor-pointer">Assignments & assumptions</summary><p className="whitespace-pre-wrap">{draft.notes}</p></details>
     </div>}
     <button ref={opener} disabled={busy} onClick={() => void generate()} className="mt-2 rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-semibold text-grass disabled:opacity-50">{busy ? "Drawing reference…" : draft ? "Open reference in Play Art" : "Show reference diagram"}</button>
     {note && <p role="status" className="mt-1 text-xs text-dim">{note}</p>}
@@ -103,7 +108,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
         }
       }}>
       <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-2">
-        <div className="mr-auto"><h2 className="text-sm font-bold">{draft.name}</h2><p className="text-xs text-dim">{standardSnag ? "Standard concept reference" : "AI reference"} · Review assumptions · Not added to your scheme</p></div>
+        <div className="mr-auto"><h2 className="text-sm font-bold">{draft.name}</h2><p className="text-xs text-dim">{savedDrawing?.call ? "Copy of saved drawing" : standardSnag || catalog?.call ? "Conventional example" : "AI reference"} · Review assumptions · Not added to your scheme</p></div>
         <select aria-label="Save reference category" value={category} onChange={e => { setCategory(e.target.value as PlaybookSection); setSaved(false); }} className="rounded border border-line bg-white px-2 py-1 text-xs">
           {["Fronts", "Coverages", "Pressures", "Checks & Adjustments"].map(c => <option key={c}>{c}</option>)}
         </select>
