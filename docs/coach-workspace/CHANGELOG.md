@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-07 — Draw Snag as a real reference diagram
+- **Asked for:** “Draw snag” returned an inaccurate text sketch instead of clear play art.
+- **Changed:** Basic Snag requests now show an inline field diagram with a fixed standard 2×2 alignment, labeled snag/settle, corner, and flat routes, and an editable Play Art view. “Let me see it” follows the preceding basic Snag request. Chat instructions prohibit ASCII play sketches.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** This specific standard Snag example works without an API key. It is not a custom team call and does not assume defense, backside routes, or protection. Tagged/custom variants still use the existing model pathway. Viewing/editing does not save a call. Geometry and request routing have regression coverage.
+
 ## 2026-10-06 — Reference diagrams from coaching answers
 - **Asked for:** Let AI draw diagrams to explain answers, mostly for the coach's reference.
 - **Changed:** Added Show reference diagram beneath chat answers. Model output is validated and opened in a temporary Play Art workspace with explanations, assumptions, and editing tools. Save a copy is explicit; simply viewing or editing never updates saved calls or scheme items.

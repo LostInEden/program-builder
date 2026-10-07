@@ -8,15 +8,20 @@ import { getStructure } from "@/lib/football";
 import { buildBrief } from "@/lib/ai/brief";
 import { approvedPlan } from "@/lib/meeting";
 import { parseReference } from "@/lib/referenceDiagram";
+import PlayCardSVG from "@/components/PlayCardSVG";
+import { isBasicSnagRequest, snagReference } from "@/lib/snagReference";
 import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
 export default function ChatReferenceDiagram({ message, question }: { message: ChatMessage; question: string }) {
   const opponent = useCurrentOpponent();
+  const initialStructure = useStore.getState().groups.find(g => g.id === useStore.getState().activeGroupId)?.structureId ?? useStore.getState().groups[0].structureId;
+  const standardSnag = message.referenceConcept === "snag" || isBasicSnagRequest(question);
+
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
-  const [draft, setDraft] = useState<Call | null>(null);
+  const [draft, setDraft] = useState<Call | null>(() => standardSnag ? snagReference(initialStructure) : null);
   const [open, setOpen] = useState(false);
-  const [structureId, setStructureId] = useState("");
+  const [structureId, setStructureId] = useState(initialStructure);
   const [selection, setSelection] = useState<Selection>(null);
   const [category, setCategory] = useState<PlaybookSection>("Fronts");
   const [saved, setSaved] = useState(false);
@@ -74,6 +79,11 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
   }
 
   return <>
+    {standardSnag && draft && <div className="mt-3 rounded-lg border border-line bg-white p-2">
+      <div className="mb-1 text-xs font-bold text-ink">Snag · standard 2×2 example · offense attacks ↓</div>
+      <div className="h-64 sm:h-80"><PlayCardSVG call={draft} structureId={structureId} overrides={overrides} defStyle="letters" preview /></div>
+      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold"><span style={{color:"#315EFB"}}>Z: snag / settle</span><span style={{color:"#7C3AED"}}>Y: corner</span><span style={{color:"#16824B"}}>B: flat</span></div>
+    </div>}
     <button ref={opener} disabled={busy} onClick={() => void generate()} className="mt-2 rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-semibold text-grass disabled:opacity-50">{busy ? "Drawing reference…" : draft ? "Open reference in Play Art" : "Show reference diagram"}</button>
     {note && <p role="status" className="mt-1 text-xs text-dim">{note}</p>}
     {open && draft && createPortal(<div ref={dialog} role="dialog" aria-modal="true" aria-label="Reference diagram in Play Art" tabIndex={-1}
@@ -88,7 +98,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
         }
       }}>
       <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-lg border border-line bg-white p-2">
-        <div className="mr-auto"><h2 className="text-sm font-bold">{draft.name}</h2><p className="text-xs text-dim">AI reference · Review assumptions · Not added to your scheme</p></div>
+        <div className="mr-auto"><h2 className="text-sm font-bold">{draft.name}</h2><p className="text-xs text-dim">{standardSnag ? "Standard concept reference" : "AI reference"} · Review assumptions · Not added to your scheme</p></div>
         <select aria-label="Save reference category" value={category} onChange={e => { setCategory(e.target.value as PlaybookSection); setSaved(false); }} className="rounded border border-line bg-white px-2 py-1 text-xs">
           {["Fronts", "Coverages", "Pressures", "Checks & Adjustments"].map(c => <option key={c}>{c}</option>)}
         </select>

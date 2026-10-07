@@ -139,6 +139,7 @@ export type ActivityItem = { id: string; text: string; sub?: string; ts: number 
 // reply can offer — "Open Game Plan", "Confirm in Recently Added".
 export type ChatAction = { label: string; href: string };
 export type ChatMessage = {
+  referenceConcept?: "snag";
   id: string;
   role: "coach" | "counterscheme";
   text: string;

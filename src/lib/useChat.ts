@@ -5,6 +5,7 @@
 // hook, so the thread is the same thread everywhere and the coach never
 // re-explains the situation.
 
+import { resolveSnagRequest, SNAG_EXPLANATION } from "@/lib/snagReference";
 import { useCallback, useMemo, useState } from "react";
 import { useStore, type ChatMessage, type Opponent } from "@/lib/store";
 import { usePractice } from "@/lib/usePractice";
@@ -80,6 +81,10 @@ export function useChat(page?: string): ChatSession {
       const history = s.chat.slice(-12).map((m) => ({ role: m.role, text: m.text }));
       try {
         s.appendChat({ role: "coach", text, context: { page: where, opponentId: opponent?.id } });
+        if (resolveSnagRequest(text, history)) {
+          const id = s.appendChat({ role: "counterscheme", text: SNAG_EXPLANATION, referenceConcept: "snag", context: { page: where, opponentId: opponent?.id } });
+          return useStore.getState().chat.find(m => m.id === id) ?? null;
+        }
         const res = await ai.chat(text, {
           scheme: s.scheme,
           concepts: s.concepts,
