@@ -3,7 +3,7 @@ import { getStructure, LOS_Y, YD } from "./football";
 
 // Resolve the subject at the drawing boundary too: existing replies and follow-ups
 // do not carry the metadata added by newer chat versions.
-const FOLLOW_UP = /^(?:please\s+)?(?:let me see (?:it|that)|show (?:me )?(?:it|that|the (?:diagram|drawing))|draw (?:it|that)|(?:(?:can you|could you) )?(?:show|draw|give|make|create)(?: me)? (?:a |the )?(?:diagram|drawing|picture))(?: again)?[.!?]*$/i;
+const FOLLOW_UP = /^(?:please\s+)?(?:(?:diagram|drawing|picture)|let me see (?:it|that)|show (?:me )?(?:it|that|the (?:diagram|drawing))|draw (?:it|that)|(?:(?:can you|could you) )?(?:show|draw|give|make|create)(?: me)? (?:a |the )?(?:diagram|drawing|picture))(?: again)?[.!?]*$/i;
 const CUSTOM = /\b(?:our|my|bunch|trips|3x1|3×1|empty|left|right|versus|vs|against|cover(?:age)?|motion|tag|tagged|custom|modify|modified|change|instead|from|with)\b/i;
 export function snagReferenceIntent(question: string, answer = ""): "standard" | "custom" | null {
   const q = question.trim();

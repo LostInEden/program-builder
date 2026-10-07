@@ -54,3 +54,8 @@ test('exact live conversation: definition, request for diagram, follow-up, punct
  assert.equal(exports.snagReferenceIntent('Can you give me a diagram','Yes I can sketch Snag.'),'standard');
  assert.equal(isBasicSnagRequest('create. diagram of snag'),true);
 });
+test('bare diagram follows the current trips topic instead of losing its subject',()=>{
+ const h=[{role:'coach',text:'snag out of trips'},{role:'counterscheme',text:'A trips example'}];
+ assert.equal(exports.referenceQuestion('diagram',h),'snag out of trips');
+ assert.equal(resolveSnagRequest('diagram',h),false);
+});

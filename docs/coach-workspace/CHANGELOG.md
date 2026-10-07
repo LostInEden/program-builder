@@ -17,7 +17,7 @@ Entry format:
 
 ## 2026-10-07 — Draw football assignments instead of free-form AI coordinates
 - **Asked for:** “make it to where any concept or front anything can be drawn up correctly”
-- **Changed:** Added a shared football blueprint renderer for preset/custom formations, named routes, defensive techniques, explicit assignment paths and coverage zones. The diagram AI returns football assignments in yards; preview and Play Art use the same coordinates, player labels and route colors. Server and client validate bounds, anchors, duplicates and supported concept combinations. Invalid output returns clarification instead of a malformed drawing.
+- **Changed:** Added a shared football blueprint renderer for preset/custom formations, named routes, defensive techniques, explicit assignment paths and coverage zones. The diagram AI returns football assignments in yards; preview and Play Art use the same coordinates, player labels and route colors. Server and client validate bounds, anchors, duplicates and supported concept combinations. Invalid model geometry gets one bounded correction attempt using the original request; unresolved output returns clarification instead of a malformed drawing.
 - **Commit:** (this one)
 - **Status:** On coach
 - **Notes:** This does not guarantee universal football correctness. Model-selected assignments still need coaching review. Missing custom rules, unsupported geometry and unknown calls should prompt clarification; nothing is automatically saved. Existing manually saved art is unchanged.
@@ -31,7 +31,7 @@ Entry format:
 
 ## 2026-10-07 — Prefer saved drawings and retain clarification context
 - **Asked for:** Make references correctly reflect the requested call or front.
-- **Changed:** Exact saved drawing names take priority over conventional examples; duplicates ask which category to use. Drawings open as independent copies. Diagram requests include recent chat context so clarification answers can be interpreted with the original request. Saved scheme links are not carried into new reference copies.
+- **Changed:** Exact saved drawing names take priority over conventional examples; duplicates ask which category to use. Drawings open as independent copies. Diagram requests include recent chat context so clarification answers can be interpreted with the original request; a bare “diagram” also retains the current topic. Saved scheme links are not carried into new reference copies.
 - **Commit:** (this one)
 - **Status:** On coach
 - **Notes:** Existing saved drawings are not edited or replaced. Fuzzy names and tagged calls are not silently matched to a different saved play. Save a copy remains an explicit coach action.

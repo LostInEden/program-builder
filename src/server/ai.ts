@@ -28,7 +28,7 @@ const JOB_RULES: Record<AiJob, string> = {
   diagram: `Translate the requested football reference into football-v1 assignments, never SVG/pixel coordinates. Respect the coach's request above the supplied assistant answer. Saved facts are authoritative for their scheme; a generic concept may use a conventional example only with its assumptions stated. A custom name without alignments/assignments MUST return one focused question and empty arrays. Do not invent what our/my/tagged call means. If a requested assignment cannot be represented faithfully, ask instead of silently substituting.
 Use a formation preset (offense array empty), none for defense only, or custom with explicit offensive alignments. All widths are signed YARDS from ball, screen right positive; depth is yards beyond LOS, offense negative, defense positive. Offense attacks down-screen. mirror flips a preset, not custom coordinates. Screen right is offense's left: disclose screen-side examples. Labels match preset: RT RG C LG LT X H Y Z Q T (I-form uses F, empty W). All labels unique per side, max 2 characters. Use C1/C2 for corners.
 ROUTES use player label, named primitive, depth in yards beyond LOS, width NONNEGATIVE lateral yards traveled. inward means toward middle, outward means toward nearest sideline. vertical: straight to depth; hitch: stem then settle 1 yard back; snag: diagonal inside and settle; slant: 1-yard stem then inside; out/in/cross: stem to depth then lateral break; corner/post: stem to depth then diagonal 4 yards deeper outward/inward; flat: release outside to depth; wheel: flat then up to depth; comeback: stem then outside 3 yards back. Do not use a primitive if its direction doesn't match the request. Supply explicit paths instead. Check width against receiver split: X=8 H=20 Y=80 Z=93 in 2x2; trips H=72 Y=80 Z=92; bunch H=70 Y=74 Z=78. Field width 53.33 yards; default ball centered. Route endpoint must stay on field, maximum 19 yards beyond LOS. If deeper routes requested, ask to shorten displayed reference instead of clipping.
-DEFENDERS use technique 0/1/2i/2/3/4i/4/5/6i/6/9 at depth 0.5–2, side left/middle/right SCREEN SIDE. 0 requires middle. Others require left/right. Techniques use the fixed OL: C=50, guards=46/54, tackles=42/58. 6/9 assumes attached TE alignment; use landmark for other spacing. Landmark uses width/depth. Give each player unique labels, e.g E1/E2. A front alone does not imply gap fits or coverage; show only known alignments. Tite is 4i–0–4i; Bear interior is 3–0–3, edge responsibilities unspecified.
+DEFENDERS use technique 0/1/2i/2/3/4i/4/5/6i/6/9 at depth 0.5–2, side left/middle/right SCREEN SIDE. 0 requires middle. Others require left/right. Techniques use the fixed OL: C=50, guards=46/54, tackles=42/58. 6i/6/9 REQUIRE an attached tight end drawn in offense (Doubles TE preset or custom). Even a down-linemen-only front request must include that offensive reference, never formation none when using 6i/6/9. Use landmark for other spacing. Landmark uses width/depth. Give each player unique labels, e.g E1/E2. A front alone does not imply gap fits or coverage; show only known alignments. Tite is 4i–0–4i; Bear interior is 3–0–3, edge responsibilities unspecified.
 PATHS support explicit run tracks, blocking, pressure, motion, and routes not covered by a primitive. Specify side, exact player label, kind, brief assignment, and ordered destinations in signed width/depth yards from BALL/LOS; renderer attaches start to player. Do not duplicate a player's route in paths. Blocking/run/pressure assignments require a specified opponent look and rules; if missing ask for those rather than guessing targets. ZONES require a defender label, landmark width/depth, radii in yards and coverage assignment. Coverage landmarks alone do not establish pattern-match rules; state omissions. Don't add defense to an offense-only question.
 Keep reference concise and uncluttered. Explanation must match assignments. Enumerate formation, intended side, depths and omitted assignments in assumptions. Never promise correctness or claim it is a saved call. Return a question if uncertain.`,
   chat: `Never draw a football play with ASCII art, dots, slashes, or Unicode arrows in the reply. Those are not usable diagrams. When asked for a drawing, explain the concept briefly and direct the coach to Show reference diagram. Do not claim a field diagram exists until the drawing tool has made one.
@@ -138,11 +138,19 @@ export async function runJob({ job, input }: AiRequest): Promise<unknown> {
   ].filter(Boolean).join("\n\n");
   const text = await callOpenAI(instructions, renderInput(input), job, SCHEMAS[job]);
   try {
-    const result = JSON.parse(text);
+    let result = JSON.parse(text);
     if (job === "diagram") {
       try { renderBlueprint(result, "3-4"); }
       catch (error) {
-        return { ...result, question: `I couldn’t draw that reliably: ${error instanceof Error ? error.message : "Please clarify the alignments and assignments."}` };
+        // One bounded repair using the original request: never ask the coach to
+        // repeat an alignment that the model simply forgot to include.
+        try {
+          const repaired = await callOpenAI(instructions + "\nRepair the validation issue without changing the coach's request. Include any required alignment reference. If it cannot be fixed faithfully, return a focused question.", renderInput({ ...input, rejectedBlueprint: result, validationError: error instanceof Error ? error.message : "Invalid assignments" }), job, SCHEMAS[job]);
+          result = JSON.parse(repaired);
+          renderBlueprint(result, "3-4");
+        } catch {
+          return { ...result, question: `I couldn’t draw that reliably: ${error instanceof Error ? error.message : "Please clarify the alignments and assignments."}` };
+        }
       }
     }
     return result;
@@ -171,7 +179,7 @@ async function callOpenAI(instructions: string, input: string, name: string, sch
       store: false,
       text: { format: { type: "json_schema", name, schema, strict: true } },
     }),
-    signal: AbortSignal.timeout(55_000),
+    signal: AbortSignal.timeout(name === "diagram" ? 25_000 : 55_000),
   });
   const data = (await res.json().catch(() => ({}))) as ResponsesOutput;
   if (!res.ok) {
