@@ -164,7 +164,7 @@ function MatchupInner() {
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">{showDetails ? "Opponent Details" : "Opponent Matchup"}</h1>
-          <p className="text-dim mt-0.5">{showDetails ? "Scouting entries, opponent information, and staff tools." : "Your opponent at a glance."}</p>
+          <p className="text-dim mt-0.5">{showDetails ? "Scouting entries, opponent information, and staff tools." : "Identify what challenges your defense, then build answers using your personnel and installed system."}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {opponents.length > 0 && (

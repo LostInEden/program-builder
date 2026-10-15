@@ -78,7 +78,7 @@ export default function PlaybookPage() {
       <SchemeTabs active="art" />
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h1 className="display text-2xl font-bold">Play Art</h1>
-        <Link href="/chat" className="text-sm text-gold">Ask CounterScheme</Link>
+        <Link href="/chat" className="text-sm text-gold">Discuss / generate a diagram</Link>
         <Link
           href="/scheme/playbook/print"
           className="display rounded-full border border-line px-4 py-1.5 text-xs font-semibold text-dim transition hover:text-ink hover:border-dim"

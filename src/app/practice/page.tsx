@@ -283,7 +283,7 @@ function PracticeInner() {
               Practice Script <span className="align-middle ml-1 rounded-full border border-line bg-pitch px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest text-dim">Optional</span>
             </h1>
             <p className="text-dim mt-0.5 max-w-2xl">
-              Select opponent looks or enter your own. Organize reps, link approved decisions, and print editable scout materials on your schedule.
+              Turn approved answers into teachable reps. Choose opponent looks, coach the responsibilities, and prepare your players on your schedule.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -306,7 +306,7 @@ function PracticeInner() {
         <div className={`${card} px-6 py-14 text-center no-print`}>
           <ClipboardList size={34} className="mx-auto text-dim mb-3" />
           <div className="text-lg font-bold mb-1">No opponent yet</div>
-          <p className="text-sm text-dim max-w-md mx-auto mb-4">Add one in Opponent Matchup and upload their play-by-play — the reps come straight off the snaps.</p>
+          <p className="text-sm text-dim max-w-md mx-auto mb-4">Add an opponent, then enter your own practice looks or use uploaded scouting. You can prepare without a report.</p>
           <Link href="/matchup" className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white hover:bg-grass-deep">Go to Opponent Matchup</Link>
         </div>
       ) : !week.pool?.reps.length ? (

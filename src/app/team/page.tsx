@@ -145,10 +145,10 @@ function TeamPageInner() {
   };
 
   const titleFor: Record<string, [string, string]> = {
-    overview: ["My Team", "Manage your roster, depth chart, and team information."],
-    depth: ["Depth Chart", "Assign, reorder, and rename positions on the field."],
-    roster: ["Roster", "Every player with measurables. Football skill grades live on the player profile."],
-    profiles: ["Player Profiles", "Open a player to edit identity, measurables, and evaluation."],
+    overview: ["My Team", "Know your players. Evaluate strengths, development needs, and the roles that fit your defense."],
+    depth: ["Depth Chart", "Match players to responsibilities. Adjust starters and packages as availability and evaluations change."],
+    roster: ["Roster", "Your personnel foundation: measurables, availability, and individual football evaluations."],
+    profiles: ["Player Profiles", "Evaluate the skills behind each assignment. Open a player to review strengths and development needs."],
     injuries: ["Injuries", "Availability status for every player."],
     weights: ["Weight Room", "Testing numbers — syncs to player profiles."],
     schedule: ["Season Schedule", "10 games + bye over 11 weeks. The calendar follows this."],

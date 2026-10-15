@@ -22,8 +22,9 @@ export default function Home() {
   const confirmed = concepts.filter((c) => c.confirmed);
   const real = opponents.filter((o) => !o.isDemo);
   const nextWeek = seasonSchedule.find((w) => w.opponent && !w.result);
-  const nextOpp = real.find((o) => o.week === nextWeek?.week) ?? real[0] ?? opponents[0];
+  const nextOpp = opponents.find(o=>o.id===store.lastOpponentId) ?? real.find((o) => o.week === nextWeek?.week) ?? real[0] ?? opponents[0];
   const plan = nextOpp ? gamePlans.find((g) => g.opponentId === nextOpp.id) : undefined;
+  const approved = plan?.meeting?.decisions.length ?? 0;
   const { findings } = computeFindings(store);
   const concerns = findings.filter((f) => f.status === "Potential Conflict").length;
   const recs = findings.filter((f) => f.status === "Needs Review").length;
@@ -35,7 +36,7 @@ export default function Home() {
       steps: [
         { label: "Roster entered", done: players.length >= 11 },
         { label: "Depth chart filled", done: filled >= 11 },
-        { label: "Starters graded (skills)", done: rated >= 11 },
+        { label: "Player evaluations available", done: rated > 0 },
       ],
     },
     {
@@ -43,26 +44,26 @@ export default function Home() {
       stat: `${confirmed.length} concepts saved`,
       steps: [
         { label: "Base front & coverage", done: confirmed.some((c) => c.kind === "front") && confirmed.some((c) => c.kind === "coverage") },
-        { label: "Pressures saved", done: confirmed.some((c) => c.kind === "pressure") },
-        { label: "Adjustments taught", done: confirmed.filter((c) => c.kind === "adjustment").length >= 3 },
+        { label: "Your philosophy saved", done: !!store.scheme.philosophy.trim() },
+        { label: "Adjustments taught", done: confirmed.some((c) => c.kind === "adjustment") },
       ],
     },
     {
       href: "/analysis", icon: ShieldCheck, title: "Defensive Analysis", n: 3,
-      stat: `${concerns} concern${concerns === 1 ? "" : "s"} · ${recs} recommendation${recs === 1 ? "" : "s"}`,
+      stat: `${concerns} concern${concerns === 1 ? "" : "s"} · ${recs} check${recs === 1 ? "" : "s"} to review`,
       steps: [
-        { label: "No open conflicts", done: concerns === 0 },
-        { label: "Recommendations reviewed", done: recs <= 2 },
+        { label: `${concerns} potential conflicts flagged`, done: false },
+        { label: `${recs} checks need coaching review`, done: false },
       ],
     },
     {
-      href: "/matchup", icon: Binoculars, title: "Opponent Matchup", n: 4,
+      href: nextOpp ? `/matchup?id=${encodeURIComponent(nextOpp.id)}` : "/matchup", icon: Binoculars, title: "Opponent Matchup", n: 4,
       stat: nextOpp ? `${nextOpp.name}${nextOpp.isDemo ? " (demo)" : ""}` : "No opponent yet",
       // Q46: the week is scouting report → game plan → call sheet. Nothing else.
       steps: [
         { label: "Scouting report", done: !!nextOpp && !nextOpp.isDemo && nextOpp.plays.length > 0 },
-        { label: "Game plan", done: !!plan?.generatedAt },
-        { label: "Call sheet", done: !!plan?.generatedAt && confirmed.some((c) => c.kind === "front") },
+        { label: `${approved} approved decisions`, done: approved > 0 },
+        { label: "Practice looks selected", done: !!(nextOpp && store.practice[nextOpp.id]?.included.length) },
       ],
     },
   ];
@@ -72,11 +73,10 @@ export default function Home() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight">
-            Efficient preparation. <span className="text-grass">Clear decisions.</span>
+            Your Team. Your Scheme.<br /><span className="text-grass">Your Game Plan.</span>
           </h1>
           <p className="text-dim mt-2 max-w-2xl">
-            The week is <span className="font-semibold text-ink">Scouting Report → Game Plan</span>: what they do,
-            then what we&apos;re going to do about it. Everything else — your team, your scheme, the call sheet — feeds those two.
+            Backed by Football Intelligence. Build around your players, review your defense, and prepare for the opponent in one connected workspace.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             <Link href={nextOpp ? `/scouting?id=${nextOpp.id}` : "/scouting"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-grass hover:text-grass">
@@ -87,17 +87,19 @@ export default function Home() {
               <ClipboardList size={15} /> Game plan
             </Link>
             <ChevronRight size={14} className="text-dim" />
+            <Link href={nextOpp ? `/practice?id=${nextOpp.id}` : "/practice"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-grass hover:text-grass">Practice</Link>
+            <ChevronRight size={14} className="text-dim" />
             <Link href={nextOpp ? `/callsheet?id=${nextOpp.id}` : "/callsheet"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-grass hover:text-grass">
               <ListChecks size={15} /> Call sheet
             </Link>
           </div>
         </div>
-        {nextWeek && (
+        {nextOpp && (
           <Link href={nextOpp ? `/matchup?id=${nextOpp.id}` : "/matchup"} className={`${card} px-5 py-3 flex items-center gap-4 hover:border-grass`}>
             <div>
-              <div className="display uppercase text-[10px] font-bold tracking-[0.15em] text-dim">This week</div>
-              <div className="font-extrabold">Wk {nextWeek.week} vs {nextWeek.opponent}</div>
-              <div className="text-xs text-dim">{plan?.generatedAt ? "Game plan ready" : "No game plan yet"}</div>
+              <div className="display uppercase text-[10px] font-bold tracking-[0.15em] text-dim">Current opponent</div>
+              <div className="font-extrabold">{nextOpp.week ? `Wk ${nextOpp.week} · ` : ""}{nextOpp.name}{nextOpp.isDemo ? " (demo)" : ""}</div>
+              <div className="text-xs text-dim">{approved ? `${approved} decisions approved` : plan?.meeting ? "Planning in progress" : "Start planning"}</div>
             </div>
             <ChevronRight size={16} className="text-dim" />
           </Link>
@@ -113,10 +115,10 @@ export default function Home() {
                 <div className="flex items-center gap-3 mb-3">
                   <span className="grid size-8 place-items-center rounded-lg bg-navy text-white text-sm font-extrabold">{n}</span>
                   <Icon size={22} className="text-grass" />
-                  <span className="ml-auto text-xs font-bold text-dim">{done}/{steps.length}</span>
+                  <span className="ml-auto text-xs font-bold text-dim">{title === "Defensive Analysis" ? "Coach review" : `${done}/${steps.length} on file`}</span>
                 </div>
                 <h2 className="text-xl font-bold">{title}</h2>
-                <p className="text-sm text-dim mt-0.5">{stat}</p>
+                <p className="mt-1 text-sm">{({"My Team":"Who are our players, and what can they do?","My Scheme":"What do we teach, and why does it fit?","Defensive Analysis":"Where are we strong, vulnerable, or missing information?","Opponent Matchup":"What will challenge us this week?"} as Record<string,string>)[title]}</p><p className="text-sm text-dim mt-2">{stat}</p>
                 <ul className="mt-3 flex flex-col gap-1 text-sm">
                   {steps.map((s) => (
                     <li key={s.label} className="flex items-center gap-2">
@@ -135,8 +137,8 @@ export default function Home() {
       </div>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <Link href="/gameplan" className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-dim hover:text-ink hover:border-dim">
-          <ClipboardList size={15} /> Game Plans
+        <Link href={nextOpp ? `/gameplan?id=${nextOpp.id}` : "/gameplan"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2 text-sm font-semibold text-dim hover:text-ink hover:border-dim">
+          <ClipboardList size={15} /> {nextOpp ? `Continue planning · ${nextOpp.name}` : "Start a game plan"}
         </Link>
       </div>
     </div>

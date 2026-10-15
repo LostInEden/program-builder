@@ -34,9 +34,9 @@ function FindingDetails({ f, accent }: { f: Finding; accent: string }) {
     : "No low ratings flagged in these checks. Confirm the fit against the matchup.";
   const summaries = f.strengths ? [
     ["Strengths", short(f.strengths[0])],
-    ["Watch for", short(f.weaknesses?.[0])],
+    ["Potential weakness", short(f.weaknesses?.[0])],
     ["Personnel fit", personnel],
-    ["Improve next", short(f.improvements?.[0])],
+    ["Adjustment to consider", short(f.improvements?.[0])],
   ] : [["What we see", f.detail], ["Why it matters", short(f.why)], ["Next step", f.suggestion]];
   return <section id="finding-details" aria-label="Finding details" className={`${card} p-4 sm:p-5`}>
     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -46,7 +46,7 @@ function FindingDetails({ f, accent }: { f: Finding; accent: string }) {
     {f.strengths && <p className="mt-1 text-xs text-dim">Scheme guidance — confirm assignments and player fit.</p>}
     <div className="mt-4 grid gap-3 sm:grid-cols-2">{summaries.filter(([, text]) => text).map(([title, text]) => <div key={title} className="rounded-lg border border-line p-3"><h3 className="mb-1 text-sm font-bold">{title}</h3><p className="text-sm leading-relaxed text-dim">{text}</p></div>)}</div>
     <details className="mt-4 border-t border-line pt-3">
-      <summary className="cursor-pointer text-sm font-semibold text-grass">View details</summary>
+      <summary className="cursor-pointer text-sm font-semibold text-grass">Why this assessment? View evidence</summary>
       <div className="mt-4 space-y-4 text-sm">
         <p className="text-dim">{f.detail}</p>
         {f.why && <Section title="Soundness & evidence"><p className="leading-relaxed">{f.why}</p></Section>}
@@ -85,7 +85,7 @@ export default function AnalysisPage() {
   };
   return <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">Pick a scheme. See what works and what to improve.</p></div>
+      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">Does it fit your players? Review strengths, weaknesses, responsibilities, and practical improvements.</p></div>
       <p className="text-xs text-dim">{groupName} · {structureName}</p>
     </div>
     <SchemeTabs active="analysis" />
@@ -107,6 +107,6 @@ export default function AnalysisPage() {
         {selected ? <FindingDetails key={selected.id} f={selected} accent={buckets.find(b => b.key === selected.status)!.accent} /> : <section id="finding-details" className={`${card} p-6 text-sm text-dim`}>Choose another category or add a confirmed scheme in Scheme Library.</section>}
       </div>
     </div>
-    <p className="mt-4 text-xs text-dim">Based on your saved scheme and personnel. Overall Defense keeps your package, situation and roster checks together.</p>
+    <p className="mt-4 text-xs text-dim">Based on saved scheme rules and personnel evaluations. Missing assignments remain unknown; a passed check is not proof the entire defense is sound. Your staff makes the final decision.</p>
   </div>;
 }

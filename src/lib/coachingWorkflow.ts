@@ -55,3 +55,9 @@ export function connectPractice(pool:PracticePool,selection:PracticeSelection,pl
   });
   return {...pool,reps};
 }
+
+// Explicit coach action only. Existing looks and their edits are never replaced.
+export function practiceFromDecision(selection:PracticeSelection|undefined,plan:GamePlan|undefined,decisionId:string,look:{id:string;play:string;formation:string;situation:string}):Partial<PracticeSelection>|null {
+  if(!look.play.trim() || !plan?.meeting?.decisions.some(d=>d.id===decisionId) || selection?.manual?.some(r=>r.decisionId===decisionId)) return null;
+  return {manual:[...(selection?.manual??[]),{...look,play:look.play.trim(),formation:look.formation.trim(),situation:look.situation.trim(),personnel:'',note:'',decisionId}],included:[...new Set([...(selection?.included??[]),look.id])]};
+}

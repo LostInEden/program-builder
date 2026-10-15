@@ -35,7 +35,7 @@ export default function ChatPage() {
         <span className="grid size-9 place-items-center rounded-xl bg-navy text-white text-xs font-extrabold">CS</span>
         <div className="min-w-0">
           <div className="font-extrabold leading-tight">CounterScheme</div>
-          <p className="text-xs text-dim leading-tight">Your team, your scheme, this week&apos;s opponent — already loaded.</p>
+          <p className="text-xs text-dim leading-tight">Discuss your players, test an idea, or visualize an answer. You make the final decision.</p>
         </div>
       </div>
       <ChatThread page="/chat" className="flex-1 min-h-0" />

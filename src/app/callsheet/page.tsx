@@ -172,7 +172,7 @@ function CallSheetInner() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 no-print">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">Call Sheet — {o.name}</h1>
-          <p className="text-dim mt-0.5">The whole menu, the plan, and the reminders — on one page. What to call is still your call.</p>
+          <p className="text-dim mt-0.5">Your installed calls, approved answers, and situational reminders. Organize game-day choices around your players and this opponent.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {opponents.length > 0 && (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, Shield, Layers, Zap, SlidersHorizontal } from "lucide-react";
 import { useStore, useHydrated, type ConceptKind } from "@/lib/store";
 import SchemeTeachingPanel from "@/components/SchemeTeachingPanel";
+import PersonnelContext from "@/components/PersonnelContext";
 import SchemeTabs from "@/components/SchemeTabs";
 
 const card = "rounded-xl border border-line bg-card p-5 sm:p-6";
@@ -29,7 +30,7 @@ export default function SchemePage() {
   return <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
     <header className="mb-5">
       <h1 className="text-3xl font-extrabold tracking-tight">My Scheme</h1>
-      <p className="mt-1 text-sm text-dim">Your defensive identity, what you carry, and the rules you coach.</p>
+      <p className="mt-1 text-sm text-dim">Build your defense around your players, your terminology, and your philosophy.</p>
       <button onClick={() => setTeaching(!teaching)} aria-expanded={teaching} className="mt-3 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-gold">{teaching ? "Close Teaching" : "Teach CounterScheme"}{pending ? ` · ${pending} to review` : ""}</button>
     </header>
     <SchemeTabs />
@@ -68,6 +69,7 @@ export default function SchemePage() {
       </div>}
     </section>
 
+    <PersonnelContext />
     <section aria-labelledby="defense-title" className="mb-5">
       <h2 id="defense-title" className="mb-3 text-lg font-extrabold">Your Defense</h2>
       <div className="grid gap-4 sm:grid-cols-2">

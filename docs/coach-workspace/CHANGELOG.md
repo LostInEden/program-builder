@@ -15,6 +15,34 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Align existing pages with the updated mission
+- **Asked for:** Keep the organization and tabs; update each page to fit the vision.
+- **Changed:** Updated Home, Team, My Scheme, Analysis, Matchup, Scouting, Game Plans, Practice, Call Sheet, Chat, Play Art options and Self Scout copy around personnel-driven decisions and preparation. Home uses the new guiding principle and preserves the four-card layout. No navigation, routes, theme or stored coaching data were replaced.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** This is a content and workflow alignment, not a new football reasoning engine. Existing self-scout limitations remain explicit.
+
+## 2026-10-15 — Show personnel evidence in My Scheme
+- **Asked for:** Build defensive systems around the players the coach has.
+- **Changed:** Added a compact panel within the existing scheme overview showing starting-role assignments, presence of skill ratings and availability concerns for the current package, with direct links to depth chart, player evaluations and scheme fit. Analysis labels now foreground weaknesses, adjustments and the evidence behind each assessment.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Counts reflect stored evaluations, not a generated fit score or a claim of soundness. Partial ratings count as having ratings, not a completed evaluation.
+
+## 2026-10-15 — Carry approved decisions into practice
+- **Asked for:** Connect the staff’s decisions to practical preparation.
+- **Changed:** Final Plan now offers Add to practice on each approved decision. The coach names the offensive look, formation and situation; the saved look links the approved answer and diagrams through the existing practice workflow. Existing links open practice instead of creating duplicates.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Draft-only decisions cannot create a linked look. No offensive alignment or play is guessed from a defensive call. Regression and local browser checks cover the handoff.
+
+## 2026-10-15 — Use honest workflow status on Home
+- **Asked for:** Support informed decisions and continuation of the weekly workflow.
+- **Changed:** Removed inferred recommendations-reviewed and game-plan-ready claims. Home shows approved decision counts, review needs and data on file, offers Practice alongside scouting/planning/call sheets, and continues the last selected opponent when available.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Readiness is not inferred from a generated timestamp. Existing card positions and main navigation remain unchanged.
+
 ## 2026-10-15 — Coach-led game-plan organizer
 - **Asked for:** Prepare the organizer with scouting, but leave strategic decisions to the coach.
 - **Changed:** Existing Game Plans now initializes eleven coaching categories with opponent evidence and blank answers. Coaches can add, rename, reorder and hide topics, retain notes and questions, discuss individual sections, approve answers or return them to draft. Refresh scouting updates evidence without replacing decisions.

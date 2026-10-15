@@ -23,13 +23,13 @@ export default function SelfScoutPage() {
 
       <section aria-labelledby="report-status" className="rounded-xl border border-line bg-card p-6 shadow-sm sm:p-8">
         <span className="inline-block rounded-full border border-line px-3 py-1 text-xs font-semibold text-dim">Report not available yet</span>
-        <h2 id="report-status" className="mt-4 text-xl font-bold">Start with what your defense actually calls</h2>
+        <h2 id="report-status" className="mt-4 text-xl font-bold">Learn from what your defense actually calls</h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-dim">
           Self scout will use your defensive game snaps to show how often you call each front, coverage, and pressure in different situations.
           Saving and importing those snaps, and calculating this report, still need to be added.
         </p>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-dim">
-          Your saved scheme describes what you can call; it doesn’t show how often you call it in games.
+          Use this feedback to refine your system and future game plans. Your saved scheme describes what you can call; it doesn’t show how often you call it in games.
           No tendency percentages are available here yet.
         </p>
         <div className="mt-6 border-t border-line pt-5">

@@ -71,7 +71,7 @@ function ScoutingInner() {
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between no-print">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">{title}{o ? ` — ${o.name}` : ""}</h1>
-          <p className="text-dim mt-0.5">Scouting Report = What they do. Game Plan = What we&apos;re going to do about it.</p>
+          <p className="text-dim mt-0.5">Study their personnel, concepts and situations. Use the evidence to develop answers in your defensive system.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {opponents.length > 0 && (
@@ -100,7 +100,7 @@ function ScoutingInner() {
       {/* The paper version says who and what it is. */}
       <div className="hidden print:block mb-4">
         <h1 className="text-2xl font-extrabold">{title} — {o?.name ?? ""}</h1>
-        <p className="text-sm text-dim">Scouting Report = What they do. Game Plan = What we&apos;re going to do about it.</p>
+        <p className="text-sm text-dim">Study their personnel, concepts and situations. Use the evidence to develop answers in your defensive system.</p>
       </div>
 
       {!o ? (

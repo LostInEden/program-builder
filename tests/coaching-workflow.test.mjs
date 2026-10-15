@@ -18,3 +18,16 @@ test('only explicit approval supplies practice answers; drafts never replace app
 test('manual practice works with no snaps, retains edits and uses a linked approved decision',()=>{const sel={...selection,manual:[{id:'manual:m',play:'Counter',formation:'Trips',personnel:'11',situation:'Third and short',note:'Walk through',decisionId:'d'}],repEdits:{'manual:m':{formation:'Bunch'}},repetitions:{'manual:m':4},schedule:{Mon:{label:'Install',tempo:'Walk',purpose:'Fit review'}}};const pool=workflow.connectPractice({reps:[]},roundtrip(sel),{meeting:{...meeting.emptyMeeting(),decisions:[decision]}});assert.equal(pool.reps.length,1);assert.equal(pool.reps[0].stats.n,0);assert.equal(pool.reps[0].stats.runRate,null);assert.equal(pool.reps[0].formation,'Bunch');assert.match(pool.reps[0].answer,/Eagle/);assert.equal(sel.manual[0].formation,'Trips');});
 const {concise}=load('ai/concise');
 test('short answers preserve decimal values and keep full detail available',()=>{const text='Set a 2.5 yard split. Check the release. Keep leverage. Explain the replacement.';const result=concise(text,'What should we do?');assert.equal(result.text,'Set a 2.5 yard split. Check the release. Keep leverage.');assert.equal(result.deeper,text);assert.equal(concise(text,'Explain further').text,text);});
+
+test('practice handoff requires approval, preserves existing work and refuses duplicate clicks',()=>{
+ const look={id:'manual:new',play:' Counter ',formation:' Trips ',situation:'Short yardage'};
+ const plan={meeting:{...meeting.emptyMeeting(),decisions:[decision]}};
+ assert.equal(workflow.practiceFromDecision(undefined,undefined,'d',look),null);
+ assert.equal(workflow.practiceFromDecision(undefined,plan,'d',{...look,play:' '}),null);
+ const before={...selection,manual:[{id:'old',play:'Mesh'}],included:['old'],notes:'Preserve notes'};
+ const patch=workflow.practiceFromDecision(before,plan,'d',look);
+ assert.equal(patch.manual[1].play,'Counter');assert.equal(patch.manual[1].decisionId,'d');
+ assert.equal(patch.manual[0].id,'old');assert.deepEqual(Array.from(patch.included),['old','manual:new']);
+ assert.equal(workflow.practiceFromDecision({...before,...patch},plan,'d',look),null);
+ assert.equal(before.manual.length,1);assert.equal(before.notes,'Preserve notes');
+});
