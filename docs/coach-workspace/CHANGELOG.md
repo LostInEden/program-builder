@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Reshape Game Plans into a focused coaching workspace
+- **Asked for:** Keep the navigation, but visibly improve the Game Plans layout around personnel, opponent threats, evidence, discussion and approved answers.
+- **Changed:** Replaced the large topic-card wall with a compact left-hand topic list and responsive answer/discussion workspace. Added side-by-side personnel/system and opponent-threat summaries above it. The answer editor and AI discussion are immediately available, evidence is expanded, and secondary metadata/notes remain accessible in disclosures. Approved decisions appear in their own section with existing practice handoffs and call-sheet links.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing tabs, approval behavior, persisted plans and diagram tools remain intact. Reviewing a hidden approved topic restores it to the planning list. Context summarizes saved data, not a newly inferred personnel-fit score. Build, lint and workflow regressions verified.
+
 ## 2026-10-15 — Align existing pages with the updated mission
 - **Asked for:** Keep the organization and tabs; update each page to fit the vision.
 - **Changed:** Updated Home, Team, My Scheme, Analysis, Matchup, Scouting, Game Plans, Practice, Call Sheet, Chat, Play Art options and Self Scout copy around personnel-driven decisions and preparation. Home uses the new guiding principle and preserves the four-card layout. No navigation, routes, theme or stored coaching data were replaced.
