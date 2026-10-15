@@ -61,11 +61,13 @@ function PriorityMeeting({ opponent, priority, meeting, update }: { opponent: Op
     } catch { setError("The assistant could not reply. Your question is saved; try again."); }
     finally { setBusy(false); }
   };
+  const evidenceAtTop = ["identity", "situations"].includes(priority.section);
   return <div className="grid lg:grid-cols-2 gap-4 items-start min-w-0">
+    {evidenceAtTop && <section className={`${card} lg:col-span-2`}><p className="text-xs uppercase tracking-widest text-gold font-bold">{saved ? "Plan set · coach approved" : "Work the priority"}</p><h2 className="mt-1 text-xl font-bold">{priority.title}</h2><p className="mt-1 text-sm text-dim">{priority.detail}</p><PlanningEvidence text={priority.evidence} opponentId={opponent.id} section={priority.section}/></section>}
     <section className={card}>
-      <p className="text-xs uppercase tracking-widest text-gold font-bold">{saved ? "Plan set · coach approved" : "Work the priority"}</p>
+      {!evidenceAtTop && <><p className="text-xs uppercase tracking-widest text-gold font-bold">{saved ? "Plan set · coach approved" : "Work the priority"}</p>
       <h2 className="mt-2 text-xl font-bold">{priority.title}</h2><p className="mt-2 text-sm text-dim">{priority.detail}</p>
-      <PlanningEvidence text={priority.evidence} opponentId={opponent.id} section={priority.section}/>
+      <PlanningEvidence text={priority.evidence} opponentId={opponent.id} section={priority.section}/></>}
       {saved && !editing ? <><dl className="mt-4 space-y-2 text-sm">{[["Call", saved.call], ["Check", saved.check], ["Fit", saved.fit], ["Key Coaching Point", saved.point],...Object.entries(saved.responses??{})].filter(([, value]) => value).map(([label, value]) => <div key={label}><dt className="text-dim">{label}</dt><dd className="font-semibold whitespace-pre-wrap">{value}</dd></div>)}</dl><div className="mt-4 flex gap-2"><button className={button} onClick={() => setEditing(true)}>Edit</button><button className={button} onClick={() => setTalking(true)}>Discuss Again</button></div></> : !editing ? <>
         <p className="mt-4 text-sm text-dim">Scouting is ready for review. Your call, fit and adjustments stay blank until you choose them.</p>
         <div className="mt-4 flex flex-wrap gap-2"><button className={primary} onClick={() => setEditing(true)}>Enter our answer</button><button className={button} onClick={() => setTalking(true)}>Talk It Through</button></div>

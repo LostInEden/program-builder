@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Compact evidence for planning steps 2 and 6
+- **Asked for:** Evidence on steps 2 and 6 goes too far down the page; show it together at the top.
+- **Changed:** Offensive Identity & Tendencies and Situational Game Plan now show evidence across the full planning workspace above the answer/discussion cards. Compact evidence tiles use three columns on wide screens, two on smaller screens, and one on phones.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** All evidence remains visible without truncation or an inner scrolling list. Saved data, approvals and other workflow steps are unchanged.
+
 ## 2026-10-15 — Make game-plan evidence readable
 - **Asked for:** Improve the format of View Evidence.
 - **Changed:** Replaced the dense evidence paragraph with a Scouting evidence panel: separate rows, emphasized player/concept labels, spaced descriptions and a Full scout link. Sections with instructional guidance are labeled Planning context.
