@@ -289,7 +289,7 @@ export type DiagramAttachment = { id: string; call: Call; structureId: string };
 export type MeetingTopic = { id: string; title: string; detail: string; evidence: string; section: string; playIds?: string[]; category?: string; scouting?: boolean };
 export type ManualPracticeLook = { id: string; play: string; formation: string; personnel: string; situation: string; note: string; decisionId?: string };
 export type MeetingAnswer = {
-  category: string; call: string; check: string; fit: string; point: string; diagrams?: DiagramAttachment[];
+  category: string; call: string; check: string; fit: string; point: string; diagrams?: DiagramAttachment[]; responses?: Record<string,string>;
 };
 export type MeetingDecision = MeetingAnswer & {
   id: string; title: string; evidence: string; playIds: string[]; approvedAt: number;

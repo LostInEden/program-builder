@@ -3,6 +3,7 @@
 // the model gets words and numbers to explain, never raw data to do math on.
 // Capped so a big roster or scouting file can't blow up the request.
 
+import { decisionText } from "@/lib/meeting";
 import type { Concept, GamePlan, Opponent } from "@/lib/store";
 import { computeTells, headlineFromPlays, makeResolver, playRows, tellSentence } from "@/lib/tendencies";
 import { getStructure } from "@/lib/football";
@@ -98,16 +99,16 @@ function opponentBlock(o: Opponent, termMap: ChatContext["termMap"]): string[] {
 
 function planBlock(plan: GamePlan): string[] {
   const out = ["## Game plan on file"];
-  const decisions = (plan as GamePlan & { meeting?: { decisions?: { title: string; call?: string; check?: string; fit?: string; point?: string }[] } }).meeting?.decisions ?? [];
+  const decisions = plan.meeting?.decisions ?? [];
   if (decisions.length) {
     out.push("Coach-approved decisions:");
-    out.push(...decisions.map((d) => `- ${d.title}: ${[d.call && `call ${d.call}`, d.check && `check ${d.check}`, d.fit && `fit ${d.fit}`, d.point && `point ${d.point}`].filter(Boolean).join(" · ")}`));
+    out.push(...decisions.map((d) => `- ${d.title}: ${decisionText(d)}`));
   }
   if(plan.meeting){
     out.push("## Working organizer — notes, questions and drafts are NOT approved decisions");
     for(const t of plan.meeting.topics??[]) {
       const draft=plan.meeting.drafts[t.id],notes=plan.meeting.notes?.[t.id],question=plan.meeting.questions?.[t.id];
-      if(draft||notes||question)out.push(`${t.title}: ${notes?'Notes: '+cut(notes,250):''} ${question?'Open question: '+cut(question,200):''} ${draft?'Unapproved draft: '+cut([draft.call,draft.check,draft.fit,draft.point].filter(Boolean).join(' · '),600):''}`);
+      if(draft||notes||question)out.push(`${t.title}: ${notes?'Notes: '+cut(notes,250):''} ${question?'Open question: '+cut(question,200):''} ${draft?'Unapproved draft: '+cut(decisionText(draft),600):''}`);
     }
   }
   const sections: [string, GamePlan[keyof GamePlan]][] = [

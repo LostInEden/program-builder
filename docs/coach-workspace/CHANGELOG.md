@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Use the coach’s seven-section game-planning progression
+- **Asked for:** Key Personnel; Offensive Identity & Tendencies; Personnel & Defensive Packages; Primary Threats & Concerns; Defensive Game Plan; Situational Game Plan; Practice & Contingencies, in that order.
+- **Changed:** Replaced the long main topic list with those seven sections and previous/next actions. Each section has its own relevant response fields; Defensive Game Plan includes Run Defense, Alignments, Calls, Pass Defense and Soundness. Individual plays are supporting evidence, not first-priority workflow steps. Earlier items remain in a collapsed review area with their notes, discussions and approvals intact.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** New optional structured answers feed the existing decision summary, AI context, practice links and call sheets. No decisions are auto-approved and no stored plans are deleted. Regression coverage verifies the exact sequence, legacy preservation and downstream structured answers. The rejected five-step draft was never committed or deployed.
+
 ## 2026-10-15 — Reshape Game Plans into a focused coaching workspace
 - **Asked for:** Keep the navigation, but visibly improve the Game Plans layout around personnel, opponent threats, evidence, discussion and approved answers.
 - **Changed:** Replaced the large topic-card wall with a compact left-hand topic list and responsive answer/discussion workspace. Added side-by-side personnel/system and opponent-threat summaries above it. The answer editor and AI discussion are immediately available, evidence is expanded, and secondary metadata/notes remain accessible in disclosures. Approved decisions appear in their own section with existing practice handoffs and call-sheet links.
