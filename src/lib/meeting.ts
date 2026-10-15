@@ -1,7 +1,8 @@
 import type { GamePlan, MeetingAnswer, MeetingDecision, StaffMeeting } from "@/lib/store";
 
-export const PLAN_CATEGORIES = ["Personnel", "Formations / Checks", "Run Plan", "Pass Plan", "Pressure Plan", "Situational", "Key Players", "Coaching Points"];
+export const PLAN_CATEGORIES = ["Personnel", "Formations / Checks", "Run Plan", "Pass Plan", "Pressure Plan", "Situational", "Key Players", "Coaching Points", "Offensive Identity", "Defensive Answers", "Practice Priorities", "Additional Notes"];
 export const emptyMeeting = (): StaffMeeting => ({ decisions: [], conversations: {}, drafts: {} });
+export const blankAnswer = (category = "Coaching Points"): MeetingAnswer => ({category, call:"", check:"", fit:"", point:"", diagrams:[]});
 export const decisionText = (d: MeetingAnswer) => [d.call && `Call: ${d.call}`, d.check && `Check: ${d.check}`, d.fit && `Fit: ${d.fit}`, d.point && `Coaching point: ${d.point}`].filter(Boolean).join(" · ");
 export const approveDecision = (meeting: StaffMeeting, decision: MeetingDecision): StaffMeeting => {
   const drafts = { ...meeting.drafts };

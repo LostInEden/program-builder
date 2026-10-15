@@ -5,12 +5,13 @@
 // choices are stored — so it stays current the same way the plan does, and
 // regenerating never throws away an elimination he already made.
 
+import { connectPractice } from "@/lib/coachingWorkflow";
 import { approvedPlan } from "@/lib/meeting";
 import { useMemo } from "react";
 import { useStore, type GamePlan, type Opponent, type PracticeSelection } from "@/lib/store";
 import {
   buildPracticePool, buildScript, emptySelection, isIncluded, orderedReps, poolSummary,
-  pruneSelection, scoutCards, scriptHasReps, selectedReps,
+  scoutCards, scriptHasReps, selectedReps,
   type PracticeDay, type PracticePool, type PracticeRep, type ScoutCard, type ScriptDay,
 } from "@/lib/practice";
 
@@ -42,15 +43,15 @@ export function usePractice(opponent: Opponent | null): PracticeWeek {
 
   const plan = opponent ? gamePlans.find((g) => g.opponentId === opponent.id) : undefined;
 
+  const stored = opponent ? practice[opponent.id] : undefined;
   const pool = useMemo(
-    () => (opponent ? buildPracticePool({ opponent, concepts, termMap, plan: approvedPlan(plan) }) : null),
-    [opponent, concepts, termMap, plan],
+    () => (opponent ? connectPractice(buildPracticePool({ opponent, concepts, termMap, plan: approvedPlan(plan) }), stored ?? emptySelection(), plan) : null),
+    [opponent, concepts, termMap, plan, stored],
   );
 
-  const stored = opponent ? practice[opponent.id] : undefined;
   const selection = useMemo(
-    () => (pool ? pruneSelection(stored ?? emptySelection(), pool) : emptySelection()),
-    [stored, pool],
+    () => stored ?? emptySelection(),
+    [stored],
   );
 
   const ordered = useMemo(() => (pool ? orderedReps(pool, selection) : []), [pool, selection]);

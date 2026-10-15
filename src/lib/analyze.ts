@@ -16,7 +16,7 @@ import {
 import { positionTypeOfConcept } from "@/lib/skills";
 import { assessScheme } from "./schemeAssessment";
 import {
-  avgGrade, callLoad, masteryNote, physicalityLine, runStopLine, TACKLE_SKILL_KEYS,
+  avgGrade, callLoad, physicalityLine, TACKLE_SKILL_KEYS,
 } from "@/lib/principles";
 
 export type Status = "Sound" | "Needs Review" | "Potential Conflict";
@@ -219,17 +219,17 @@ export function computeFindings(input: AnalysisInput): { findings: Finding[]; gr
   const load = callLoad(concepts);
   const boxAvgAll = avgGrade(boxStarters.map((e) => e.pl), skill, TACKLE_SKILL_KEYS);
   const dbAvgAll = avgGrade(dbStarters.map((e) => e.pl), skill, TACKLE_SKILL_KEYS);
-  const runFront = fronts.some((f) => /tite|mint|bear|over|under|okie|eagle|46/i.test(f.name));
+
   const physical = physicalityLine(dbAvgAll);
   findings.push({
     id: "fundamentals",
     check: "Fundamentals",
-    status: load.over || (boxAvgAll != null && boxAvgAll < 3) || physical || boxAvgAll == null || dbAvgAll == null ? "Needs Review" : "Sound",
-    detail: [masteryNote(load), runStopLine(boxAvgAll, runFront), physical].filter(Boolean).join(" "),
+    status: (boxAvgAll != null && boxAvgAll < 3) || physical || boxAvgAll == null || dbAvgAll == null ? "Needs Review" : "Sound",
+    detail: [`${load.active} active calls. Judge installation load against your available practice time, not a mandatory call limit.`, physical].filter(Boolean).join(" "),
     affected: load.over ? ["Fronts", "Coverages", "Pressures", "Adjustments"] : physical ? ["Secondary"] : undefined,
     why: "Coverage, pressure and adjustments are built on top of execution. Volume is the first thing that takes reps away from it.",
     breakdown: [
-      `Live calls: ${load.active} of a ${load.budget} in-season budget${load.backPocket ? ` (${load.backPocket} back pocket, not counted)` : ""}.`,
+      `Live calls: ${load.active}; reference range ${load.budget}, not a required budget${load.backPocket ? ` (${load.backPocket} back pocket, not counted)` : ""}.`,
       boxAvgAll != null ? `Box tackling / run fits: ${boxAvgAll.toFixed(1)}/5 across ${boxStarters.length} starters.` : "Box tackling / run fits: not graded yet.",
       dbAvgAll != null ? `Secondary tackling / run support: ${dbAvgAll.toFixed(1)}/5.` : "Secondary tackling / run support: not graded yet.",
     ],

@@ -208,6 +208,7 @@ export type Play = {
 };
 
 export type Opponent = {
+  diagrams?: DiagramAttachment[];
   id: string;
   name: string;
   week?: number | null; // ties to seasonSchedule
@@ -284,14 +285,22 @@ export type PendingUpdate = {
   changes: PlanChange[];
 };
 
+export type DiagramAttachment = { id: string; call: Call; structureId: string };
+export type MeetingTopic = { id: string; title: string; detail: string; evidence: string; section: string; playIds?: string[]; category?: string; scouting?: boolean };
+export type ManualPracticeLook = { id: string; play: string; formation: string; personnel: string; situation: string; note: string; decisionId?: string };
 export type MeetingAnswer = {
-  category: string; call: string; check: string; fit: string; point: string;
+  category: string; call: string; check: string; fit: string; point: string; diagrams?: DiagramAttachment[];
 };
 export type MeetingDecision = MeetingAnswer & {
   id: string; title: string; evidence: string; playIds: string[]; approvedAt: number;
 };
 export type StaffMeeting = {
-  topics?: { id: string; title: string; detail: string; evidence: string; section: string; playIds?: string[] }[];
+  topics?: MeetingTopic[];
+  order?: string[];
+  hidden?: string[];
+  notes?: Record<string, string>;
+  questions?: Record<string, string>;
+  scoutingUpdatedAt?: number;
   decisions: MeetingDecision[];
   conversations: Record<string, { role: "coach" | "counterscheme"; text: string }[]>;
   drafts: Record<string, MeetingAnswer>;
@@ -322,6 +331,11 @@ export type GamePlan = {
 // saved, so regenerating never quietly undoes an elimination.
 export type PracticeDayKey = "Mon" | "Tue" | "Wed" | "Thu";
 export type PracticeSelection = {
+  manual?: ManualPracticeLook[];
+  repEdits?: Record<string, Partial<ManualPracticeLook>>;
+  diagrams?: Record<string, DiagramAttachment[]>;
+  repetitions?: Record<string, number>;
+  schedule?: Partial<Record<PracticeDayKey, { label: string; tempo: string; purpose: string }>>;
   included: string[]; // rep ids he said yes to
   excluded: string[]; // rep ids he threw out
   order: string[]; // his order, for the reps he moved
@@ -1089,7 +1103,7 @@ export const useStore = create<Store>()(
         set((s) => ({
           practice: {
             ...s.practice,
-            [opponentId]: { included: [], excluded: [], order: [], notes: s.practice[opponentId]?.notes ?? "", generatedAt: Date.now() },
+            [opponentId]: { ...s.practice[opponentId], included: [], excluded: [], order: [], days: undefined, notes: s.practice[opponentId]?.notes ?? "", generatedAt: Date.now() },
           },
         })),
 

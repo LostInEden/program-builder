@@ -5,6 +5,7 @@
 
 import type { Concept, GamePlan, Opponent } from "@/lib/store";
 import { computeTells, headlineFromPlays, makeResolver, playRows, tellSentence } from "@/lib/tendencies";
+import { getStructure } from "@/lib/football";
 import { PRINCIPLES } from "@/lib/principles";
 import type { ChatContext, SchemeContext } from "./types";
 
@@ -27,7 +28,7 @@ function schemeBlock(ctx: SchemeContext): string[] {
   const confirmed = ctx.concepts.filter((c) => c.confirmed);
   const waiting = ctx.concepts.length - confirmed.length;
   const out = [
-    "## Coach's program principles (his words)",
+    "## Optional reference philosophies — NOT mandatory team rules; the saved coach philosophy below takes precedence",
     ...PRINCIPLES.map((p) => `- ${p.short}: ${p.line}`),
     "",
     `## Saved scheme: ${ctx.scheme.structureName}${ctx.scheme.philosophyTitle ? ` — ${ctx.scheme.philosophyTitle}` : ""}`,
@@ -42,6 +43,14 @@ function schemeBlock(ctx: SchemeContext): string[] {
   const hurt = ctx.players.filter((p) => p.status !== "Healthy");
   out.push("", `## Roster: ${ctx.players.length} players on file`);
   if (hurt.length) out.push(`Not healthy: ${hurt.slice(0, 20).map((p) => `${p.jersey != null ? `#${p.jersey} ` : ""}${p.name} (${p.positions.join("/")}, ${p.status})`).join("; ")}`);
+  const group=ctx.groups.find(g=>g.id===ctx.activeGroupId)??ctx.groups[0];
+  if(group){
+    const base=ctx.groups.find(g=>g.isBase&&g.level===group.level&&g.structureId===group.structureId);
+    const slots=group.isBase?group.slots:{...base?.slots,...group.overrides};
+    const structure=getStructure(group.structureId);
+    out.push(`## Current personnel package: ${group.name}`);
+    structure.slots.forEach((slot,i)=>{const p=ctx.players.find(p=>p.id===slots?.[i]?.[0]);const name=ctx.overrides[group.structureId]?.[i]?.label??slot.pos;out.push(p?`${name}: ${p.jersey!=null?'#'+p.jersey+' ':''}${p.name}, ${p.status}; coach ratings (1–5, not measured ability): ${Object.entries(p.skills??{}).map(([k,v])=>`${k} ${v}`).join(', ')||'not rated'}`:`${name}: no starter assigned`);});
+  }
   return out;
 }
 
@@ -94,6 +103,13 @@ function planBlock(plan: GamePlan): string[] {
     out.push("Coach-approved decisions:");
     out.push(...decisions.map((d) => `- ${d.title}: ${[d.call && `call ${d.call}`, d.check && `check ${d.check}`, d.fit && `fit ${d.fit}`, d.point && `point ${d.point}`].filter(Boolean).join(" · ")}`));
   }
+  if(plan.meeting){
+    out.push("## Working organizer — notes, questions and drafts are NOT approved decisions");
+    for(const t of plan.meeting.topics??[]) {
+      const draft=plan.meeting.drafts[t.id],notes=plan.meeting.notes?.[t.id],question=plan.meeting.questions?.[t.id];
+      if(draft||notes||question)out.push(`${t.title}: ${notes?'Notes: '+cut(notes,250):''} ${question?'Open question: '+cut(question,200):''} ${draft?'Unapproved draft: '+cut([draft.call,draft.check,draft.fit,draft.point].filter(Boolean).join(' · '),600):''}`);
+    }
+  }
   const sections: [string, GamePlan[keyof GamePlan]][] = [
     ["Priorities", plan.priorities], ["Their best players", plan.bestPlayers], ["Tendencies", plan.threats],
     ["Concerns", plan.concerns], ["Adjustments", plan.adjustments], ["Practice emphasis", plan.emphasis],
@@ -114,9 +130,13 @@ export function buildBrief(ctx: SchemeContext & Partial<ChatContext>, opponent?:
   const out: string[] = [];
   if (ctx.program?.name) out.push(`Program: ${[ctx.program.name, ctx.program.level, ctx.program.state, ctx.program.classification].filter(Boolean).join(" · ")}`);
   if (ctx.page) out.push(`Coach is on page: ${ctx.page}`);
+  if (ctx.plan) out.push("", ...planBlock(ctx.plan));
   out.push("", ...schemeBlock(ctx));
   out.push("", ...(o ? opponentBlock(o, ctx.termMap) : ["## No opponent on file yet"]));
-  if (ctx.plan) out.push("", ...planBlock(ctx.plan));
+  if(ctx.practiceSelection){
+    out.push("## Current practice work",`Staff notes: ${cut(ctx.practiceSelection.notes,500)}`);
+    for(const r of (ctx.practiceSelection.manual??[]).slice(0,15)) out.push(`Coach-entered look: ${r.play} · ${r.formation} · ${r.situation} · ${cut(r.note,180)}`);
+  }
   const text = out.join("\n");
   return text.length > MAX ? `${text.slice(0, MAX)}\n…(trimmed)` : text;
 }

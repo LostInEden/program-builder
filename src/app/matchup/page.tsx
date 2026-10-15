@@ -13,12 +13,14 @@ import {
 } from "@/lib/store";
 import { AI_LABEL } from "@/lib/ai";
 import CoachObservation from "@/components/CoachObservation";
+import WorkflowDiagrams from "@/components/WorkflowDiagrams";
 import OpponentOverview from "@/components/OpponentOverview";
 import TendencyImport from "@/components/TendencyImport";
 import { TopTellsCard } from "@/components/TendencyReport";
 import UnknownTerms from "@/components/UnknownTerms";
 import PlanStatus from "@/components/PlanStatus";
 import { headlineFromPlays } from "@/lib/tendencies";
+import { initializeMeeting } from "@/lib/coachingWorkflow";
 import { useGamePlan } from "@/lib/useGamePlan";
 import { useChat, startDictation, quickChips } from "@/lib/useChat";
 
@@ -87,7 +89,7 @@ function MatchupInner() {
   const chat = useChat("/matchup");
 
   const o = opponents.find((x) => x.id === sp.get("id")) ?? opponents.find((x) => !x.isDemo) ?? opponents[0] ?? null;
-  const { plan, regenerate } = useGamePlan(o);
+  const { plan } = useGamePlan(o);
 
   // "Ask about this" on a game plan item lands here with the question ready to
   // send — answer first, evidence second, conversation whenever he wants it (Q29).
@@ -148,7 +150,7 @@ function MatchupInner() {
 
   const createPlan = async () => {
     if (!o) return;
-    await regenerate();
+    store.updateGamePlan(o.id, {meeting:initializeMeeting(o,plan?.meeting)});
     router.push(`/gameplan?id=${o.id}`);
   };
 
@@ -200,7 +202,7 @@ function MatchupInner() {
           <p className="text-sm text-dim max-w-md mx-auto mb-4">Add the opponent, then upload a play-by-play report or fill in what you know from film.</p>
           <button onClick={addOpp} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white hover:bg-grass-deep"><Plus size={15} /> Add Opponent</button>
         </div>
-      ) : !showDetails ? <OpponentOverview opponent={o} /> : (
+      ) : !showDetails ? <><OpponentOverview opponent={o} /><WorkflowDiagrams diagrams={o.diagrams} onChange={diagrams=>updateOpponent(o.id,{diagrams})} opponentId={o.id} context={`Opponent reference: ${o.name}. ${o.notes}. Use only supplied scouting evidence; do not invent opponent assignments.`}/></> : (
         <motion.div key={o.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-4">
           {o.isDemo && (
             <div className="rounded-lg border border-ember/40 bg-ember/5 px-4 py-2.5 text-sm flex items-center gap-3">

@@ -15,6 +15,41 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Coach-led game-plan organizer
+- **Asked for:** Prepare the organizer with scouting, but leave strategic decisions to the coach.
+- **Changed:** Existing Game Plans now initializes eleven coaching categories with opponent evidence and blank answers. Coaches can add, rename, reorder and hide topics, retain notes and questions, discuss individual sections, approve answers or return them to draft. Refresh scouting updates evidence without replacing decisions.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing legacy planning data is retained. Hidden topics and decisions are recoverable; hiding a topic does not revoke its approved decision.
+
+## 2026-10-15 — Concise contextual coaching assistance
+- **Asked for:** Keep ordinary AI replies short, respect our philosophy and challenge real football concerns.
+- **Changed:** AI context now includes starter evaluations, approved decisions, separate working drafts and manual practice notes. Built-in philosophies are marked optional. Ordinary chat/ask replies are condensed with full reasoning available; detailed requests remain detailed. Chat replies can be explicitly copied into an unapproved plan draft.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Rules-based fallback is disclosed. A configured model connection remains necessary for general conversational reasoning; prompts cannot guarantee football correctness.
+
+## 2026-10-15 — Editable diagrams across the coaching workflow
+- **Asked for:** Connect editable football diagrams to scouting, plans and practice.
+- **Changed:** Reused the existing structured diagram generator and StudioCanvas in Opponent Matchup, game-plan discussions/drafts and practice looks. Coaches can attach independent copies of saved art, generate references, edit attachments, and include approved diagrams in final plans and printable scout cards.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing saved Play Art is not changed by attachment editing. Unsupported or uncertain generated assignments still require clarification or coach review. No universal accuracy claim.
+
+## 2026-10-15 — Manual and customizable practice preparation
+- **Asked for:** Build practice from scouting or manual looks, using approved answers.
+- **Changed:** Practice now accepts manual looks without uploaded snaps, links approved decisions, supports per-look edits and repetitions, custom session labels/tempo/purpose and ordering, and prints the script with scout cards. Working drafts do not replace approved practice answers.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing four-session schedule remains the starting template. Coach selections, manual looks, edits and diagrams survive reset/refresh; no opponent statistics are fabricated for manual looks.
+
+## 2026-10-15 — Preserve coaching work and show save status
+- **Asked for:** Retain notes, diagrams, questions, discussions and decisions when returning.
+- **Changed:** Added optional backward-compatible persisted fields and visible browser save/error status for Game Plans and Practice. Added workflow regression coverage for blank initialization, preservation, explicit approval, manual practice and concise responses.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Data continues to save in this browser/device, not shared staff cloud storage. Local browser testing verified reload persistence and approved diagram transfer. Tests and production build passed.
+
 ## 2026-10-07 — Draw football assignments instead of free-form AI coordinates
 - **Asked for:** “make it to where any concept or front anything can be drawn up correctly”
 - **Changed:** Added a shared football blueprint renderer for preset/custom formations, named routes, defensive techniques, explicit assignment paths and coverage zones. The diagram AI returns football assignments in yards; preview and Play Art use the same coordinates, player labels and route colors. Server and client validate bounds, anchors, duplicates and supported concept combinations. Invalid model geometry gets one bounded correction attempt using the original request; unresolved output returns clarification instead of a malformed drawing.

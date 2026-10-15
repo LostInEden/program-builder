@@ -10,7 +10,7 @@ import {
   bestCombo, tagFamilyPower, tendencyReport, tellSentence, makeResolver, summarize, tag as normTag,
   type PlayerUsage, type Tell,
 } from "@/lib/tendencies";
-import { addAdvice, callLoad, masteryNote, principle, PRINCIPLES } from "@/lib/principles";
+import { callLoad, masteryNote, PRINCIPLES } from "@/lib/principles";
 import {
   answerFor, callName, genItem, lockable, makeKit, readConcept, tellEvidence,
   type PlanAnswer, type PlanKit, type PlanSections,
@@ -915,7 +915,7 @@ async function coachAsk(question: string, o: Opponent, ctx: ChatContext | Scheme
     if (pri.length) bits.push(`Priorities: ${pri.map((p) => p.text).join("; ")}.`);
     if (emp.length) bits.push(`On the grass: ${emp.map((e) => e.text).join("; ")}.`);
     if (!bits.length) bits.push(thin ? noSnaps : "Nothing counted is worth prioritizing yet — generate the game plan and I'll have something to stand on.");
-    if (load.over) bits.push(masteryNote(load));
+    if (load.over) bits.push("The call count exceeds a default reference range; decide whether it fits your staff’s practice capacity.");
     return {
       answer: `${bits.join(" ")} Which of those can your kids not do right now?`,
       deeper: [
@@ -1271,11 +1271,11 @@ async function chat(input: string, ctx: ChatContext): Promise<ChatReply> {
       .replace(/[?.!]+\s*$/, "")
       .trim();
     const top = (ctx.plan?.priorities ?? []).slice(0, 2).map((p) => p.text);
-    const bits = [addAdvice(load, what.length > 2 && what.length < 60 ? what : undefined)];
+    const bits = [`Consider ${what.length > 2 && what.length < 60 ? what : "the new concept"} as an option, not an installed call. Check the personnel demands, assignment changes and available practice time against your system.`];
     if (top.length) bits.push(`This week's plan says what matters is ${top.join("; ")} — if it doesn't serve one of those it costs reps.`);
-    bits.push(principle("run"));
+
     return {
-      reply: reply(`${bits.join(" ")} What are you willing to take off the menu to pay for it?`, ctx, {
+      reply: reply(`${bits.join(" ")} The final choice is yours.`, ctx, {
         actions: acts({ label: "Open My Scheme", href: "/scheme" }, planLink(ctx)),
         deeper: [
           masteryNote(load),

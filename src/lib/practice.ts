@@ -387,7 +387,7 @@ export function buildPracticePool(input: PracticeInput): PracticePool {
 
   const warning =
     plays.length === 0
-      ? "No snaps imported yet. Upload the Hudl play-by-play on Opponent Matchup and the reps build themselves."
+      ? "No uploaded snaps. Add manual practice looks here, or import a play-by-play in Opponent Matchup for scouting-based candidates."
       : plays.length < 20
         ? `Only ${plays.length} snaps on file — the ranking is thin. Tag more film and this list gets sharper.`
         : looks.every((l) => !normTag(l.rows[0].play))
@@ -634,7 +634,7 @@ export function buildScript(pool: PracticePool, sel: PracticeSelection): ScriptD
   return PRACTICE_DAYS.map(({ day, label, tempo, purpose }) => {
     const override = sel.days?.[day];
     const ids = (override ?? generated[day]).filter((id) => live.has(id));
-    return { day, label, tempo, purpose, presentation: presentation[day], repIds: ids };
+    return { day, label, tempo, purpose, presentation: presentation[day], ...sel.schedule?.[day], repIds: ids };
   });
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useStore, type Call, type ChatMessage, type PlaybookSection, slotLabelOf } from "@/lib/store";
+import { useStore, type Call, type ChatMessage, type PlaybookSection, type DiagramAttachment, slotLabelOf } from "@/lib/store";
 import { useCurrentOpponent } from "@/lib/useChat";
 import { getStructure } from "@/lib/football";
 import { buildBrief } from "@/lib/ai/brief";
@@ -14,9 +14,9 @@ import { renderBlueprint, savedReference } from "@/lib/footballBlueprint";
 import { catalogReference } from "@/lib/referenceCatalog";
 import StudioCanvas, { type Selection } from "@/components/StudioCanvas";
 
-export default function ChatReferenceDiagram({ message, question }: { message: ChatMessage; question: string }) {
+export default function ChatReferenceDiagram({ message, question, initialDiagram, onAttach, contextText = "", compact = false }: { message: ChatMessage; question: string; initialDiagram?: DiagramAttachment; onAttach?: (diagram: DiagramAttachment) => void; contextText?: string; compact?: boolean }) {
   const opponent = useCurrentOpponent();
-  const initialStructure = useStore.getState().groups.find(g => g.id === useStore.getState().activeGroupId)?.structureId ?? useStore.getState().groups[0].structureId;
+  const initialStructure = initialDiagram?.structureId ?? useStore.getState().groups.find(g => g.id === useStore.getState().activeGroupId)?.structureId ?? useStore.getState().groups[0].structureId;
   const snagIntent = snagReferenceIntent(question, message.text);
   const savedDrawing = savedReference(question, useStore.getState().calls);
   const catalog = savedDrawing ?? catalogReference(question, initialStructure);
@@ -24,7 +24,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
 
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
-  const [draft, setDraft] = useState<Call | null>(() => savedDrawing?.call ?? (standardSnag && !savedDrawing ? snagReference(initialStructure) : catalog?.call ?? null));
+  const [draft, setDraft] = useState<Call | null>(() => initialDiagram ? structuredClone(initialDiagram.call) : savedDrawing?.call ?? (standardSnag && !savedDrawing ? snagReference(initialStructure) : catalog?.call ?? null));
   const [open, setOpen] = useState(false);
   const [structureId, setStructureId] = useState(initialStructure);
   const [selection, setSelection] = useState<Selection>(null);
@@ -59,8 +59,9 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
       const response = await fetch("/api/ai", {
         method: "POST", headers: { "Content-Type": "application/json" }, signal: abort.signal,
         body: JSON.stringify({ job: "diagram", input: {
+          workspaceContext: contextText.slice(0,6000),
           facts: buildBrief({ ...s, opponent: contextOpponent, plan: approvedPlan(s.gamePlans.find(p => p.opponentId === contextOpponent?.id)) }, contextOpponent),
-          history: s.chat.slice(0, s.chat.findIndex(m => m.id === message.id)).slice(-8).map(m => ({role:m.role,text:m.text.slice(0,1500)})),
+          history: s.chat.slice(0, Math.max(0, s.chat.findIndex(m => m.id === message.id))).slice(-8).map(m => ({role:m.role,text:m.text.slice(0,1500)})),
           question: question.slice(0, 3000), answer: message.text.slice(0, 4000),
           slots: structure.slots.map((_, i) => ({ slot: i, label: slotLabelOf(s.overrides, group.structureId, i) })),
         } }),
@@ -89,7 +90,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
   }
 
   return <>
-    {draft && <div className="mt-3 rounded-lg border border-line bg-white p-2">
+    {draft && !compact && <div className="mt-3 rounded-lg border border-line bg-white p-2">
       <div className="mb-1 text-xs font-bold text-ink">{draft.name} · offense attacks ↓</div>
       <div className="h-64 sm:h-80"><PlayCardSVG call={draft} structureId={structureId} overrides={overrides} defStyle="letters" preview /></div>
       <details className="mt-1 text-xs text-dim"><summary className="cursor-pointer">Assignments & assumptions</summary><p className="whitespace-pre-wrap">{draft.notes}</p></details>
@@ -112,6 +113,7 @@ export default function ChatReferenceDiagram({ message, question }: { message: C
         <select aria-label="Save reference category" value={category} onChange={e => { setCategory(e.target.value as PlaybookSection); setSaved(false); }} className="rounded border border-line bg-white px-2 py-1 text-xs">
           {["Fronts", "Coverages", "Pressures", "Checks & Adjustments"].map(c => <option key={c}>{c}</option>)}
         </select>
+        {onAttach && <button className="rounded bg-grass px-3 py-2 text-xs font-bold text-white" onClick={() => { onAttach({id:initialDiagram?.id ?? crypto.randomUUID(),call:structuredClone(draft),structureId}); setOpen(false); }}>Attach to workspace</button>}
         <button disabled={saved} onClick={save} className="rounded bg-grass px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{saved ? "Saved to Play Art" : "Save a copy"}</button>
         <button onClick={() => setOpen(false)} className="rounded border border-line px-3 py-2 text-xs">Close</button>
       </div>

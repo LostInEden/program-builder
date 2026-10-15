@@ -9,6 +9,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import WorkspaceSaveStatus from "@/components/WorkspaceSaveStatus";
 import PlanNavigation from "@/components/PlanNavigation";
 import ApprovedDecisionReference from "@/components/ApprovedDecisionReference";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -18,7 +19,8 @@ import {
 } from "lucide-react";
 import { useStore, useHydrated, type Opponent, type Play } from "@/lib/store";
 import { PRACTICE_DAYS, type PracticeDay, type PracticeRep } from "@/lib/practice";
-import { principle } from "@/lib/principles";
+import { ManualPractice, EditPracticeLook } from "@/components/PracticeLookEditor";
+import { DiagramPreviews } from "@/components/WorkflowDiagrams";
 import { usePractice, type PracticeWeek } from "@/lib/usePractice";
 import { PlayTable } from "@/components/TendencyReport";
 import { AI_LABEL } from "@/lib/ai";
@@ -122,7 +124,7 @@ function PoolRow({
           ))}
         </div>
         <div className="mt-0.5 text-sm text-dim">{rep.why}</div>
-        <RepDetails rep={rep} byId={byId} />
+        <RepDetails rep={rep} byId={byId} /><EditPracticeLook rep={rep} week={week}/>
       </div>
       <div className="flex shrink-0 flex-col gap-1">
         <button onClick={() => week.move(rep.id, -1)} disabled={index === 0} className="rounded border border-line p-1 text-dim hover:text-ink disabled:opacity-30" aria-label="Move up"><ArrowUp size={13} /></button>
@@ -133,7 +135,7 @@ function PoolRow({
 }
 
 function DayCard({ week, day, index }: { week: PracticeWeek; day: PracticeDay; index: number }) {
-  const meta = PRACTICE_DAYS[index];
+  const meta = {...PRACTICE_DAYS[index],...week.selection.schedule?.[day]};
   const script = week.script.find((d) => d.day === day);
   const byId = new Map(week.pool?.reps.map((r) => [r.id, r]) ?? []);
   const reps = (script?.repIds ?? []).map((id) => byId.get(id)).filter((r): r is PracticeRep => !!r);
@@ -146,7 +148,8 @@ function DayCard({ week, day, index }: { week: PracticeWeek; day: PracticeDay; i
       </div>
       <div className="px-5 py-3 text-xs text-dim border-b border-line/60">
         <div className="font-semibold text-ink">{meta.purpose}</div>
-        <div className="mt-0.5">{script?.presentation}</div>
+        {!week.selection.schedule?.[day]&&<div className="mt-0.5">{script?.presentation}</div>}
+        <details className="mt-2"><summary className="cursor-pointer">Customize session</summary>{(['label','tempo','purpose'] as const).map(k=><label key={k} className="block mt-1 capitalize">{k}<input className={`${input} w-full`} value={meta[k]} onChange={e=>week.setSelection({schedule:{...week.selection.schedule,[day]:{label:meta.label,tempo:meta.tempo,purpose:meta.purpose,[k]:e.target.value}}})}/></label>)}</details>
       </div>
       {reps.length === 0 ? (
         <div className="px-5 py-6 text-center text-sm text-dim">Nothing on this day yet.</div>
@@ -157,13 +160,14 @@ function DayCard({ week, day, index }: { week: PracticeWeek; day: PracticeDay; i
               <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-extrabold text-dim">{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold truncate">
-                  {rep.play || rep.formation || `${rep.personnel} personnel`}
+                  {rep.play || rep.formation || `${rep.personnel} personnel`} · {week.selection.repetitions?.[rep.id]??1} reps
                   {rep.kind !== "look" && <span className="ml-1.5 text-[10px] font-bold text-dim uppercase">{KIND_CHIP[rep.kind].label}</span>}
                 </div>
                 <div className="text-[11px] text-dim">
                   {[rep.personnel, rep.formation, rep.backfield, rep.motion, rep.direction, rep.hash, day === "Tue" || day === "Wed" ? rep.situation : ""].filter(Boolean).join(" · ") || rep.why}
                 </div>
               </div>
+              <div className="flex flex-col gap-1">{([-1,1] as const).map(dir=><button key={dir} className="text-xs text-dim" aria-label={dir<0?'Move session rep up':'Move session rep down'} disabled={i+dir<0||i+dir>=reps.length} onClick={()=>{const ids=[...(script?.repIds??[])];[ids[i],ids[i+dir]]=[ids[i+dir],ids[i]];week.setSelection({days:{...week.selection.days,[day]:ids}});}}>{dir<0?'↑':'↓'}</button>)}</div>
               <select
                 value=""
                 onChange={(e) => {
@@ -175,7 +179,7 @@ function DayCard({ week, day, index }: { week: PracticeWeek; day: PracticeDay; i
               >
                 <option value="">Move…</option>
                 {PRACTICE_DAYS.filter((d) => d.day !== day).map((d) => (
-                  <option key={d.day} value={d.day}>To {d.label}</option>
+                  <option key={d.day} value={d.day}>To {week.selection.schedule?.[d.day]?.label??d.label}</option>
                 ))}
                 <option value="off">Drop from {meta.label}</option>
               </select>
@@ -220,6 +224,7 @@ function ScoutCards({ week, opponent }: { week: PracticeWeek; opponent: Opponent
                 </div>
               ))}
           </dl>
+          <DiagramPreviews diagrams={week.selection.diagrams?.[rep.id]??week.plan?.meeting?.decisions.filter(d=>d.playIds.some(id=>rep.playIds.includes(id))||d.id===week.selection.manual?.find(r=>r.id===rep.id)?.decisionId).flatMap(d=>d.diagrams??[])}/>
           <div className="mt-2 border-t border-line pt-1.5 text-xs">
             <span className={th}>Scout team</span> <span>{rep.note}</span>
           </div>
@@ -229,7 +234,7 @@ function ScoutCards({ week, opponent }: { week: PracticeWeek; opponent: Opponent
             </div>
           )}
           <div className="mt-1.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-dim">
-            {days.length ? days.join(" · ") : "Not on the script"}
+            {days.length ? days.map(day=>week.selection.schedule?.[day]?.label??day).join(" · ") : "Not on the script"} · {week.selection.repetitions?.[rep.id]??1} repetitions
           </div>
         </div>
       ))}
@@ -254,7 +259,7 @@ function PracticeInner() {
 
   return (
     <div className="px-6 py-8 max-w-6xl mx-auto print-root">
-      {opponent && <PlanNavigation id={opponent.id} active="Practice Script" />}
+      {opponent && <PlanNavigation id={opponent.id} active="Practice Script" />}<WorkspaceSaveStatus/>
       {opponent && <ApprovedDecisionReference id={opponent.id} />}
       <style>{`
         @media print {
@@ -267,6 +272,7 @@ function PracticeInner() {
         }
       `}</style>
 
+      {week.chosen.length>0&&<div className="hidden print:block mb-5"><h1 className="text-xl font-bold">Practice Script — {opponent?.name}</h1><p>{week.selection.notes}</p>{week.script.map(day=><section key={day.day} className="mt-3 break-inside-avoid"><h2 className="font-bold">{day.label} · {day.tempo}</h2><p>{day.purpose}</p><ol>{day.repIds.map(id=>{const rep=week.chosen.find(r=>r.id===id);return rep?<li key={id}>{rep.play} · {rep.formation} · {rep.situation} · {week.selection.repetitions?.[id]??1} reps{rep.answer?` · ${rep.answer}`:''}</li>:null;})}</ol></section>)}</div>}
       <div className="no-print">
         <Link href={opponent ? `/gameplan?id=${opponent.id}` : "/gameplan"} className="inline-flex items-center gap-1.5 text-sm text-dim hover:text-ink mb-3">
           <ArrowLeft size={15} /> Game Plan
@@ -277,8 +283,7 @@ function PracticeInner() {
               Practice Script <span className="align-middle ml-1 rounded-full border border-line bg-pitch px-2 py-0.5 text-[11px] font-bold uppercase tracking-widest text-dim">Optional</span>
             </h1>
             <p className="text-dim mt-0.5 max-w-2xl">
-              The scouting report and the game plan come first. Practice plans, periods and drills come later —
-              this is just the scout-team look list when you want it: ranked reps, narrowed by you, printed as cards.
+              Select opponent looks or enter your own. Organize reps, link approved decisions, and print editable scout materials on your schedule.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -289,13 +294,14 @@ function PracticeInner() {
             )}
             {!!week.cards.length && (
               <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">
-                <Printer size={15} /> Print scout cards
+                <Printer size={15} /> Print script & cards
               </button>
             )}
           </div>
         </div>
       </div>
 
+      {opponent&&<ManualPractice week={week} opponent={opponent}/>}
       {!opponent ? (
         <div className={`${card} px-6 py-14 text-center no-print`}>
           <ClipboardList size={34} className="mx-auto text-dim mb-3" />
@@ -338,7 +344,7 @@ function PracticeInner() {
             {over && (
               <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 max-w-md">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                <span>More reps than the kids can master. {principle("quality")} Take out the ones you can live without.</span>
+                <span>This exceeds the default suggested range. Adjust the script to your available time and teaching priorities.</span>
               </div>
             )}
           </div>
@@ -370,7 +376,7 @@ function PracticeInner() {
               <Shuffle size={15} className="text-grass" />
               <h2 className="text-lg font-extrabold">The Week</h2>
               <span className="text-xs text-dim">
-                The important reps repeat — the presentation and the purpose progress.
+                Suggested sessions are starting points. Edit the names, tempo, purpose and rep order to fit your staff.
               </span>
             </div>
             <div className="grid gap-4 lg:grid-cols-2 items-start">
@@ -400,7 +406,7 @@ function PracticeInner() {
               <Printer size={15} className="text-grass" />
               <h2 className="text-lg font-extrabold">Scout Cards</h2>
               <span className="text-xs text-dim">
-                One card per rep, {week.cards.length} total. No field diagram in V1 — the words are what the scout team reads.
+                One card per look, {week.cards.length} total. Attached diagrams and approved answers are included.
               </span>
               {!!week.cards.length && (
                 <button onClick={() => window.print()} className="ml-auto inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-bold hover:border-dim">
