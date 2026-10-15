@@ -38,10 +38,10 @@ Entry format:
 
 ## 2026-10-15 — Manual and customizable practice preparation
 - **Asked for:** Build practice from scouting or manual looks, using approved answers.
-- **Changed:** Practice now accepts manual looks without uploaded snaps, links approved decisions, supports per-look edits and repetitions, custom session labels/tempo/purpose and ordering, and prints the script with scout cards. Working drafts do not replace approved practice answers.
+- **Changed:** Practice now accepts manual looks without uploaded snaps, links approved decisions, supports per-look edits and repetitions, custom session labels/tempo/purpose and ordering, and prints the script with scout cards. Working drafts do not replace approved practice answers. Before a plan exists, rules-based suggestions are not shown as an approved call.
 - **Commit:** (this one)
 - **Status:** On coach
-- **Notes:** Existing four-session schedule remains the starting template. Coach selections, manual looks, edits and diagrams survive reset/refresh; no opponent statistics are fabricated for manual looks.
+- **Notes:** Existing four-session schedule remains the starting template. Refresh retains coach selections; reset clears selection/order while retaining manual looks, edits, notes and diagrams; no opponent statistics are fabricated for manual looks.
 
 ## 2026-10-15 — Preserve coaching work and show save status
 - **Asked for:** Retain notes, diagrams, questions, discussions and decisions when returning.

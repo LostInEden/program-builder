@@ -50,7 +50,7 @@ export function connectPractice(pool:PracticePool,selection:PracticeSelection,pl
   const reps=[...pool.reps,...manual].map(r=>{
     const approved=decisions.filter(d=>d.playIds.some(id=>r.playIds.includes(id)));
     const patched={...r,...selection.repEdits?.[r.id],id:r.id};
-    if(plan?.meeting && !manual.some(p=>p.id===r.id)) return {...patched,answer:approved.length?approved.map(d=>decisionText(d)).join(' | '):null,hasAnswer:approved.length>0};
+    if((plan?.meeting || !plan) && !manual.some(p=>p.id===r.id)) return {...patched,answer:approved.length?approved.map(d=>decisionText(d)).join(' | '):null,hasAnswer:approved.length>0};
     return patched;
   });
   return {...pool,reps};
