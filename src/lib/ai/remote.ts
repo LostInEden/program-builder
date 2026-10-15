@@ -104,7 +104,7 @@ async function chat(input: string, ctx: ChatContext): Promise<ChatReply> {
     draft: [draft.reply.text, draft.reply.deeper].filter(Boolean).join("\n"),
     filed: (effects.concepts ?? []).map((c) => `${c.kind}: ${c.name}`),
   });
-  if (!r?.reply) return { reply: {...draft.reply,text:`AI is unavailable; this is a rules-based reference. ${draft.reply.text}`}, sideEffects: effects };
+  if (!r?.reply) return { reply: {...draft.reply,text:`CounterScheme is unavailable; this is a rules-based reference. ${draft.reply.text}`}, sideEffects: effects };
   return {
     reply: { ...draft.reply, text: r.reply, deeper: r.deeper ?? draft.reply.deeper },
     sideEffects: effects.question ? { ...effects, question: { ...effects.question, a: r.reply } } : effects,

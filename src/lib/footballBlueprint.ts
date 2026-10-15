@@ -137,7 +137,7 @@ export function renderBlueprint(value: unknown, structureId:string): {call:Call|
     assignments.push(`${d.label}: ${z.assignment}`);
   }
   const alignments=b.defenders.map(d=>`${d.label}: ${d.technique==='landmark'?`${d.width} yd from ball, ${d.depth} yd deep`:`${d.side} ${d.technique}-technique`}`);
-  call.notes=`AI reference — coach review needed. Offense attacks down-screen.\n${b.explanation}\n\n${[...alignments,...assignments].join('\n')}\n\nAssumptions: ${b.assumptions || 'Only the displayed assignments are illustrated; no unshown assignment is implied.'}`;
+  call.notes=`CounterScheme reference — coach review needed. Offense attacks down-screen.\n${b.explanation}\n\n${[...alignments,...assignments].join('\n')}\n\nAssumptions: ${b.assumptions || 'Only the displayed assignments are illustrated; no unshown assignment is implied.'}`;
   return {call,question:''};
 }
 

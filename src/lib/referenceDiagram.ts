@@ -56,5 +56,5 @@ export function parseReference(value: unknown, structureId: string): { call: Cal
     if (Math.hypot(absolute[0][0] - origin[0], absolute[0][1] - origin[1]) > 2) throw new Error("Line does not start at its player");
     return { id: `ref-line-${i}`, anchor: l.side === "off" ? `off:${off[l.player].id}` : `def:${l.player}`, kind: l.kind as "route" | "block" | "motion", points: absolute.map(([x,y]) => [x-origin[0], y-origin[1]]), color: "#315EFB" };
   });
-  return { explanation, assumptions, question, call: { id: "reference", section: "Fronts", name: title || "Reference diagram", offForm: "", offConcept: "", offLook: off, defOffsets: offsets, defAppearance: appearance, lines, zones: [], assignments: {}, notes: `AI reference — review before using.\n${explanation}\n${assumptions}` } };
+  return { explanation, assumptions, question, call: { id: "reference", section: "Fronts", name: title || "Reference diagram", offForm: "", offConcept: "", offLook: off, defOffsets: offsets, defAppearance: appearance, lines, zones: [], assignments: {}, notes: `CounterScheme reference — review before using.\n${explanation}\n${assumptions}` } };
 }

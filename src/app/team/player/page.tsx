@@ -300,7 +300,7 @@ function PlayerProfile() {
             ))}
           </div>
           <p className="mt-3 text-xs text-dim">
-            Everything here becomes structured context for the coaching AI later — blanks are fine.
+            Everything here becomes structured context for CounterScheme — blanks are fine.
           </p>
         </div>
 

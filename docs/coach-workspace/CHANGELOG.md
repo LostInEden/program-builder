@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Make game-plan evidence readable
+- **Asked for:** Improve the format of View Evidence.
+- **Changed:** Replaced the dense evidence paragraph with a Scouting evidence panel: separate rows, emphasized player/concept labels, spaced descriptions and a Full scout link. Sections with instructional guidance are labeled Planning context.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Presentation only. Saved evidence, decisions and source data are unchanged.
+
+## 2026-10-15 — Use CounterScheme in coach-facing language
+- **Asked for:** Do not use the word AI anywhere on the software; use CounterScheme instead.
+- **Changed:** Replaced visible labels and messages in planning, voice, diagram references, observation review, player profiles and generated draft descriptions. Existing assistant replies and diagram reference notes receive display-only branding normalization. Generation instructions prefer the CounterScheme name.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Internal API names and provider integration remain intact. Saved coach-authored text is not rewritten. Direct questions about the underlying technology must still receive truthful answers. Build, targeted lint and 42 regressions pass.
+
 ## 2026-10-15 — Use the coach’s seven-section game-planning progression
 - **Asked for:** Key Personnel; Offensive Identity & Tendencies; Personnel & Defensive Packages; Primary Threats & Concerns; Defensive Game Plan; Situational Game Plan; Practice & Contingencies, in that order.
 - **Changed:** Replaced the long main topic list with those seven sections and previous/next actions. Each section has its own relevant response fields; Defensive Game Plan includes Run Defense, Alignments, Calls, Pass Defense and Soundness. Individual plays are supporting evidence, not first-priority workflow steps. Earlier items remain in a collapsed review area with their notes, discussions and approvals intact.

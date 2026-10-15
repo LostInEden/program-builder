@@ -5,6 +5,7 @@
 // without scrolling, quick chips when the thread is empty, speech-to-text on
 // the input, and every reply can carry links so it stays useful on a phone.
 
+import { productLanguage } from "@/lib/productLanguage";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { referenceQuestion } from "@/lib/snagReference";
@@ -95,7 +96,7 @@ export default function ChatThread({
                     m.role === "coach" ? "bg-grass text-white" : "border border-line bg-white text-ink"
                   }`}
                 >
-                  {m.text}
+                  {m.role === "counterscheme" ? productLanguage(m.text) : m.text}
                 </div>
                 {m.role === "counterscheme" && !voice && <ChatReferenceDiagram message={m} question={referenceQuestion(thread.slice(0, index).reverse().find(item => item.role === "coach")?.text ?? m.text, thread.slice(0, index))} />}
                 {m.role === "counterscheme" && <AddPlanDraft message={m}/>}
@@ -110,7 +111,7 @@ export default function ChatThread({
                     </button>
                     {deepOpen[m.id] && (
                       <div className="mt-1 rounded-lg border border-line bg-pitch px-3 py-2 text-[13px] leading-relaxed text-dim whitespace-pre-wrap">
-                        {m.deeper}
+                        {productLanguage(m.deeper)}
                       </div>
                     )}
                   </div>

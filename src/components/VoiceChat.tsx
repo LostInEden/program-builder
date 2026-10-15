@@ -55,7 +55,7 @@ export default function VoiceChat({ page, onClose }: { page: string; onClose: ()
     };
     try {
       const health = await fetch("/api/voice", { signal: abort.signal, cache: "no-store" });
-      if (!health.ok || !(await health.json()).configured) throw new Error("Voice needs to be enabled in the site's AI settings. You can still type or dictate.");
+      if (!health.ok || !(await health.json()).configured) throw new Error("Voice needs to be enabled in the site’s CounterScheme settings. You can still type or dictate.");
       if (!current()) return;
       if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error("Voice needs a browser with microphone support and a secure connection.");
       stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
@@ -133,7 +133,7 @@ export default function VoiceChat({ page, onClose }: { page: string; onClose: ()
     <audio ref={audio} autoPlay />
     <div className={`mx-auto mb-3 grid size-16 place-items-center rounded-full bg-grass text-white ${connected && !muted ? "motion-safe:animate-pulse" : ""}`}><AudioLines size={28} /></div>
     <p className="text-sm font-bold" role="status" aria-live="polite">{muted ? "Microphone muted" : status}</p>
-    <p className="mt-1 text-xs text-dim">AI voice · Uses your saved team and opponent context.</p>
+    <p className="mt-1 text-xs text-dim">CounterScheme voice · Uses your saved team and opponent context.</p>
     <p className="mt-1 text-xs text-dim">Audio is sent to OpenAI. Transcript saved on this device. Use Teach to save scheme rules.</p>
     <div className="mt-3 flex flex-wrap justify-center gap-2">
       {!active && <button onClick={() => void start()} className="rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white">Start voice</button>}
