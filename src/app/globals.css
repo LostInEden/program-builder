@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* CounterScheme's smokey grey and Carolina blue palette. Historical token names remain shared. */
+/* CounterScheme's smokey grey and Ohio State scarlet palette. Historical token names remain shared. */
 @theme {
   --color-on-dark: #F5F7FA;
   --color-pitch: #343A40;
@@ -9,15 +9,15 @@
   --color-line: #59636D;
   --color-ink: #F5F7FA;
   --color-dim: #B8C1CA;
-  --color-grass: #7BAFD4;
-  --color-grass-deep: #5695C2;
+  --color-grass: #BB0000;
+  --color-grass-deep: #D41920;
   --color-navy: #252A30;
   --color-slate-brand: #343A40;
-  --color-sky: #7BAFD4;
-  --color-ember: #7BAFD4;
+  --color-sky: #BB0000;
+  --color-ember: #BB0000;
   --color-success: #2E8B57;
   --color-alert: #AA0000;
-  --color-gold: #7BAFD4;
+  --color-gold: #BB0000;
   --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
   --color-slate-50: #343A40;
@@ -110,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: rgba(123, 175, 212, 0.28);
+  background: rgba(187, 0, 0, 0.28);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -253,11 +253,11 @@ select optgroup {
   input[type="checkbox"], input[type="radio"] { accent-color: var(--color-grass); }
 }
 
-/* Carolina blue surfaces need dark ink; white text lacks contrast on this accent. */
+/* Soft-white text maintains contrast on scarlet interactive surfaces. */
 @media screen {
   .bg-grass, .bg-gold, .bg-sky, .bg-ember,
   .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover {
-    color: #15171A;
+    color: #F5F7FA;
   }
   :is(.text-green-400, .text-green-500, .text-green-600, .text-green-700,
       .text-emerald-400, .text-emerald-500, .text-emerald-600, .text-emerald-700) { color: #88D4A5; }
@@ -295,10 +295,10 @@ select optgroup {
     box-shadow: 0 2px 5px rgb(12 17 22 / 16%), inset 0 1px 0 rgb(255 255 255 / 15%);
   }
   :is(button, a).border-line:not(:disabled):hover {
-    border-color: #7BAFD4;
+    border-color: #BB0000;
   }
   a.bg-card:hover {
-    border-color: #7BAFD4;
+    border-color: #BB0000;
     box-shadow: 0 6px 20px rgb(12 17 22 / 18%), inset 0 1px 0 rgb(245 247 250 / 6%);
   }
   :is(button, a).bg-grass:active {
@@ -325,4 +325,12 @@ select optgroup {
     --art-ink: #17212B;
     --art-line: #D5D9DC;
   }
+}
+
+/* A lighter scarlet tint keeps small accent text readable on slate surfaces. */
+@media screen {
+  :is(.text-grass, .text-gold, .text-sky, .text-ember) { color: #FF9494; }
+  :is(.bg-grass, .bg-gold, .bg-sky, .bg-ember),
+  .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover { color: #F5F7FA; }
+  :is(button, a, input, select, textarea):focus-visible { outline-color: #FF9494; }
 }

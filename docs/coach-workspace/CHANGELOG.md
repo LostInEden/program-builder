@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Replace Carolina blue accents with scarlet
+- **Asked for:** Ohio State Scarlet accents with the existing smokey grey and charcoal theme unchanged; preserve football diagram colors.
+- **Changed:** Shared buttons, selected navigation, highlights and hover states use #BB0000 and #D41920 with soft-white button text. Small accent text and focus rings use a lighter scarlet tint for readability on grey.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Grey surfaces, gradients, shadows, layouts and stored data remain unchanged. Field line-of-scrimmage colors are retained independently of interface accents; custom drawing colors are preserved.
+
 ## 2026-10-15 — Add an accessible Copy Play action
 - **Asked for:** Make a copy play option in Play Art.
 - **Changed:** Added a visible Copy Play button beside the canvas controls and renamed the existing detail action. Copying opens a separately saved play named with “(copy)” and clears the prior selection. The entire drawing and metadata are deeply copied.

@@ -703,7 +703,7 @@ export default function StudioCanvas({
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(157,163,166,0.65)" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="var(--color-grass)" strokeWidth="0.16" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#7BAFD4" strokeWidth="0.16" />
 
           </g>
           {call.zones.map((z) => (

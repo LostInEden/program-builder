@@ -118,7 +118,7 @@ export default function PlayCardSVG({
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="#9ca3af" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke={preview ? "var(--color-grass)" : INKC} strokeWidth={preview ? 0.18 : 0.4} />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke={preview ? "#7BAFD4" : INKC} strokeWidth={preview ? 0.18 : 0.4} />
 
       {call.zones.map((z) => (
         <ellipse
