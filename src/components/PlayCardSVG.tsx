@@ -21,7 +21,8 @@ const FIELD_H = BASE_FIELD_H + 12;
 const OFF = "#17212B";
 const DEF = "#505050";
 const INKC = "#1f2937";
-const FAINT = "#d1d5db";
+const FAINT = "var(--art-line)";
+const displayInk = (color:string) => [OFF, DEF, "#1e2a3a"].includes(color) ? "var(--art-ink)" : color;
 
 export default function PlayCardSVG({
   call,
@@ -89,11 +90,11 @@ export default function PlayCardSVG({
 
   return (
     <svg viewBox={viewBox} role="img" aria-label={`${call.name} play diagram`} className={preview ? "h-full w-full" : "w-full h-auto rounded border border-gray-300 bg-white"}>
-      <rect width="100" height={FIELD_H} fill="#FFFFFF" />
+      <rect width="100" height={FIELD_H} fill="var(--art-field)" />
       <defs>
         {[...new Set([OFF, DEF, ...ROUTE_COLORS, ...ART_COLORS.map(c => c.value), ...call.lines.map(l => l.color).filter((c): c is string => !!c), "#6b7280"])].map((c) => (
           <marker key={c} id={arrId(c)} viewBox="0 0 6 6" refX="4.6" refY="3" markerWidth="3.5" markerHeight="3.5" orient="auto-start-reverse">
-            <path d="M0,0 L6,3 L0,6 z" fill={c} />
+            <path d="M0,0 L6,3 L0,6 z" fill={displayInk(c)} />
           </marker>
         ))}
       </defs>
@@ -117,7 +118,7 @@ export default function PlayCardSVG({
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="#9ca3af" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke={preview ? "#BCC9EC" : INKC} strokeWidth={preview ? 0.18 : 0.4} />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke={preview ? "var(--color-grass)" : INKC} strokeWidth={preview ? 0.18 : 0.4} />
 
       {call.zones.map((z) => (
         <ellipse
@@ -148,14 +149,14 @@ export default function PlayCardSVG({
         }
         return (
           <g key={l.id}>
-            {preview && <path d={d} fill="none" stroke="#FFFFFF" strokeWidth="0.95" strokeLinejoin="round" strokeLinecap="round" />}
+            {preview && <path d={d} fill="none" stroke="var(--art-field)" strokeWidth="0.95" strokeLinejoin="round" strokeLinecap="round" />}
             <path
-              d={d} fill="none" stroke={color} strokeWidth={3.1 * 0.09 * thicknessFactor(l.thickness) * (l.kind === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
+              d={d} fill="none" stroke={displayInk(color)} strokeWidth={3.1 * 0.09 * thicknessFactor(l.thickness) * (l.kind === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
               strokeDasharray={lineDash(l)}
               markerStart={arrows === "both" ? `url(#${arrId(color)})` : undefined}
               markerEnd={showArrow ? `url(#${arrId(color)})` : undefined}
             />
-            {bar && <line {...bar} stroke={color} strokeWidth={3.1 * 0.09 * thicknessFactor(l.thickness) * 0.9} strokeLinecap="round" />}
+            {bar && <line {...bar} stroke={displayInk(color)} strokeWidth={3.1 * 0.09 * thicknessFactor(l.thickness) * 0.9} strokeLinecap="round" />}
           </g>
         );
       })}
@@ -166,16 +167,16 @@ export default function PlayCardSVG({
         const [x, y] = defPos(i);
         const label = shortLabel(appearance.displayLabel ?? slotLabelOf(overrides, structureId, i));
         const symbol = appearance.symbol ?? "letters";
-        return symbol === "letters" ? <text key={`d${i}`} x={x} y={y} dominantBaseline="middle" textAnchor="middle" fontSize={preview ? 2.5 : 1.84} fontWeight="800" fill={appearance.color ?? (preview ? OFF : DEF)} stroke={preview ? "#FFFFFF" : undefined} strokeWidth={preview ? 0.5 : undefined} paintOrder="stroke">{label}</text> :
-          <svg key={`d${i}`} x={x - 1.55} y={y - 1.55} width="3.1" height="3.1" viewBox="0 0 40 40"><PlayerGlyph appearance={appearance} label={label} symbol={symbol} defaultColor={DEF} /></svg>;
+        return symbol === "letters" ? <text key={`d${i}`} x={x} y={y} dominantBaseline="middle" textAnchor="middle" fontSize={preview ? 2.5 : 1.84} fontWeight="800" fill={appearance.color ?? "var(--art-ink)"} stroke={preview ? "var(--art-field)" : undefined} strokeWidth={preview ? 0.5 : undefined} paintOrder="stroke">{label}</text> :
+          <svg key={`d${i}`} x={x - 1.55} y={y - 1.55} width="3.1" height="3.1" viewBox="0 0 40 40"><PlayerGlyph appearance={appearance} label={label} symbol={symbol} defaultColor="var(--art-ink)" /></svg>;
       })}
 
       {(call.texts ?? []).map((t) => (
-        <text key={t.id} x={t.x} y={t.y} textAnchor="middle" fontSize="2" fontWeight="600" fill="#4b5563">{t.text}</text>
+        <text key={t.id} x={t.x} y={t.y} textAnchor="middle" fontSize="2" fontWeight="600" fill="var(--art-ink)">{t.text}</text>
       ))}
 
       {call.offLook.map(o => <svg key={o.id} x={o.x - 1.55} y={o.y - 1.55} width="3.1" height="3.1" viewBox="0 0 40 40">
-        <PlayerGlyph appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} defaultColor={OFF} />
+        <PlayerGlyph appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} defaultColor="var(--art-ink)" />
       </svg>)}
     </svg>
   );

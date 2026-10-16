@@ -16,7 +16,7 @@ export default function SchemeConceptCard({ concept: c, href }: { concept: Conce
       <h2 className="font-extrabold">{c.name}</h2>
       {c.isBase && <span className="rounded-full bg-grass/10 px-2 py-1 text-xs font-bold text-grass">Base {c.kind}</span>}
     </div>
-    <div className="mx-3 flex h-40 flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border border-line bg-[#FFFFFF] text-dim shadow-inner">
+    <div className="mx-3 flex h-40 flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border border-line bg-[var(--art-field)] text-dim shadow-inner">
       {diagram ? <div className="h-full w-full p-2"><PlayCardSVG call={diagram} structureId={structureId} overrides={overrides} defStyle="letters" preview /></div> : <><PencilRuler size={28} strokeWidth={1.5} /><span className="text-xs">No diagram linked</span></>}
     </div>
     <div className="p-3">

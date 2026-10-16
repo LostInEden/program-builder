@@ -25,7 +25,7 @@ export default function SchemeDiagrams({ concept, kind }: { concept?: Concept; k
       if (concept && !call.schemeConceptId) updateCall(call.id, { schemeConceptId: concept.id });
       open(call.id);
     }} className="overflow-hidden rounded-lg border border-line text-left hover:border-grass">
-      <div className="h-40 bg-[#FFFFFF] p-2"><PlayCardSVG call={call} structureId={structureId} overrides={overrides} defStyle="letters" preview /></div>
+      <div className="h-40 bg-[var(--art-field)] p-2"><PlayCardSVG call={call} structureId={structureId} overrides={overrides} defStyle="letters" preview /></div>
       <div className="px-3 py-2 text-sm font-semibold">{call.name}<span className="block text-xs font-normal text-dim">Edit in Play Art →</span></div>
     </button>)}</div>
   </section>;

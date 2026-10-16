@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Match Play Art to the Carolina blue theme
+- **Asked for:** Apply the color theme to Play Art.
+- **Changed:** The drawing field and saved previews use slate grey, soft-white default players/routes, subtle grey markings and Carolina blue editing accents. Preview containers match the field.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Display styling only; saved coordinates, drawings and custom player/route colors are preserved. Paper output retains a white field and dark default ink.
+
 ## 2026-10-15 — Refine the smokey grey visual finish
 - **Asked for:** A premium, minimal sports-tech appearance with subtle gradients, layered cards, polished controls and clearer typography while preserving layouts and functionality.
 - **Changed:** Added restrained grey workspace/navigation gradients, softly layered slate cards, thin muted card borders, stronger heading hierarchy, inset form depth and subtle button/link hover states. Color and shadow transitions respect reduced-motion preferences.

@@ -71,9 +71,9 @@ const PLAYER_SIZE = 3.1;
 const DEF_FONT_SIZE = 1.84; // Medium-sized defensive letters keep the alignment easy to read.
 const PATH_WIDTH = PLAYER_SIZE * 0.09;
 const BLOCK_BAR_HALF = 1.1;
-// Display defaults match the light field without changing saved player colors.
+// Adapt neutral defaults to the field theme without rewriting saved colors.
 const fieldColor = (color: string) => ({
-  "#1e2a3a": "#17191B", "#17212B": "#17191B",
+  "#1e2a3a": "var(--art-ink)", "#17212B": "var(--art-ink)",
 }[color] ?? color);
 // legacy stored colors from the light-theme build
 const legacy = (c?: string) =>
@@ -653,7 +653,7 @@ export default function StudioCanvas({
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
         style={{ cursor: panMode ? "grab" : undefined }}
-        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-line bg-[#FFFFFF] touch-none select-none ${
+        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-line bg-[var(--art-field)] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >
@@ -682,7 +682,7 @@ export default function StudioCanvas({
           <g mask={`url(#${pathMaskId})`}>
           {yardLines.map((yl) => (
             <g key={yl.y}>
-              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "#D5D9DC"} strokeWidth={yl.goal ? 0.5 : 0.14} />
+              <line x1="0" x2="100" y1={yl.y} y2={yl.y} stroke={yl.goal ? "#A7ADB1" : "var(--art-line)"} strokeWidth={yl.goal ? 0.5 : 0.14} />
               {yl.label && (
                 <>
                   <text x="14" y={yl.y} fontSize="6" fill="none" stroke="#9DA3A6" strokeWidth="0.1" fontFamily="var(--font-inter)" fontWeight="700" textAnchor="middle" transform={`rotate(-90 14 ${yl.y})`}>{yl.label}</text>
@@ -699,7 +699,7 @@ export default function StudioCanvas({
           )}
           {/* The board ends at each sideline; no out-of-bounds strip. */}
           {[0, 100].map((x) => <line key={`sideline-${x}`} x1={x} x2={x} y1="0" y2={FIELD_H} stroke="rgba(157,163,166,0.65)" strokeWidth="0.8" />)}
-          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="#BCC9EC" strokeWidth="0.16" />
+          <line x1="0" x2="100" y1={LOS_Y} y2={LOS_Y} stroke="var(--color-grass)" strokeWidth="0.16" />
 
           </g>
           {call.zones.map((z) => (
@@ -721,7 +721,7 @@ export default function StudioCanvas({
               />
               {z.id === selZoneId && (
                 <rect
-                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#ffffff" stroke="#315EFB" strokeWidth="0.25"
+                  x={z.x + z.rx - 1.1} y={z.y + z.ry - 1.1} width="2.2" height="2.2" fill="#ffffff" stroke="var(--color-grass)" strokeWidth="0.25"
                   style={{ pointerEvents: "all", cursor: "nwse-resize" }}
                   onPointerDown={(e) => { e.stopPropagation(); snapshot(); dragRef.current = { type: "zone-resize", id: z.id, moved: false }; }}
                 />
@@ -794,8 +794,8 @@ export default function StudioCanvas({
                   }}
                 />
                 {/* White separation keeps field markings from crossing through drawings. */}
-                <path mask={`url(#${pathMaskId})`} d={d} fill="none" stroke="white" strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1) + 0.28} strokeLinejoin="round" strokeLinecap="round" style={{ pointerEvents: "none" }} />
-                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke="white" strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.2 : 0.9) + 0.28} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
+                <path mask={`url(#${pathMaskId})`} d={d} fill="none" stroke="var(--art-field)" strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1) + 0.28} strokeLinejoin="round" strokeLinecap="round" style={{ pointerEvents: "none" }} />
+                {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke="var(--art-field)" strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.2 : 0.9) + 0.28} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 <path
                   mask={`url(#${pathMaskId})`} d={d} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.35 : l.kind === "block" ? 0.9 : 1)}
                   strokeLinejoin="round" strokeLinecap="round" strokeDasharray={lineDash(l)}
@@ -806,7 +806,7 @@ export default function StudioCanvas({
                 {bar && <line mask={`url(#${pathMaskId})`} x1={bar.x1} y1={bar.y1} x2={bar.x2} y2={bar.y2} stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(l.thickness) * (selected ? 1.2 : 0.9)} strokeLinecap="round" style={{ pointerEvents: "none" }} />}
                 {selected && tool === "select" && (
                   <>
-                    <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="#315EFB" strokeWidth="0.3"
+                    <circle cx={startHandle[0]} cy={startHandle[1]} r="1.1" fill="#ffffff" stroke="var(--color-grass)" strokeWidth="0.3"
                       style={{ pointerEvents: "all", cursor: "grab" }}
                       onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "start", lineId: l.id, moved: false }; }}>
                       <title>Drag start (detaches from player)</title>
@@ -816,7 +816,7 @@ export default function StudioCanvas({
                       const i = l.anchor === "free" ? vertexIndex + 1 : vertexIndex;
                       return vertexIndex === pts.length - 2 && !extendId ? null : ( // tip is the + button
                       <circle
-                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="#315EFB" strokeWidth="0.3"
+                        key={`wp${i}`} cx={x} cy={y} r="1.1" fill="#ffffff" stroke="var(--color-grass)" strokeWidth="0.3"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); snapshot(); dragRef.current = { type: "wp", lineId: l.id, index: i, moved: false }; }}
                         onDoubleClick={(e) => {
@@ -835,7 +835,7 @@ export default function StudioCanvas({
                     {/* midpoint bend handles (hollow) — drag to bend like Excalidraw */}
                     {midpoints.map((m, i) => (
                       <circle
-                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(255,255,255,0.85)" stroke="#315EFB" strokeWidth="0.22" strokeDasharray="0.5 0.4"
+                        key={`mid${i}`} cx={m.x} cy={m.y} r="0.95" fill="rgba(255,255,255,0.85)" stroke="var(--color-grass)" strokeWidth="0.22" strokeDasharray="0.5 0.4"
                         style={{ pointerEvents: "all", cursor: "grab" }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
@@ -868,7 +868,7 @@ export default function StudioCanvas({
             const len = Math.hypot(end[0] - prev[0], end[1] - prev[1]) || 1;
             const nx = -(end[1] - prev[1]) / len, ny = (end[0] - prev[0]) / len;
             return <g mask={`url(#${pathMaskId})`} style={{ pointerEvents: "none" }}>
-              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke="white" strokeWidth={PATH_WIDTH * thicknessFactor(thickness) + 0.28} strokeLinejoin="round" strokeLinecap="round" />
+              <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke="var(--art-field)" strokeWidth={PATH_WIDTH * thicknessFactor(thickness) + 0.28} strokeLinejoin="round" strokeLinecap="round" />
               <path d={pts.map(([x, y], i) => `${i ? "L" : "M"}${x},${y}`).join(" ")} fill="none" stroke={fieldColor(c)} strokeWidth={PATH_WIDTH * thicknessFactor(thickness) * (tool === "block" ? 0.9 : 1)} strokeLinejoin="round" strokeLinecap="round"
                 strokeDasharray={lineDash({ kind: toolKind(), style: tool === "motion" ? "dashed" : style })}
                 markerEnd={tool !== "block" && tool !== "line" && tool !== "freehand" ? `url(#sarr-${c.slice(1)})` : undefined} />
@@ -915,8 +915,8 @@ export default function StudioCanvas({
             title={`${defLabel(i) || "Defender"} · drag to align`} aria-label={`Defender ${defLabel(i) || i + 1}`}
             className={`absolute -translate-x-1/2 -translate-y-1/2 ${selected ? "ring-1 ring-gold rounded" : ""}`}
             style={{ ...screenPosition(x, y), width: PLAYER_SIZE * scale, height: PLAYER_SIZE * scale }}>
-            {symbol === "letters" ? <span style={{ color: appearance.color ?? "#17191B", fontSize: DEF_FONT_SIZE * scale, ...(appearance.color === "#000000" ? { textShadow: "0 0 2px white" } : {}) }} className="font-extrabold whitespace-nowrap">{defLabel(i)}</span> :
-              <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="#17191B" appearance={appearance} label={defLabel(i)} symbol={symbol} /></svg>}
+            {symbol === "letters" ? <span style={{ color: appearance.color ?? "var(--art-ink)", fontSize: DEF_FONT_SIZE * scale, ...(appearance.color === "#000000" ? { textShadow: "0 0 2px white" } : {}) }} className="font-extrabold whitespace-nowrap">{defLabel(i)}</span> :
+              <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="var(--art-ink)" appearance={appearance} label={defLabel(i)} symbol={symbol} /></svg>}
           </button>;
         })}
         {call.offLook.map(o => {
@@ -925,7 +925,7 @@ export default function StudioCanvas({
             onPointerDown={e => beginMarkerDrag(e, "off", o.id)}
             className={`absolute aspect-square -translate-x-1/2 -translate-y-1/2 cursor-grab ${selected ? "ring-1 ring-gold rounded" : ""}`}
             style={{ ...screenPosition(o.x, o.y), width: PLAYER_SIZE * scale }}>
-            <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="#17191B" appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} /></svg>
+            <svg viewBox="0 0 40 40" className="pointer-events-none h-full w-full"><PlayerGlyph defaultColor="var(--art-ink)" appearance={o} label={o.showLabel ? o.displayLabel ?? o.label : ""} symbol={offenseSymbol(o)} /></svg>
           </span>;
         })}
 

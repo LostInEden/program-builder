@@ -24,7 +24,7 @@ export function PlayerGlyph({ appearance, label, symbol, defaultColor = "#E8EAEB
 }) {
   const color = appearance.color ?? defaultColor;
   const fill = appearance.fill ?? "outline";
-  const textColor = symbol === "letters" ? color : fill === "filled" ? contrastText(color) : defaultColor;
+  const textColor = symbol === "letters" ? color : fill === "filled" ? (color === "var(--art-ink)" ? "var(--art-field)" : contrastText(color)) : defaultColor;
   const shapeProps = { fill: fill === "outline" ? "none" : color, fillOpacity: fill === "shaded" ? 0.25 : 1, stroke: color, strokeWidth: 2 };
   return <>
     {symbol === "circle" && <circle cx="20" cy="20" r="17" {...shapeProps} />}

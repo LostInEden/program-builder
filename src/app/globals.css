@@ -312,3 +312,17 @@ select optgroup {
     transition-timing-function: ease-out;
   }
 }
+
+/* One field palette for the editable board and saved play previews. */
+:root {
+  --art-field: #414850;
+  --art-ink: #F5F7FA;
+  --art-line: #66717C;
+}
+@media print {
+  :root {
+    --art-field: #FFFFFF;
+    --art-ink: #17212B;
+    --art-line: #D5D9DC;
+  }
+}
