@@ -169,10 +169,10 @@ export default function PlaybookPage() {
                   className="display rounded-lg border border-line bg-slate-50 px-3 py-1.5 text-2xl font-bold min-w-0 w-52"
                 />
                 <button
-                  onClick={() => duplicateCall(call.id)}
+                  onClick={() => { duplicateCall(call.id); setSelection(null); }}
                   className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs text-dim hover:text-ink"
                 >
-                  <Copy size={13} /> Duplicate
+                  <Copy size={13} /> Copy Play
                 </button>
                 <button
                   onClick={() => deleteCall(call.id)}
@@ -295,6 +295,7 @@ export default function PlaybookPage() {
                 labelFor={label}
                 selection={selection}
                 onSelect={setSelection}
+                onCopy={() => { duplicateCall(call.id); setSelection(null); }}
               />
 
             </motion.div>

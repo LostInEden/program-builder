@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Add an accessible Copy Play action
+- **Asked for:** Make a copy play option in Play Art.
+- **Changed:** Added a visible Copy Play button beside the canvas controls and renamed the existing detail action. Copying opens a separately saved play named with “(copy)” and clears the prior selection. The entire drawing and metadata are deeply copied.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** The original is preserved. The toolbar action waits until the current unfinished line is finished or canceled. Copies use the existing browser autosave and can be renamed under Play details.
+
 ## 2026-10-15 — Match Play Art to the Carolina blue theme
 - **Asked for:** Apply the color theme to Play Art.
 - **Changed:** The drawing field and saved previews use slate grey, soft-white default players/routes, subtle grey markings and Carolina blue editing accents. Preview containers match the field.

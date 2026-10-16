@@ -12,6 +12,7 @@ import {
   Circle,
   UserPlus,
   Trash2,
+  Copy,
   Undo2,
   Redo2,
   Plus,
@@ -114,6 +115,7 @@ export default function StudioCanvas({
   selection,
   onSelect,
   onUpdate,
+  onCopy,
 }: {
   call: Call;
   structureId: string;
@@ -123,6 +125,7 @@ export default function StudioCanvas({
   selection: Selection;
   onSelect: (s: Selection) => void;
   onUpdate?: (id: string, patch: Partial<Call>) => void;
+  onCopy?: () => void;
 }) {
   const savedUpdateCall = useStore((s) => s.updateCall);
   const updateCall = onUpdate ?? savedUpdateCall;
@@ -625,6 +628,7 @@ export default function StudioCanvas({
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <div className="flex shrink-0 items-center justify-between gap-2 py-1 text-xs">
+        {onCopy && <button type="button" onClick={onCopy} disabled={!!draft} title={draft ? "Finish or cancel the current line before copying" : "Create a separate editable copy of this play"} className="inline-flex shrink-0 items-center gap-1.5 rounded border border-grass/50 px-3 py-1 font-semibold text-grass hover:bg-grass/10 disabled:opacity-40"><Copy size={13} />Copy Play</button>}
         <span className="hidden lg:block text-dim">Click bends · Enter finishes · Esc cancels</span>
         <div className="ml-auto flex items-center gap-1" aria-label="Canvas view controls">
           <button type="button" aria-label="Zoom out" onClick={() => { cancelDraft(); setZoom(z => Math.max(1, z / 1.25)); setPan([0, 0]); setPanMode(false); }} className="rounded border border-line px-3 py-1">−</button>

@@ -1330,14 +1330,9 @@ export const useStore = create<Store>()(
           calls: [
             ...s.calls,
             {
-              ...c,
+              ...structuredClone(c),
               id: nid,
               name: `${c.name} (copy)`,
-              offLook: c.offLook.map((m) => ({ ...m })),
-              lines: c.lines.map((l) => ({ ...l, points: l.points.map((p) => [...p] as [number, number]) })),
-              zones: c.zones.map((z) => ({ ...z })),
-              defOffsets: { ...c.defOffsets },
-              defAppearance: Object.fromEntries(Object.entries(c.defAppearance ?? {}).map(([k, v]) => [k, { ...v }])),
             },
           ],
           activeCallId: nid,
