@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Refine the smokey grey visual finish
+- **Asked for:** A premium, minimal sports-tech appearance with subtle gradients, layered cards, polished controls and clearer typography while preserving layouts and functionality.
+- **Changed:** Added restrained grey workspace/navigation gradients, softly layered slate cards, thin muted card borders, stronger heading hierarchy, inset form depth and subtle button/link hover states. Color and shadow transitions respect reduced-motion preferences.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Styling only; no spacing, component geometry, navigation, data or logic changes. Diagram artwork and print output remain unchanged.
+
 ## 2026-10-15 — Smokey grey and Carolina blue theme
 - **Asked for:** Apply smokey grey and Carolina blue consistently without changing layouts, functionality, data or football diagrams.
 - **Changed:** Updated shared workspace, navigation, card, text, border, accent and hover colors. Blue buttons use dark text for contrast; native controls use dark styling and status text remains legible.
