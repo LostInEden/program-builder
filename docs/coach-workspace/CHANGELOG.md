@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Unify every decorative red accent
+- **Asked for:** Make all red accents, including lighter pink text and links, 49ers red.
+- **Changed:** Replaced the light accent text/focus tint and brighter hover red with #AA0000. Filled buttons retain soft-white text.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Exact requested accent color; no layout, data or diagram changes. Semantic warning/error indicators retain their existing styling.
+
 ## 2026-10-15 — Switch the accent to 49ers red
 - **Asked for:** 49ers red this time.
 - **Changed:** Replaced scarlet interface accents with #AA0000 and a coordinated #C51B22 hover state.

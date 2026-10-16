@@ -10,7 +10,7 @@
   --color-ink: #F5F7FA;
   --color-dim: #B8C1CA;
   --color-grass: #AA0000;
-  --color-grass-deep: #C51B22;
+  --color-grass-deep: #AA0000;
   --color-navy: #252A30;
   --color-slate-brand: #343A40;
   --color-sky: #AA0000;
@@ -327,10 +327,10 @@ select optgroup {
   }
 }
 
-/* A lighter red tint keeps small accent text readable on slate surfaces. */
+/* Use the coach-selected 49ers red consistently for interface accents. */
 @media screen {
-  :is(.text-grass, .text-gold, .text-sky, .text-ember) { color: #FF9494; }
+  :is(.text-grass, .text-gold, .text-sky, .text-ember) { color: #AA0000; }
   :is(.bg-grass, .bg-gold, .bg-sky, .bg-ember),
   .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover { color: #F5F7FA; }
-  :is(button, a, input, select, textarea):focus-visible { outline-color: #FF9494; }
+  :is(button, a, input, select, textarea):focus-visible { outline-color: #AA0000; }
 }
