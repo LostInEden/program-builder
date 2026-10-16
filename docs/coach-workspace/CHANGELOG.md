@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Switch the accent to 49ers red
+- **Asked for:** 49ers red this time.
+- **Changed:** Replaced scarlet interface accents with #AA0000 and a coordinated #C51B22 hover state.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Grey surfaces, readable text tints, layouts, data and football diagram colors remain unchanged.
+
 ## 2026-10-15 — Replace Carolina blue accents with scarlet
 - **Asked for:** Ohio State Scarlet accents with the existing smokey grey and charcoal theme unchanged; preserve football diagram colors.
 - **Changed:** Shared buttons, selected navigation, highlights and hover states use #BB0000 and #D41920 with soft-white button text. Small accent text and focus rings use a lighter scarlet tint for readability on grey.

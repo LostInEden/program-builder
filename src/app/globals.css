@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* CounterScheme's smokey grey and Ohio State scarlet palette. Historical token names remain shared. */
+/* CounterScheme's smokey grey and 49ers red palette. Historical token names remain shared. */
 @theme {
   --color-on-dark: #F5F7FA;
   --color-pitch: #343A40;
@@ -9,15 +9,15 @@
   --color-line: #59636D;
   --color-ink: #F5F7FA;
   --color-dim: #B8C1CA;
-  --color-grass: #BB0000;
-  --color-grass-deep: #D41920;
+  --color-grass: #AA0000;
+  --color-grass-deep: #C51B22;
   --color-navy: #252A30;
   --color-slate-brand: #343A40;
-  --color-sky: #BB0000;
-  --color-ember: #BB0000;
+  --color-sky: #AA0000;
+  --color-ember: #AA0000;
   --color-success: #2E8B57;
   --color-alert: #AA0000;
-  --color-gold: #BB0000;
+  --color-gold: #AA0000;
   --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
   --color-slate-50: #343A40;
@@ -110,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: rgba(187, 0, 0, 0.28);
+  background: rgba(170, 0, 0, 0.28);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -253,7 +253,7 @@ select optgroup {
   input[type="checkbox"], input[type="radio"] { accent-color: var(--color-grass); }
 }
 
-/* Soft-white text maintains contrast on scarlet interactive surfaces. */
+/* Soft-white text maintains contrast on red interactive surfaces. */
 @media screen {
   .bg-grass, .bg-gold, .bg-sky, .bg-ember,
   .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover {
@@ -295,10 +295,10 @@ select optgroup {
     box-shadow: 0 2px 5px rgb(12 17 22 / 16%), inset 0 1px 0 rgb(255 255 255 / 15%);
   }
   :is(button, a).border-line:not(:disabled):hover {
-    border-color: #BB0000;
+    border-color: #AA0000;
   }
   a.bg-card:hover {
-    border-color: #BB0000;
+    border-color: #AA0000;
     box-shadow: 0 6px 20px rgb(12 17 22 / 18%), inset 0 1px 0 rgb(245 247 250 / 6%);
   }
   :is(button, a).bg-grass:active {
@@ -327,7 +327,7 @@ select optgroup {
   }
 }
 
-/* A lighter scarlet tint keeps small accent text readable on slate surfaces. */
+/* A lighter red tint keeps small accent text readable on slate surfaces. */
 @media screen {
   :is(.text-grass, .text-gold, .text-sky, .text-ember) { color: #FF9494; }
   :is(.bg-grass, .bg-gold, .bg-sky, .bg-ember),
