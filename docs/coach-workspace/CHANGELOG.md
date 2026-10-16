@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-16 — Connect the first visual defensive-planning workflow
+- **Asked for:** Reuse existing functionality for opponent formation → draw defense → CounterScheme checks → coach approval → visual game-plan report without changing tabs or navigation.
+- **Changed:** Added a visual workspace inside Defensive Game Plan. Saved opponent drawings, top formation and primary run/pass scouting evidence lead into StudioCanvas. Coaches confirm template-based opponent looks, apply copies of saved defensive calls, edit players, paths and responsibilities, and run a review. Approved reports show opponent/answer diagrams, notes and review limitations together; approved attachments are available in practice and call-sheet references.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Optional attachment metadata preserves existing storage. Every edit invalidates the check; a current review and explicit staff confirmation are required before plan approval. A configured model receives the actual drawing, scheme and personnel context; otherwise only clearly labeled limited checks run. Name-only scouting is never treated as verified geometry. Automatic generation of a validated defensive answer is not claimed: this first workflow uses coach drawings and installed calls until the knowledge/reasoning foundation supports it. Existing layouts, navigation and approvals are retained.
+
 ## 2026-10-15 — Unify every decorative red accent
 - **Asked for:** Make all red accents, including lighter pink text and links, 49ers red.
 - **Changed:** Replaced the light accent text/focus tint and brighter hover red with #AA0000. Filled buttons retain soft-white text.

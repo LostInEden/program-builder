@@ -285,7 +285,10 @@ export type PendingUpdate = {
   changes: PlanChange[];
 };
 
-export type DiagramAttachment = { id: string; call: Call; structureId: string };
+export type DiagramAttachment = { id: string; call: Call; structureId: string; visual?: {
+ opponentLook: Call; source: string; confirmed: boolean;
+ review?: { revision: string; text: string; kind: "limited" | "counterscheme" };
+} };
 export type MeetingTopic = { id: string; title: string; detail: string; evidence: string; section: string; playIds?: string[]; category?: string; scouting?: boolean };
 export type ManualPracticeLook = { id: string; play: string; formation: string; personnel: string; situation: string; note: string; decisionId?: string };
 export type MeetingAnswer = {

@@ -13,6 +13,8 @@ import ChatReferenceDiagram from "@/components/ChatReferenceDiagram";
 import WorkspaceSaveStatus from "@/components/WorkspaceSaveStatus";
 import DecisionPracticeAction from "@/components/DecisionPracticeAction";
 import GamePlanContext from "@/components/GamePlanContext";
+import VisualGamePlan from "@/components/VisualGamePlan";
+import { readyVisualDiagram } from "@/lib/visualGamePlan";
 import PlanningEvidence from "@/components/PlanningEvidence";
 import { productLanguage } from "@/lib/productLanguage";
 import PlanNavigation from "@/components/PlanNavigation";
@@ -38,7 +40,7 @@ function PriorityMeeting({ opponent, priority, meeting, update }: { opponent: Op
   const messages = meeting.conversations[priority.id] ?? [];
   const patch = (p: Partial<MeetingAnswer>) => update(m => ({ ...m, topics: remember(m).topics, drafts: { ...m.drafts, [priority.id]: { ...draft, ...p } } }));
   const save = (answer: MeetingAnswer) => {
-    if (!decisionText(answer).trim() && !answer.diagrams?.length) return;
+    if ((!decisionText(answer).trim() && !answer.diagrams?.length) || answer.diagrams?.some(d=>!readyVisualDiagram(d))) return;
     update(m => approveDecision(remember(m), { ...answer, id: priority.id, title: priority.title, evidence: priority.evidence, playIds: priority.playIds ?? [], approvedAt: Date.now() }));
     setEditing(false);
   };
@@ -73,12 +75,13 @@ function PriorityMeeting({ opponent, priority, meeting, update }: { opponent: Op
         <div className="mt-4 flex flex-wrap gap-2"><button className={primary} onClick={() => setEditing(true)}>Enter our answer</button><button className={button} onClick={() => setTalking(true)}>Talk It Through</button></div>
       </> : null}
       {editing && <div className="mt-5 border-t border-line pt-4 space-y-3"><h3 className="font-bold">Our answer</h3><details className="text-xs"><summary className="cursor-pointer text-dim">Title &amp; category</summary><label className="block text-xs text-dim">Priority title<input className={input} value={priority.title} onChange={e=>update(m=>({...m,topics:(m.topics??[]).map(t=>t.id===priority.id?{...t,title:e.target.value,scouting:false}:t)}))}/></label><label className="block text-xs text-dim">Final Plan category<select value={draft.category} onChange={e => patch({ category: e.target.value })} className={`${input} mt-1`}>{PLAN_CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></label></details>
+        {priority.section === "answers" && <VisualGamePlan opponent={opponent} diagrams={draft.diagrams??[]} onChange={diagrams=>patch({diagrams})}/>}
         {prompts ? prompts.map(label=><label key={label} className="block text-xs text-dim">{label}<textarea rows={2} className={`${input} mt-1`} placeholder="Your staff’s answer" value={draft.responses?.[label]??''} onChange={e=>patch({responses:{...draft.responses,[label]:e.target.value}})}/></label>) : <>
         {([['call', 'Call'], ['check', 'Check'], ['fit', 'Fit']] as const).map(([key, label]) => <label key={key} className="block text-xs text-dim">{label}<input className={`${input} mt-1`} value={draft[key]} onChange={e => patch({ [key]: e.target.value })} placeholder="Coach’s choice" /></label>)}
         <label className="block text-xs text-dim">Key Coaching Point<textarea rows={3} value={draft.point} onChange={e => patch({ point: e.target.value })} className={`${input} mt-1`} /></label>
         </>}
         <WorkflowDiagrams diagrams={draft.diagrams} onChange={diagrams=>patch({diagrams})} opponentId={opponent.id} context={`${priority.title}\n${priority.evidence}\nDraft (not approved): ${decisionText(draft)}`} available={opponent.diagrams}/>
-        <div className="flex gap-2"><button className={primary} disabled={!decisionText(draft).trim() && !draft.diagrams?.length} onClick={() => save(draft)}>{saved ? "Approve Updated Decision" : "Approve Decision"}</button><button className={button} onClick={() => setEditing(false)}>Close Draft</button></div><p className="text-xs text-dim">Draft edits stay separate from your approved decision until saved.</p>
+        <div className="flex gap-2"><button className={primary} disabled={(!decisionText(draft).trim() && !draft.diagrams?.length) || draft.diagrams?.some(d=>!readyVisualDiagram(d))} onClick={() => save(draft)}>{saved ? "Approve Updated Decision" : "Approve Decision"}</button><button className={button} onClick={() => setEditing(false)}>Close Draft</button></div><p className="text-xs text-dim">Draft edits stay separate from your approved decision until saved. Visual answers need a current check and coach review before approval.</p>
       </div>}
       {saved&&!editing&&<DiagramPreviews diagrams={saved.diagrams}/>}
       <details className="mt-4 border-t border-line pt-3"><summary className="cursor-pointer text-sm font-semibold">Notes &amp; open questions{meeting.questions?.[priority.id] ? " · Question saved" : ""}</summary><label className="block text-xs text-dim mt-4">Coaching notes<textarea rows={2} className={`${input} mt-1`} value={meeting.notes?.[priority.id]??""} onChange={e=>update(m=>({...remember(m),notes:{...m.notes,[priority.id]:e.target.value}}))}/></label>
