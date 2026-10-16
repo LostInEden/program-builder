@@ -1,28 +1,28 @@
 @import "tailwindcss";
 
-/* CounterScheme's black, light gray, and royal blue palette. Historical token names remain shared. */
+/* CounterScheme's smokey grey and Carolina blue palette. Historical token names remain shared. */
 @theme {
-  --color-on-dark: #F7F8FA;
-  --color-pitch: #ECEDEF;
-  --color-panel: #FFFFFF;
-  --color-card: #FFFFFF;
-  --color-line: #C4C8CC;
-  --color-ink: #17191B;
-  --color-dim: #626870;
-  --color-grass: #315EFB;
-  --color-grass-deep: #244AC7;
-  --color-navy: #15171A;
-  --color-slate-brand: #DDE0E3;
-  --color-sky: #315EFB;
-  --color-ember: #315EFB;
+  --color-on-dark: #F5F7FA;
+  --color-pitch: #343A40;
+  --color-panel: #414850;
+  --color-card: #414850;
+  --color-line: #59636D;
+  --color-ink: #F5F7FA;
+  --color-dim: #B8C1CA;
+  --color-grass: #7BAFD4;
+  --color-grass-deep: #5695C2;
+  --color-navy: #252A30;
+  --color-slate-brand: #343A40;
+  --color-sky: #7BAFD4;
+  --color-ember: #7BAFD4;
   --color-success: #2E8B57;
   --color-alert: #AA0000;
-  --color-gold: #315EFB;
+  --color-gold: #7BAFD4;
   --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
-  --color-slate-50: #DDE0E3;
-  --color-slate-100: #DDE0E3;
-  --color-slate-200: #C4C8CC;
+  --color-slate-50: #343A40;
+  --color-slate-100: #343A40;
+  --color-slate-200: #59636D;
   --color-emerald-400: #2E8B57;
   --color-emerald-500: #2E8B57;
   --color-emerald-600: #2E8B57;
@@ -67,7 +67,7 @@
   --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
 
-html { color-scheme: light; }
+html { color-scheme: dark; }
 body {
   background-color: var(--color-pitch);
   color: var(--color-ink);
@@ -75,17 +75,17 @@ body {
 }
 .stadium-bg { background: var(--color-pitch); }
 
-/* Dark navigation, light workspace, and white content panels. */
+/* Charcoal navigation and slate content panels over a smokey grey workspace. */
 .theme-navigation {
-  background-color: #15171A;
-  color: #F7F8FA;
+  background-color: #252A30;
+  color: #F5F7FA;
 }
 
 @media screen {
   .bg-white { background-color: var(--color-card); }
   .text-navy { color: var(--color-ink); }
   .text-gold, .text-ember { color: var(--color-grass); }
-  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #756139; }
+  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #E5C480; }
   :is(button, a, input, select, textarea):focus-visible {
     outline: 2px solid var(--color-grass);
     outline-offset: 3px;
@@ -110,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: rgba(49, 94, 251, 0.22);
+  background: rgba(123, 175, 212, 0.28);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -128,8 +128,8 @@ input[type="number"] {
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  color-scheme: dark;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B8C1CA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 14px;
@@ -251,4 +251,19 @@ select optgroup {
   :is(button, a).bg-grass:hover { background-color: var(--color-grass-deep); }
   :is(button, a).bg-grass:active { background-color: var(--color-grass-deep); }
   input[type="checkbox"], input[type="radio"] { accent-color: var(--color-grass); }
+}
+
+/* Carolina blue surfaces need dark ink; white text lacks contrast on this accent. */
+@media screen {
+  .bg-grass, .bg-gold, .bg-sky, .bg-ember,
+  .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover {
+    color: #15171A;
+  }
+  :is(.text-green-400, .text-green-500, .text-green-600, .text-green-700,
+      .text-emerald-400, .text-emerald-500, .text-emerald-600, .text-emerald-700) { color: #88D4A5; }
+  :is(.text-red-400, .text-red-500, .text-red-600, .text-red-700) { color: #FFAAAA; }
+  /* Keep status text dark when the existing status surface is pale. */
+  :is(.bg-green-50, .bg-emerald-50) { color: #20553A; }
+  .bg-red-50 { color: #8F2020; }
+  :is(.bg-amber-50, .bg-yellow-50) { color: #685025; }
 }

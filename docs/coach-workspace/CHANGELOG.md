@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-15 — Smokey grey and Carolina blue theme
+- **Asked for:** Apply smokey grey and Carolina blue consistently without changing layouts, functionality, data or football diagrams.
+- **Changed:** Updated shared workspace, navigation, card, text, border, accent and hover colors. Blue buttons use dark text for contrast; native controls use dark styling and status text remains legible.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Visual styling only. Football diagram artwork, player/route colors, stored data and print surfaces remain unchanged. Warning and success colors retain their meaning.
+
 ## 2026-10-15 — Compact evidence for planning steps 2 and 6
 - **Asked for:** Evidence on steps 2 and 6 goes too far down the page; show it together at the top.
 - **Changed:** Offensive Identity & Tendencies and Situational Game Plan now show evidence across the full planning workspace above the answer/discussion cards. Compact evidence tiles use three columns on wide screens, two on smaller screens, and one on phones.
