@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-19 — Silver workspace with Ohio State Scarlet accents
+- **Asked for:** Silver Grey as the dominant background, charcoal navigation, light silver cards, medium silver secondary panels and Ohio State Scarlet accents.
+- **Changed:** Updated shared theme colors and subtle gradients, native controls, text contrast, status text and hover states. Navigation remains charcoal with soft-white text.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Styling only; layout, navigation, functionality and stored data are unchanged. Play Art field colors and custom artwork remain intact, including light annotations on the dark field.
+
 ## 2026-10-16 — Connect the first visual defensive-planning workflow
 - **Asked for:** Reuse existing functionality for opponent formation → draw defense → CounterScheme checks → coach approval → visual game-plan report without changing tabs or navigation.
 - **Changed:** Added a visual workspace inside Defensive Game Plan. Saved opponent drawings, top formation and primary run/pass scouting evidence lead into StudioCanvas. Coaches confirm template-based opponent looks, apply copies of saved defensive calls, edit players, paths and responsibilities, and run a review. Approved reports show opponent/answer diagrams, notes and review limitations together; approved attachments are available in practice and call-sheet references.

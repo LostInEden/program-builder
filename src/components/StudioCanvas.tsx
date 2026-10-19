@@ -657,7 +657,7 @@ export default function StudioCanvas({
         onClick={onFieldClick}
         onDoubleClick={(e) => { if (draft) { e.preventDefault(); finishPath(); } }}
         style={{ cursor: panMode ? "grab" : undefined }}
-        className={`relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-line bg-[var(--art-field)] touch-none select-none ${
+        className={`play-art-field relative min-h-0 flex-1 w-full overflow-hidden rounded-sm border border-line bg-[var(--art-field)] touch-none select-none ${
           tool === "select" && !pending && !extendId ? "" : "cursor-crosshair"
         }`}
       >

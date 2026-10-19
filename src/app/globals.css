@@ -1,28 +1,28 @@
 @import "tailwindcss";
 
-/* CounterScheme's smokey grey and 49ers red palette. Historical token names remain shared. */
+/* CounterScheme's Ohio State scarlet and silver palette. Historical token names remain shared. */
 @theme {
-  --color-on-dark: #F5F7FA;
-  --color-pitch: #343A40;
-  --color-panel: #414850;
-  --color-card: #414850;
-  --color-line: #59636D;
-  --color-ink: #F5F7FA;
-  --color-dim: #B8C1CA;
-  --color-grass: #AA0000;
-  --color-grass-deep: #AA0000;
-  --color-navy: #252A30;
-  --color-slate-brand: #343A40;
-  --color-sky: #AA0000;
-  --color-ember: #AA0000;
+  --color-on-dark: #F2F3F5;
+  --color-pitch: #C4C8CC;
+  --color-panel: #D2D5D8;
+  --color-card: #E3E5E7;
+  --color-line: #ADB3B9;
+  --color-ink: #24272B;
+  --color-dim: #59616A;
+  --color-grass: #BB0000;
+  --color-grass-deep: #990000;
+  --color-navy: #24272B;
+  --color-slate-brand: #D2D5D8;
+  --color-sky: #BB0000;
+  --color-ember: #BB0000;
   --color-success: #2E8B57;
   --color-alert: #AA0000;
-  --color-gold: #AA0000;
+  --color-gold: #BB0000;
   --color-metallic: #9DA3A6;
   --color-mind: #7c3aed;
-  --color-slate-50: #343A40;
-  --color-slate-100: #343A40;
-  --color-slate-200: #59636D;
+  --color-slate-50: #D2D5D8;
+  --color-slate-100: #D2D5D8;
+  --color-slate-200: #ADB3B9;
   --color-emerald-400: #2E8B57;
   --color-emerald-500: #2E8B57;
   --color-emerald-600: #2E8B57;
@@ -67,7 +67,7 @@
   --font-body: var(--font-inter), "Segoe UI", sans-serif;
 }
 
-html { color-scheme: dark; }
+html { color-scheme: light; }
 body {
   background-color: var(--color-pitch);
   color: var(--color-ink);
@@ -75,17 +75,17 @@ body {
 }
 .stadium-bg { background: var(--color-pitch); }
 
-/* Charcoal navigation and slate content panels over a smokey grey workspace. */
+/* Charcoal navigation over a silver workspace and lighter silver panels. */
 .theme-navigation {
-  background-color: #252A30;
-  color: #F5F7FA;
+  background-color: #24272B;
+  color: #F2F3F5;
 }
 
 @media screen {
   .bg-white { background-color: var(--color-card); }
   .text-navy { color: var(--color-ink); }
   .text-gold, .text-ember { color: var(--color-grass); }
-  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #E5C480; }
+  :is(.text-amber-700, .text-amber-800, .text-yellow-700, .text-yellow-800) { color: #756139; }
   :is(button, a, input, select, textarea):focus-visible {
     outline: 2px solid var(--color-grass);
     outline-offset: 3px;
@@ -110,7 +110,7 @@ body {
 }
 
 ::selection {
-  background: rgba(170, 0, 0, 0.28);
+  background: rgba(187, 0, 0, 0.20);
 }
 
 /* Number inputs: no native stepper arrows */
@@ -128,8 +128,8 @@ input[type="number"] {
 select {
   appearance: none;
   -webkit-appearance: none;
-  color-scheme: dark;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B8C1CA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  color-scheme: light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2359616A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 14px;
@@ -257,11 +257,11 @@ select optgroup {
 @media screen {
   .bg-grass, .bg-gold, .bg-sky, .bg-ember,
   .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover {
-    color: #F5F7FA;
+    color: #F2F3F5;
   }
   :is(.text-green-400, .text-green-500, .text-green-600, .text-green-700,
-      .text-emerald-400, .text-emerald-500, .text-emerald-600, .text-emerald-700) { color: #88D4A5; }
-  :is(.text-red-400, .text-red-500, .text-red-600, .text-red-700) { color: #FFAAAA; }
+      .text-emerald-400, .text-emerald-500, .text-emerald-600, .text-emerald-700) { color: #256B43; }
+  :is(.text-red-400, .text-red-500, .text-red-600, .text-red-700) { color: #AA0000; }
   /* Keep status text dark when the existing status surface is pale. */
   :is(.bg-green-50, .bg-emerald-50) { color: #20553A; }
   .bg-red-50 { color: #8F2020; }
@@ -271,34 +271,34 @@ select optgroup {
 /* Surface polish only: preserve component geometry, diagram art and print output. */
 @media screen {
   body, .stadium-bg {
-    background-image: linear-gradient(145deg, #3A4148 0%, #343A40 48%, #30363C 100%);
+    background-image: linear-gradient(145deg, #CDD1D5 0%, #C4C8CC 48%, #BEC3C8 100%);
     background-attachment: fixed;
   }
   .theme-navigation {
-    background-image: linear-gradient(180deg, #2B3138, #252A30);
+    background-image: linear-gradient(180deg, #2B2F34, #24272B);
     border-color: #48515A;
     box-shadow: 0 3px 14px rgb(12 17 22 / 12%);
   }
   :is(.bg-card, .bg-white):is(.rounded-xl, .rounded-2xl) {
-    background-image: linear-gradient(155deg, #464E57, #414850 65%, #3E454D);
-    border-color: #535D67;
+    background-image: linear-gradient(155deg, #E8EAEC, #E3E5E7 65%, #DCDFE2);
+    border-color: #ADB3B9;
     box-shadow: 0 4px 16px rgb(12 17 22 / 12%), inset 0 1px 0 rgb(245 247 250 / 4%);
   }
   h1, h2, h3 { text-rendering: optimizeLegibility; }
   h1, h2 { letter-spacing: -0.025em; font-weight: 700; }
   h3 { letter-spacing: -0.01em; }
   :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select).border-line {
-    border-color: #626D78;
+    border-color: #ADB3B9;
     box-shadow: inset 0 1px 2px rgb(12 17 22 / 10%);
   }
   :is(button, a).bg-grass {
     box-shadow: 0 2px 5px rgb(12 17 22 / 16%), inset 0 1px 0 rgb(255 255 255 / 15%);
   }
   :is(button, a).border-line:not(:disabled):hover {
-    border-color: #AA0000;
+    border-color: #BB0000;
   }
   a.bg-card:hover {
-    border-color: #AA0000;
+    border-color: #BB0000;
     box-shadow: 0 6px 20px rgb(12 17 22 / 18%), inset 0 1px 0 rgb(245 247 250 / 6%);
   }
   :is(button, a).bg-grass:active {
@@ -327,10 +327,16 @@ select optgroup {
   }
 }
 
-/* Use the coach-selected 49ers red consistently for interface accents. */
+/* Use the Ohio State scarlet consistently for interface accents. */
 @media screen {
-  :is(.text-grass, .text-gold, .text-sky, .text-ember) { color: #AA0000; }
+  :is(.text-grass, .text-gold, .text-sky, .text-ember) { color: #BB0000; }
   :is(.bg-grass, .bg-gold, .bg-sky, .bg-ember),
-  .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover { color: #F5F7FA; }
-  :is(button, a, input, select, textarea):focus-visible { outline-color: #AA0000; }
+  .hover\:bg-grass:hover, .hover\:bg-grass-deep:hover { color: #F2F3F5; }
+  :is(button, a, input, select, textarea):focus-visible { outline-color: #BB0000; }
+}
+
+@media screen {
+  .theme-navigation :is(.bg-card, .bg-panel, .bg-white) { color: var(--color-ink); }
+  /* Preserve drawing annotations on the existing dark football field. */
+  .play-art-field .text-ink { color: var(--art-ink); }
 }
