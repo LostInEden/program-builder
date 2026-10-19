@@ -1,4 +1,5 @@
 "use client";
+import VisualLibrary from "@/components/VisualLibrary";
 
 // Scouting Report (Q43) — the INPUT half. Five headings, in the coach's order:
 // Personnel, Top Formations, Top Plays, Best Players, Key Tendencies / Tells.
@@ -97,6 +98,7 @@ function ScoutingInner() {
       {o && <nav aria-label="Opponent scouting views" className="no-print flex flex-wrap gap-2 mb-5">
         {[{ label: "Overview", href: `/matchup?id=${o.id}`, active: false }, { label: "Full Scout", href: `/scouting?id=${o.id}`, active: full }, { label: "Personnel", href: `/scouting?id=${o.id}&view=personnel`, active: personnelOnly }, { label: "Situational Tendencies", href: `/scouting?id=${o.id}&view=situations`, active: situationsOnly }].map(tab => <Link key={tab.label} href={tab.href} aria-current={tab.active ? "page" : undefined} className={`rounded-lg px-4 py-2 text-sm font-semibold border ${tab.active ? "bg-grass border-grass text-white" : "border-line text-dim hover:text-ink"}`}>{tab.label}</Link>)}
       </nav>}
+      {o && full && <VisualLibrary title="Saved opponent drawings" opponent={o}/>}
       {/* The paper version says who and what it is. */}
       <div className="hidden print:block mb-4">
         <h1 className="text-2xl font-extrabold">{title} — {o?.name ?? ""}</h1>

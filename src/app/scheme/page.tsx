@@ -1,4 +1,5 @@
 "use client";
+import VisualLibrary from "@/components/VisualLibrary";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -69,7 +70,8 @@ export default function SchemePage() {
       </div>}
     </section>
 
-    <PersonnelContext />
+    <VisualLibrary title="Your defensive drawings" />
+    <details className="mb-4"><summary className="cursor-pointer text-sm font-semibold text-dim">Personnel fit</summary><PersonnelContext /></details>
     <section aria-labelledby="defense-title" className="mb-5">
       <h2 id="defense-title" className="mb-3 text-lg font-extrabold">Your Defense</h2>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -88,13 +90,13 @@ export default function SchemePage() {
       </div>
     </section>
 
-    <section aria-labelledby="rules-title" className={card}>
-      <h2 id="rules-title" className="text-lg font-extrabold">Core Rules</h2>
+    <details className={card}><summary className="cursor-pointer font-bold">Core rules &amp; terminology</summary>
+
       <p className="mt-2 text-sm text-dim">System-wide rules have not been designated separately. Your saved checks and responsibilities remain in their scheme details.</p>
       <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-grass">
         <Link href="/scheme/concepts?kind=adjustment" className="rounded-lg border border-line px-3 py-2 hover:border-grass">View / Edit Checks</Link>
         <Link href="/scheme/terminology" className="rounded-lg border border-line px-3 py-2 hover:border-grass">View / Edit Terminology</Link>
       </div>
-    </section>
+    </details>
   </div>;
 }

@@ -15,6 +15,34 @@ Entry format:
 
 ---
 
+## 2026-10-19 — Visual game-planning board
+- **Asked for:** Use the approved preview layout with more diagrams and less typing.
+- **Changed:** Replaced the vertical planning rail with a compact seven-step bar; added opponent-look selection and paired opponent/answer boards using the existing editor.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Approval, revision checks, existing decisions and storage are unchanged. Missing drawings are explicitly identified.
+
+## 2026-10-19 — Drawing-first coaching pages
+- **Asked for:** Apply the visual layout across pages where useful.
+- **Changed:** Added saved-drawing shelves to Home, My Scheme, Defense Analysis, Opponent Matchup and Full Scout. Scheme analysis shows linked artwork beside its existing checks.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Only saved artwork is displayed. Team depth chart, Play Art, existing tabs and data models are preserved.
+
+## 2026-10-19 — Less typing and progressive detail
+- **Asked for:** Keep complexity behind a simple, efficient experience.
+- **Changed:** Moved optional game-plan notes, decision settings, context and discussion into expandable controls; added saved-diagram selection previews and compact evidence cards.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** All prior fields and discussions remain available. Diagram-only decisions retain explicit coach approval.
+
+## 2026-10-19 — Visual practice and plan reports
+- **Asked for:** Reuse approved diagrams with less text.
+- **Changed:** Enlarged shared diagram previews, put artwork before coaching notes in approved reports and practice references, opened Call Sheet diagram references, and collapsed optional staff notes.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Detailed review and coaching notes remain available on screen and in printed visual reports.
+
 ## 2026-10-19 — Silver workspace with Ohio State Scarlet accents
 - **Asked for:** Silver Grey as the dominant background, charcoal navigation, light silver cards, medium silver secondary panels and Ohio State Scarlet accents.
 - **Changed:** Updated shared theme colors and subtle gradients, native controls, text contrast, status text and hover states. Navigation remains charcoal with soft-white text.

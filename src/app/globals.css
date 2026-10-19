@@ -340,3 +340,9 @@ select optgroup {
   /* Preserve drawing annotations on the existing dark football field. */
   .play-art-field .text-ink { color: var(--art-ink); }
 }
+
+/* Keep expanded coaching evidence in printed visual reports. */
+@media print {
+  .diagram-review::details-content { display: block; content-visibility: visible; }
+  .diagram-review > :not(summary) { display: block !important; }
+}

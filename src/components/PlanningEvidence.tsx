@@ -3,7 +3,7 @@ import {productLanguage} from '@/lib/productLanguage';
 
 export default function PlanningEvidence({text,opponentId,section}:{text:string;opponentId:string;section:string}){
  const context=['answers','packages','practice'].includes(section);
- const compact=['identity','situations'].includes(section);
+ const compact=true;
  const rows=productLanguage(text).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
  return <section aria-label={context?'Planning context':'Scouting evidence'} className="mt-4 overflow-hidden rounded-lg border border-line">
   <div className="flex items-center justify-between gap-2 border-b border-line bg-panel px-3 py-2"><h3 className="text-xs font-bold uppercase tracking-wide text-dim">{context?'Planning context':'Scouting evidence'}</h3><Link href={`/scouting?id=${encodeURIComponent(opponentId)}`} className="text-xs font-semibold text-grass">Full scout →</Link></div>

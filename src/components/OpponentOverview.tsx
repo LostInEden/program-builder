@@ -1,4 +1,5 @@
 "use client";
+import VisualLibrary from "@/components/VisualLibrary";
 
 import Link from "next/link";
 import { useMemo } from "react";
@@ -21,6 +22,7 @@ export default function OpponentOverview({ opponent: o }: { opponent: Opponent }
       <div><span className="font-bold">{o.name}</span><span className="text-dim"> · Week {o.week ?? "—"} · {o.record || "Record not entered"}</span>{o.isDemo && <span className="ml-2 text-gold text-xs">DEMO DATA</span>}</div>
       <Link href={details} className="text-gold font-semibold hover:underline">Edit Opponent Information</Link>
     </div>
+    <VisualLibrary title="Opponent looks" opponent={o}/>
     <section aria-labelledby="priorities-heading" className={`${card} border-t-4 border-t-grass p-5`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2"><h2 id="priorities-heading" className="text-xl font-extrabold">Game Plan Priorities</h2><p className="text-xs text-gold font-semibold">What must our defense solve?</p></div>
       <ol className={`mt-4 grid gap-3 sm:grid-cols-2 ${summary.priorities.length > 3 ? "xl:grid-cols-5" : "md:grid-cols-3"}`}>
@@ -58,7 +60,7 @@ export default function OpponentOverview({ opponent: o }: { opponent: Opponent }
         <Link href={`${scout}&view=situations`} className={more}>View Situations →</Link>
       </section>
     </div>
-    <div className="rounded-lg border border-line bg-card p-3 text-sm"><strong>Develop our answers</strong><p className="mt-1 text-dim">Compare these threats with your players and installed responsibilities. Scouting identifies the problem; your staff approves the response.</p><div className="mt-2 flex flex-wrap gap-4 font-semibold text-grass"><Link href="/team?view=depth">Review our personnel →</Link><Link href="/analysis">Check our scheme fit →</Link><Link href={`/gameplan?id=${encodeURIComponent(o.id)}`}>Work through the game plan →</Link></div></div>
+    <div className="rounded-lg border border-line bg-card p-3 text-sm"><strong>Develop our answers</strong><p className="mt-1 text-dim">Select their look, draw your answer, then review. </p><div className="mt-2 flex flex-wrap gap-4 font-semibold text-grass"><Link href="/team?view=depth">Review our personnel →</Link><Link href="/analysis">Check our scheme fit →</Link><Link href={`/gameplan?id=${encodeURIComponent(o.id)}`}>Work through the game plan →</Link></div></div>
     <div className="flex flex-wrap items-center justify-between gap-3 pt-1 pb-3">
       <p className="text-xs text-dim">{o.plays?.length ? `From ${o.plays.length} uploaded snaps and saved scouting notes.` : "From saved scouting entries."}</p>
       <div className="flex flex-wrap gap-3"><Link href={scout} className={secondary}>View Full Scout</Link><Link href={`/gameplan?id=${encodeURIComponent(o.id)}`} className="rounded-lg bg-grass px-5 py-2 text-sm font-bold text-white hover:bg-grass-deep">Build Game Plan →</Link></div>
