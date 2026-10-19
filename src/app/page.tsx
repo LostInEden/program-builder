@@ -1,9 +1,8 @@
 "use client";
-import VisualLibrary from "@/components/VisualLibrary";
 
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Users, Shield, ShieldCheck, Binoculars, ClipboardList, ListChecks, ChevronRight } from "lucide-react";
+import { Users, Shield, ShieldCheck, Binoculars, ClipboardList, ListChecks, ChevronRight, Check, Circle } from "lucide-react";
 import { useStore, useHydrated, baseGroupFor, effectiveSlots } from "@/lib/store";
 import { computeFindings } from "@/lib/analyze";
 import { getStructure } from "@/lib/football";
@@ -77,7 +76,7 @@ export default function Home() {
             Your Team. Your Scheme.<br /><span className="text-grass">Your Game Plan.</span>
           </h1>
           <p className="text-dim mt-2 max-w-2xl">
-            Pick up where your staff left off.
+            Backed by Football Intelligence. Build around your players, review your defense, and prepare for the opponent in one connected workspace.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             <Link href={nextOpp ? `/scouting?id=${nextOpp.id}` : "/scouting"} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-grass hover:text-grass">
@@ -107,7 +106,6 @@ export default function Home() {
         )}
       </motion.div>
 
-      <VisualLibrary title="Your whiteboard" />
       <div className="grid gap-4 sm:grid-cols-2">
         {systems.map(({ href, icon: Icon, title, n, stat, steps }, i) => {
           const done = steps.filter((s) => s.done).length;
@@ -121,7 +119,14 @@ export default function Home() {
                 </div>
                 <h2 className="text-xl font-bold">{title}</h2>
                 <p className="mt-1 text-sm">{({"My Team":"Who are our players, and what can they do?","My Scheme":"What do we teach, and why does it fit?","Defensive Analysis":"Where are we strong, vulnerable, or missing information?","Opponent Matchup":"What will challenge us this week?"} as Record<string,string>)[title]}</p><p className="text-sm text-dim mt-2">{stat}</p>
-
+                <ul className="mt-3 flex flex-col gap-1 text-sm">
+                  {steps.map((s) => (
+                    <li key={s.label} className="flex items-center gap-2">
+                      {s.done ? <Check size={14} className="text-emerald-600" /> : <Circle size={12} className="text-slate-300" />}
+                      <span className={s.done ? "text-ink/80" : "text-dim"}>{s.label}</span>
+                    </li>
+                  ))}
+                </ul>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-grass">
                   Open <ChevronRight size={15} className="transition group-hover:translate-x-0.5" />
                 </span>

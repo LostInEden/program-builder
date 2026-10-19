@@ -15,7 +15,7 @@ import ApprovedDecisionReference from "@/components/ApprovedDecisionReference";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft, ArrowDown, ArrowUp, ChevronDown, ChevronRight, ClipboardList, Printer,
-  AlertTriangle, Check, X, Shuffle, Info,
+  AlertTriangle, Check, X, Users2, Shuffle, Info,
 } from "lucide-react";
 import { useStore, useHydrated, type Opponent, type Play } from "@/lib/store";
 import { PRACTICE_DAYS, type PracticeDay, type PracticeRep } from "@/lib/practice";
@@ -387,8 +387,8 @@ function PracticeInner() {
           </div>
 
           {/* -- notes the coach keeps with the script */}
-          <details className={`${card} no-print`}>
-            <summary className={`${cardHead} cursor-pointer`}>Notes for the staff (optional)</summary>
+          <div className={`${card} no-print`}>
+            <div className={cardHead}><Users2 size={14} className="text-dim" /> Notes for the staff</div>
             <div className="p-4">
               <textarea
                 value={week.selection.notes}
@@ -398,7 +398,7 @@ function PracticeInner() {
                 className={`${input} w-full resize-y`}
               />
             </div>
-          </details>
+          </div>
 
           {/* -- scout cards */}
           <div>

@@ -1,5 +1,4 @@
 "use client";
-import VisualLibrary from "@/components/VisualLibrary";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -45,7 +44,7 @@ function FindingDetails({ f, accent }: { f: Finding; accent: string }) {
       <span className={`text-xs font-semibold ${accent}`}>{f.status === "Potential Conflict" ? "Needs attention" : f.status === "Sound" ? "Check passed" : "Review needed"}</span>
     </div>
     {f.strengths && <p className="mt-1 text-xs text-dim">Scheme guidance — confirm assignments and player fit.</p>}
-    <div className="mt-4 grid gap-3">{summaries.filter(([, text]) => text).map(([title, text]) => <div key={title} className="rounded-lg border border-line p-3"><h3 className="mb-1 text-sm font-bold">{title}</h3><p className="text-sm leading-relaxed text-dim">{text}</p></div>)}</div>
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">{summaries.filter(([, text]) => text).map(([title, text]) => <div key={title} className="rounded-lg border border-line p-3"><h3 className="mb-1 text-sm font-bold">{title}</h3><p className="text-sm leading-relaxed text-dim">{text}</p></div>)}</div>
     <details className="mt-4 border-t border-line pt-3">
       <summary className="cursor-pointer text-sm font-semibold text-grass">Why this assessment? View evidence</summary>
       <div className="mt-4 space-y-4 text-sm">
@@ -86,7 +85,7 @@ export default function AnalysisPage() {
   };
   return <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">Select a scheme. Review the drawing and the key checks.</p></div>
+      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">Does it fit your players? Review strengths, weaknesses, responsibilities, and practical improvements.</p></div>
       <p className="text-xs text-dim">{groupName} · {structureName}</p>
     </div>
     <SchemeTabs active="analysis" />
@@ -105,10 +104,7 @@ export default function AnalysisPage() {
       </aside>
       <div className="min-w-0">
         {selectedConcept && <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-dim">{selectedConcept.isBase ? "Base scheme" : "Active scheme"} · {categoryLabel}</p><Link href={`/scheme/concepts?kind=${selectedConcept.kind}&id=${encodeURIComponent(selectedConcept.id)}`} className="text-sm font-semibold text-grass">Open in Scheme Library →</Link></div>}
-        <div className="grid gap-3 xl:grid-cols-2 items-start">
-        {selectedConcept && <VisualLibrary title={selectedConcept.name} conceptId={selectedConcept.id} kind={selectedConcept.kind} limit={1} />}
         {selected ? <FindingDetails key={selected.id} f={selected} accent={buckets.find(b => b.key === selected.status)!.accent} /> : <section id="finding-details" className={`${card} p-6 text-sm text-dim`}>Choose another category or add a confirmed scheme in Scheme Library.</section>}
-        </div>
       </div>
     </div>
     <p className="mt-4 text-xs text-dim">Based on saved scheme rules and personnel evaluations. Missing assignments remain unknown; a passed check is not proof the entire defense is sound. Your staff makes the final decision.</p>
