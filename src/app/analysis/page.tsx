@@ -6,6 +6,7 @@ import {useStore,useHydrated} from '@/lib/store';
 import {getStructure} from '@/lib/football';
 import {parseExceptions,reviewBatches,correctionPatch,concernKey,type Facts,type ExceptionResult,type Concern} from '@/lib/schemeExceptions';
 import ExpandableDiagram from '@/components/ExpandableDiagram';
+import {localSchemeAnalysis} from '@/lib/localSchemeAnalysis';
 import SchemeTabs from '@/components/SchemeTabs';
 
 const dismissalStorage='counterscheme-analysis-dismissals-v1';
@@ -31,6 +32,7 @@ export default function AnalysisPage(){
   return out;
  },[scheme,concepts,calls,players,groups,activeGroupId,overrides]);
  const revision=JSON.stringify(facts);
+ const localResult=useMemo(()=>localSchemeAnalysis(calls),[calls]);
  useEffect(()=>{
   if(!hydrated)return;
   const controller=new AbortController();
@@ -54,7 +56,7 @@ export default function AnalysisPage(){
   return ()=>{clearTimeout(timer);controller.abort();};
  },[hydrated,facts,revision,retry]);
  const current=review?.revision===revision?review:null;
- const result=current?.result;
+ const result=current?.result??localResult;
  // A dismissal only applies to exactly the evidence reviewed. Changes trigger a fresh review.
  const snapshotId=useMemo(()=>fingerprint(revision),[revision]);
  const key=(c:Concern)=>snapshotId+':'+fingerprint(concernKey(c));
@@ -76,12 +78,12 @@ export default function AnalysisPage(){
   <p className="mb-5 mt-1 text-sm text-dim">Football concerns that need your attention. Your rules. Your decisions.</p>
   <SchemeTabs active="analysis"/>
   <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm">
-   <p aria-live="polite">{!current?'Evaluating saved scheme…':current.error?'Review unavailable':`${visible.filter(c=>c.severity==='critical').length} critical · ${visible.filter(c=>c.severity==='potential').length} potential`}</p>
+   <p aria-live="polite">{`${visible.filter(c=>c.severity==='critical').length} critical · ${visible.filter(c=>c.severity==='potential').length} potential`}{!current&&' · Checking saved football rules…'}</p>
    <button className="text-grass font-semibold" onClick={()=>{setReview(null);setRetry(x=>x+1);}}>Reevaluate</button>
   </div>
   {notice&&<p role="status" className="mb-3 text-sm">{notice}</p>}
-  {current?.error&&<div role="alert" className={card}>{current.error}</div>}
-  {result&&!result.concerns.length&&<p className={card}>No issues identified in the areas evaluated.</p>}
+  {!current?.result&&<p role="status" className="mb-4 text-sm text-dim">Local alignment checks only.{current?.error?' Full football review is not connected or could not finish. Your scheme has not been changed.':' Full football review is pending.'}</p>}
+  {result&&!result.concerns.length&&<div className={card}><p>{result.evaluated.length?'No issues identified in the areas evaluated.':'No saved defensive alignments available to evaluate.'}</p>{!current?.result&&<p className="mt-2 text-sm text-dim">{result.evaluated.length?'Checked visible defender spacing and field boundaries only. Assignments and football soundness remain unverified.':'Open a saved Full Defense to draw or review its alignment. Missing information is not counted as a concern.'}</p>}<Link className="mt-3 inline-block text-sm font-semibold text-grass" href="/scheme/concepts?view=full-calls">Open Full Defense →</Link></div>}
   {result&&result.concerns.length>0&&!visible.length&&<p className={card}>All identified concerns have been dismissed for this version.</p>}
   <div className="space-y-3">{visible.map(c=>{
    const id=concernKey(c),call=c.source.startsWith('call:')?calls.find(x=>`call:${x.id}`===c.source):undefined;

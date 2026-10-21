@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-21 — Usable Defense Analysis without connected review
+- **Asked for:** Fix Defensive Analysis in the local preview.
+- **Changed:** Added immediate local checks for visible saved defenders outside the field or overlapping. Connected-review failures no longer replace the entire page with an error. Added a clear local-only scope, honest empty state and direct Full Defense link.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** No assignment inference, storage migration or automatic edits. Run-fit, coverage and personnel reasoning still require the connected review. Missing assignments never increase local concern totals. Regression tests cover hidden markers, missing data, overlaps and unchanged saved input.
+
 ## 2026-10-21 — Exception-based Defense Analysis
 - **Asked for:** Only flag real football concerns; missing information is not a concern.
 - **Changed:** Replaced the analysis page's generic strengths/recommendations with evidence-cited Critical Issues and Potential Concerns. Reuses the protected reasoning endpoint, saved calls, component snapshots, personnel, coach philosophy and diagrams. Evaluation limits remain separate from totals; no-result and unavailable states do not certify soundness.
