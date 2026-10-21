@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-21 — Teaching open on My Scheme Overview
+- **Asked for:** Have Teach CounterScheme up and available on the overview.
+- **Changed:** Teaching opens by default directly below the existing scheme tabs, above Full Defense. Coaches can still collapse it.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Presentation only; saved rules, diagrams, assignments and navigation unchanged.
+
 ## 2026-10-21 — Confirmed base philosophy and scoped coaching rules
 - **Asked for:** Teach CounterScheme base philosophy once through short text or voice, and confirm the scope of corrections.
 - **Changed:** Added rule teaching to the existing teaching panel and Full Defense editor. Coaches review the organized rule and explicitly choose base philosophy or this-install-only before saving. Player corrections can be remembered as scoped rules. Core Rules displays confirmed base principles; shared reasoning briefs include rule scope.

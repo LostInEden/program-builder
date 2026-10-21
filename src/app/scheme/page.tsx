@@ -21,7 +21,7 @@ const categories = [
 export default function SchemePage() {
   const hydrated = useHydrated();
   const { scheme, setScheme, concepts } = useStore();
-  const [teaching, setTeaching] = useState(false);
+  const [teaching, setTeaching] = useState(true);
   const [editing, setEditing] = useState(false);
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
   const confirmed = concepts.filter((c) => c.confirmed);
@@ -35,8 +35,8 @@ export default function SchemePage() {
       <button onClick={() => setTeaching(!teaching)} aria-expanded={teaching} className="mt-3 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-gold">{teaching ? "Close Teaching" : "Teach CounterScheme"}{pending ? ` · ${pending} to review` : ""}</button>
     </header>
     <SchemeTabs />
-    <FullDefenseLibrary />
     {teaching && <div className="mb-5"><SchemeTeachingPanel /></div>}
+    <FullDefenseLibrary />
     <details className="mb-5 rounded-lg border border-line bg-card">
       <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">Scheme tools & review{pending > 0 ? ` · ${pending} to confirm` : ""}</summary>
       <div className="border-t border-line p-3 sm:p-4">
