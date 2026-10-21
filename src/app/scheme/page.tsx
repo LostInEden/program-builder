@@ -7,6 +7,7 @@ import { useStore, useHydrated, type ConceptKind } from "@/lib/store";
 import SchemeTeachingPanel from "@/components/SchemeTeachingPanel";
 import PersonnelContext from "@/components/PersonnelContext";
 import FullDefenseLibrary from "@/components/FullDefenseLibrary";
+import SectionTools from "@/components/SectionTools";
 import SchemeTabs from "@/components/SchemeTabs";
 
 const card = "rounded-xl border border-line bg-card p-5 sm:p-6";
@@ -36,6 +37,7 @@ export default function SchemePage() {
     </header>
     <SchemeTabs />
     {teaching && <div className="mb-5"><SchemeTeachingPanel /></div>}
+    <SectionTools section="scheme" />
     <FullDefenseLibrary />
     <details className="mb-5 rounded-lg border border-line bg-card">
       <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">Scheme tools & review{pending > 0 ? ` · ${pending} to confirm` : ""}</summary>

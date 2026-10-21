@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-21 — Overview-first section navigation
+- **Asked for:** Clicking a main section opens its overview; no subtabs, with tools accessible through the overview.
+- **Changed:** Main navigation now uses direct section links instead of dropdown menus. Removed sidebar children and My Scheme, scouting and game-plan subtab rows. Added overview tool cards for team pages, Scheme Library, Defense Analysis, Play Art, scouting/personnel/situations, Call Sheet, Practice Script and Self Scout. Detail pages retain simple return links.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing routes, saved data and editing tools preserved. Opponent overview links retain the selected opponent. Primary section links are also accessible on smaller screens. Verified lint and production build.
+
 ## 2026-10-21 — Teaching open on My Scheme Overview
 - **Asked for:** Have Teach CounterScheme up and available on the overview.
 - **Changed:** Teaching opens by default directly below the existing scheme tabs, above Full Defense. Coaches can still collapse it.

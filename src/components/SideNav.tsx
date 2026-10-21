@@ -4,7 +4,7 @@
 // the section you're in opens its pages underneath it. Nothing up top.
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import {
   Home, Users, Shield, Binoculars, ClipboardList, Settings,
@@ -101,19 +101,11 @@ function ProgramCard() {
 
 function SideNavInner() {
   const pathname = usePathname();
-  const sp = useSearchParams();
   const hydrated = useHydrated();
   const pending = useStore((s) => s.concepts.filter((c) => !c.confirmed).length);
   const players = useStore((s) => s.players.length);
   if (pathname.startsWith("/scheme/playbook") || pathname.startsWith("/chat")) return null;
 
-  const isCurrentChild = (href: string) => {
-    if (href.startsWith("/scheme/concepts")) return pathname === "/scheme/concepts";
-    if (!href.includes("?")) return pathname === href;
-    const [p, q] = href.split("?");
-    if (pathname !== p) return false;
-    return [...new URLSearchParams(q).entries()].every(([k, v]) => sp.get(k) === v);
-  };
   const badges: BadgeState = { pending: hydrated ? pending : 0, players: hydrated ? players : 0 };
 
   return (
@@ -121,7 +113,6 @@ function SideNavInner() {
       <nav className="flex-1 overflow-y-auto px-3 pt-3">
         {SECTIONS.map((sec) => {
           const active = inSection(pathname, sec);
-          const onOverview = active && pathname === sec.href && (sec.children ? !sec.children.some((c) => isCurrentChild(c.href)) : true);
           const badge = sec.badge?.(badges);
           return (
             <div key={sec.href} className="mb-0.5">
@@ -139,32 +130,7 @@ function SideNavInner() {
                   }`}>{badge}</span>
                 )}
               </Link>
-              {active && sec.children && (
-                <div className="mt-0.5 mb-1.5 flex flex-col">
-                  <Link
-                    href={sec.href}
-                    className={`ml-5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                      onOverview ? "bg-grass text-on-dark" : "text-on-dark hover:text-ink hover:bg-slate-50"
-                    }`}
-                  >
-                    Overview
-                  </Link>
-                  {sec.children.map((c) => {
-                    const cur = isCurrentChild(c.href);
-                    return (
-                      <Link
-                        key={c.href}
-                        href={c.href}
-                        className={`ml-5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                          cur ? "bg-grass text-on-dark" : "text-on-dark hover:text-ink hover:bg-slate-50"
-                        }`}
-                      >
-                        {c.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+
             </div>
           );
         })}

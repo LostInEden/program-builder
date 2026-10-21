@@ -80,7 +80,7 @@ function ScoutingInner() {
             </select>
           )}
           {o && <Link href={`/matchup?id=${o.id}&view=details#situations`} className="text-sm font-semibold text-gold hover:underline">Full Down &amp; Distance / Situations</Link>}
-          {o && <><Link href={`/matchup?id=${o.id}`} className="text-sm font-semibold text-gold hover:underline">Overview</Link><Link href={`/matchup?id=${o.id}&view=details`} className="rounded-lg border border-line px-3 py-2 text-sm font-semibold hover:border-gold">Opponent Details / Edit Scout</Link></>}
+          {o && <><Link href={`/matchup?id=${o.id}`} className="text-sm font-semibold text-gold hover:underline">← Opponent Matchup</Link><Link href={`/matchup?id=${o.id}&view=details`} className="rounded-lg border border-line px-3 py-2 text-sm font-semibold hover:border-gold">Opponent Details / Edit Scout</Link></>}
           {o && (
             <>
               <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim">
@@ -94,9 +94,7 @@ function ScoutingInner() {
         </div>
       </div>
 
-      {o && <nav aria-label="Opponent scouting views" className="no-print flex flex-wrap gap-2 mb-5">
-        {[{ label: "Overview", href: `/matchup?id=${o.id}`, active: false }, { label: "Full Scout", href: `/scouting?id=${o.id}`, active: full }, { label: "Personnel", href: `/scouting?id=${o.id}&view=personnel`, active: personnelOnly }, { label: "Situational Tendencies", href: `/scouting?id=${o.id}&view=situations`, active: situationsOnly }].map(tab => <Link key={tab.label} href={tab.href} aria-current={tab.active ? "page" : undefined} className={`rounded-lg px-4 py-2 text-sm font-semibold border ${tab.active ? "bg-grass border-grass text-white" : "border-line text-dim hover:text-ink"}`}>{tab.label}</Link>)}
-      </nav>}
+
       {/* The paper version says who and what it is. */}
       <div className="hidden print:block mb-4">
         <h1 className="text-2xl font-extrabold">{title} — {o?.name ?? ""}</h1>

@@ -195,7 +195,7 @@ function MatchupInner() {
         state.updateOpponent(current.id, { notes: [current.notes, note].filter(Boolean).join("\n\n") });
         return true;
       }} />}
-      {showDetails && o && <Link href={`/matchup?id=${o.id}`} className="inline-block mb-4 text-sm font-semibold text-gold hover:underline">← Back to Overview</Link>}
+      {showDetails && o && <Link href={`/matchup?id=${o.id}`} className="inline-block mb-4 text-sm font-semibold text-gold hover:underline">← Opponent Matchup</Link>}
       {!o ? (
         <div className={`${card} px-6 py-14 text-center`}>
           <div className="text-lg font-bold mb-1">No opponents yet</div>

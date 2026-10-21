@@ -410,11 +410,14 @@ function TeamPageInner() {
         </div>
       </div>
 
-      {view !== "overview" && <Link href="/team" className="mb-4 inline-block text-sm font-semibold text-grass hover:underline">← My Team overview</Link>}
+      {view !== "overview" && <Link href="/team" className="mb-4 inline-block text-sm font-semibold text-grass hover:underline">← My Team</Link>}
 
       {view === "overview" && (
         <nav aria-label="Team options" className="mb-5 grid gap-3 sm:grid-cols-3">
           {[
+            { view: "depth", label: "Depth Chart", description: "Set your personnel and defensive alignment." },
+            { view: "roster", label: "Roster", description: "Manage your team and player information." },
+            { view: "schedule", label: "Schedule", description: "Review games and upcoming opponents." },
             { view: "profiles", label: "Player Profiles", description: "Player details and football evaluations." },
             { view: "weights", label: "Weight Room", description: "Testing numbers and weight room imports." },
             { view: "injuries", label: "Injuries", description: "Player availability and injury status." },

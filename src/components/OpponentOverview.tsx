@@ -1,5 +1,6 @@
 "use client";
 
+import SectionTools from "./SectionTools";
 import Link from "next/link";
 import { useMemo } from "react";
 import type { Opponent } from "@/lib/store";
@@ -17,6 +18,7 @@ export default function OpponentOverview({ opponent: o }: { opponent: Opponent }
   const rows = (items: [string, string][]) => <dl className="mt-3 divide-y divide-line/60 text-sm">{items.map(([label, value]) => <div key={label} className="grid grid-cols-[minmax(100px,0.8fr)_minmax(0,1.2fr)] gap-3 py-2"><dt className="text-dim">{label}</dt><dd className="font-semibold break-words">{value}</dd></div>)}</dl>;
   const more = "mt-auto pt-3 inline-block text-sm font-semibold text-gold hover:underline";
   return <div className="flex flex-col gap-4">
+    <SectionTools section="matchup" opponentId={o.id} />
     <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
       <div><span className="font-bold">{o.name}</span><span className="text-dim"> · Week {o.week ?? "—"} · {o.record || "Record not entered"}</span>{o.isDemo && <span className="ml-2 text-gold text-xs">DEMO DATA</span>}</div>
       <Link href={details} className="text-gold font-semibold hover:underline">Edit Opponent Information</Link>

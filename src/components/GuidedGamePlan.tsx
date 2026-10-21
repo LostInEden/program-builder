@@ -18,6 +18,7 @@ import VisualGamePlan from "@/components/VisualGamePlan";
 import { readyVisualDiagram } from "@/lib/visualGamePlan";
 import PlanningEvidence from "@/components/PlanningEvidence";
 import { productLanguage } from "@/lib/productLanguage";
+import SectionTools from "./SectionTools";
 import PlanNavigation from "@/components/PlanNavigation";
 
 const card = "rounded-xl border border-line bg-card p-5";
@@ -128,7 +129,7 @@ export default function GuidedGamePlan() {
     if (!existing?.topics?.some(p=>p.id.startsWith("workflow:"))) current.updateGamePlan(o.id, { meeting: initializeMeeting(o, existing) });
   }, [hydrated, o]);
   if (!hydrated) return <div className="p-8 text-dim">Loading…</div>;
-  if (!o) return <div className="p-8"><h1 className="text-2xl font-bold">Game Plan</h1><p className="my-3 text-dim">Add an opponent to start a staff meeting.</p><Link href="/matchup" className={button}>Opponent Matchup</Link></div>;
+  if (!o) return <div className="p-8"><h1 className="text-2xl font-bold">Game Plan</h1><SectionTools section="gameplan"/><p className="my-3 text-dim">Add an opponent to start a staff meeting.</p><Link href="/matchup" className={button}>Opponent Matchup</Link></div>;
   const update = (fn: (m: StaffMeeting) => StaffMeeting) => {
     const current = useStore.getState();
     const stored = current.gamePlans.find(g => g.opponentId === o.id);
@@ -142,8 +143,8 @@ export default function GuidedGamePlan() {
   return <div className="px-4 sm:px-6 py-6 max-w-[1500px] mx-auto print-root">
     <div className="no-print flex flex-wrap justify-between items-center gap-3 mb-5"><div><h1 className="text-3xl font-extrabold">Game Plan — {o.name}</h1><p className="text-dim mt-1">Your personnel + your scheme + their tendencies. Develop the answer, then approve it.</p></div><select aria-label="Select opponent" className={input + " max-w-xs"} value={o.id} onChange={e => { setSelected(null); router.push(`/gameplan?id=${e.target.value}`); }}>{state.opponents.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</select></div>
     <h1 className="hidden print:block text-2xl font-bold mb-4">Game Plan — {o.name}</h1>
-    <PlanNavigation id={o.id} active="Plan" /><WorkspaceSaveStatus/>
-    <div className="no-print flex flex-wrap justify-between gap-3 mb-5"><div className="flex gap-2"><Link href={`/gameplan?id=${o.id}`} className={final ? button : primary}>Build Plan</Link><Link href={`/gameplan?id=${o.id}&view=final`} className={final ? primary : button}>Final Plan ({meeting.decisions.length})</Link></div><div className="flex gap-3 text-sm"><Link href={`/matchup?id=${o.id}`} className="text-gold">Opponent Matchup</Link>{plan && <Link href={`/gameplan?id=${o.id}&view=legacy`} className="text-dim">Previous planning workspace</Link>}</div></div>
+    {!final&&<SectionTools section="gameplan" opponentId={o.id}/>}<PlanNavigation id={o.id} active="Plan" /><WorkspaceSaveStatus/>
+    <div className="no-print flex flex-wrap justify-between gap-3 mb-5"><div>{final?<Link href={`/gameplan?id=${o.id}`} className="text-sm font-semibold text-grass">← Game Plans</Link>:<Link href={`/gameplan?id=${o.id}&view=final`} className={button}>Open Final Plan ({meeting.decisions.length}) →</Link>}</div><div className="flex gap-3 text-sm"><Link href={`/matchup?id=${o.id}`} className="text-gold">Opponent Matchup</Link>{plan && <Link href={`/gameplan?id=${o.id}&view=legacy`} className="text-dim">Previous planning workspace</Link>}</div></div>
     {final ? <><div className="flex justify-between gap-3 mb-4"><h2 className="text-2xl font-bold">Final Plan</h2><button onClick={() => window.print()} className={`${button} no-print`}>Print / Save as PDF</button></div>{!meeting.decisions.length && <div className={card}>No approved decisions yet. Work through a priority in Build Plan, then explicitly approve your decision.</div>}<div className="grid md:grid-cols-2 gap-4">{decisionGroups(meeting.decisions).map(group => <section key={group.category} className={`${card} print-card`}><h2 className="font-bold text-gold uppercase text-sm tracking-wider">{group.category}</h2>{group.decisions.map(d => <article key={d.id} className="border-t border-line mt-4 pt-4"><h3 className="font-bold">{d.title} — Plan Set</h3><p className="mt-2 text-sm whitespace-pre-wrap">{decisionText(d)}</p><DiagramPreviews diagrams={d.diagrams}/><DecisionPracticeAction decision={d} opponentId={o.id}/><div className="no-print mt-3 flex gap-3"><button className="text-sm text-gold" onClick={() => openDecision(d)}>Edit / Discuss Again</button><details className="text-sm"><summary className="text-gold cursor-pointer">View Evidence</summary><p className="mt-2 text-dim">{d.evidence}</p></details></div></article>)}</section>)}</div><p className="mt-5 text-sm text-dim">Approved decisions update Call Sheet and Practice Script references automatically. Unaccepted ideas stay in Build Plan.</p></> : <>
       <GamePlanContext opponent={o}/>
       <div className="grid items-start gap-4 lg:grid-cols-[230px_minmax(0,1fr)]">
