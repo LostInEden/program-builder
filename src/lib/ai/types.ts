@@ -19,7 +19,7 @@ export type TeachResult = {
 };
 
 export type SchemeContext = {
-  scheme: { structureName: string; philosophyTitle: string; philosophy: string };
+  scheme: { structureName: string; philosophyTitle: string; philosophy: string; coachingRules?: import("../installLearning").CoachingRule[] };
   concepts: Concept[];
   players: Player[];
   groups: PersonnelGroup[];

@@ -34,6 +34,7 @@ function schemeBlock(ctx: SchemeContext): string[] {
     "",
     `## Saved scheme: ${ctx.scheme.structureName}${ctx.scheme.philosophyTitle ? ` — ${ctx.scheme.philosophyTitle}` : ""}`,
   ];
+  for (const rule of ctx.scheme.coachingRules ?? []) out.push(`Confirmed coach rule [${rule.id}] (${rule.scope === "general" ? "base philosophy" : `ONLY install ${rule.callId}`}): ${cut(rule.text, 700)}`);
   if (ctx.scheme.philosophy) out.push(`Philosophy: ${cut(ctx.scheme.philosophy, 400)}`);
   out.push(...(confirmed.length ? confirmed.map(conceptLine) : ["(no confirmed calls saved yet)"]));
   if (waiting) out.push(`(${waiting} more taught but still unconfirmed — not part of his defense until he confirms)`);

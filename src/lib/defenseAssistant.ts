@@ -7,7 +7,7 @@ export function parseOrganizedAssignment(value:unknown):OrganizedAssignment{
  if(typeof data.unclassified!=='string')throw new Error('Invalid unclassified assignment text.');
  return {duties,unclassified:data.unclassified};
 }
-export async function defenseRequest(job:'organize-assignment'|'review-defense',input:Record<string,unknown>){
+export async function defenseRequest(job:'organize-assignment'|'review-defense'|'suggest-install'|'organize-coaching-rule',input:Record<string,unknown>){
  const response=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({job,input}),signal:AbortSignal.timeout(60000)});
  if(!response.ok)throw new Error('CounterScheme review is unavailable. Your drawing and assignments are unchanged; try again or edit the categories directly.');
  const body=await response.json();return body.result;

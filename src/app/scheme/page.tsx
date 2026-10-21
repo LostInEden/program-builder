@@ -92,7 +92,8 @@ export default function SchemePage() {
 
     <section aria-labelledby="rules-title" className={card}>
       <h2 id="rules-title" className="text-lg font-extrabold">Core Rules</h2>
-      <p className="mt-2 text-sm text-dim">System-wide rules have not been designated separately. Your saved checks and responsibilities remain in their scheme details.</p>
+      {scheme.coachingRules?.some(r=>r.scope==='general')?<ul className="mt-2 space-y-2 text-sm">{scheme.coachingRules.filter(r=>r.scope==='general').map(r=><li key={r.id}>{r.text}</li>)}</ul>:<p className="mt-2 text-sm text-dim">Teach your base principles once. Confirmed rules will guide future install suggestions.</p>}
+      <button className="mt-3 text-sm font-semibold text-grass" onClick={()=>setTeaching(true)}>Teach a base rule</button>
       <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-grass">
         <Link href="/scheme/concepts?kind=adjustment" className="rounded-lg border border-line px-3 py-2 hover:border-grass">View / Edit Checks</Link>
         <Link href="/scheme/terminology" className="rounded-lg border border-line px-3 py-2 hover:border-grass">View / Edit Terminology</Link>

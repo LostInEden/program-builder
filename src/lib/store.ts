@@ -866,7 +866,7 @@ type Store = {
   players: Player[];
   groups: PersonnelGroup[];
   activeGroupId: string;
-  scheme: { structureName: string; philosophyTitle: string; philosophy: string };
+  scheme: { structureName: string; philosophyTitle: string; philosophy: string; coachingRules?: import("./installLearning").CoachingRule[] };
   overrides: Overrides;
   strengthRule: StrengthRule;
   formationTerms: Record<string, string>; // internal name -> coach's label
@@ -940,7 +940,7 @@ type Store = {
   renameGroup: (id: string, name: string) => void;
   removeGroup: (id: string) => void;
 
-  setScheme: (patch: Partial<{ structureName: string; philosophyTitle: string; philosophy: string }>) => void;
+  setScheme: (patch: Partial<{ structureName: string; philosophyTitle: string; philosophy: string; coachingRules?: import("./installLearning").CoachingRule[] }>) => void;
   setSlotOverride: (structureId: string, slotIndex: number, patch: SlotOverride) => void;
   setStrengthRule: (rule: StrengthRule) => void;
   setFormationTerm: (internal: string, label: string) => void;
@@ -1446,7 +1446,7 @@ export const useStore = create<Store>()(
           callSheet?: Record<string, CallSheet>;
           chat?: ChatMessage[];
           lastOpponentId?: string | null;
-          scheme?: { structureName: string; philosophyTitle?: string; philosophy: string };
+          scheme?: { structureName: string; philosophyTitle?: string; philosophy: string; coachingRules?: import("./installLearning").CoachingRule[] };
         };
         if (version < 2 && state?.calls) {
           // v1 offensive looks lived at y 58–86 (OL at 82): remap into the

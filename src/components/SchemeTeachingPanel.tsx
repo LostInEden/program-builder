@@ -10,6 +10,7 @@ import {
 import { useStore, useHydrated } from "@/lib/store";
 
 import { ai, AI_LABEL, type TeachResult } from "@/lib/ai";
+import {TeachBaseRules} from "@/components/InstallLearning";
 import TalkTypeInput from "@/components/TalkTypeInput";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
@@ -78,6 +79,7 @@ export default function SchemeTeachingPanel() {
   return (
       <div className={`${card} grid lg:grid-cols-[1.6fr_1fr] divide-y lg:divide-y-0 lg:divide-x divide-line`}>
         <div className="p-6">
+          <div className="mb-4"><TeachBaseRules /></div>
           <div className="flex items-start gap-3 mb-4">
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-navy text-white font-extrabold text-sm">CS</span>
             <div>

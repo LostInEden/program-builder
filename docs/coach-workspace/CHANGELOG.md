@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-10-21 — Confirmed base philosophy and scoped coaching rules
+- **Asked for:** Teach CounterScheme base philosophy once through short text or voice, and confirm the scope of corrections.
+- **Changed:** Added rule teaching to the existing teaching panel and Full Defense editor. Coaches review the organized rule and explicitly choose base philosophy or this-install-only before saving. Player corrections can be remembered as scoped rules. Core Rules displays confirmed base principles; shared reasoning briefs include rule scope.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Optional coachingRules field extends existing scheme storage without migration or replacement. Duplicate confirmations are deduplicated. When connected reasoning is unavailable, exact coach words remain editable for confirmation; no invented organization is presented.
+
+## 2026-10-21 — Draw, suggest, confirm and reuse install responsibilities
+- **Asked for:** Draw a base install, suggest player responsibilities from saved rules, confirm and reuse.
+- **Changed:** Reused StudioCanvas and Full Defense to request rule-cited responsibilities from drawing coordinates, paths, offensive look, components and terminology. Each player suggestion shows current duties and its rule basis before acceptance. Changed drawing/rules invalidate proposals. Existing approval and game-plan, practice and call-sheet handoffs remain in place.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Local preview offers only exact unambiguous confirmed player rules; new drawing interpretation requires the connected reasoning service. Unknowns and conflicting offline rules remain undetermined, not concerns. Tests cover scoped reuse, persistence, preserved originals, stale suggestions, hidden/ambiguous players and invalid citations. Existing football knowledge-base availability is unchanged.
+
 ## 2026-10-21 — Usable Defense Analysis without connected review
 - **Asked for:** Fix Defensive Analysis in the local preview.
 - **Changed:** Added immediate local checks for visible saved defenders outside the field or overlapping. Connected-review failures no longer replace the entire page with an error. Added a clear local-only scope, honest empty state and direct Full Defense link.
