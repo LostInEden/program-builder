@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-10-20 — Quicker coaching decisions in the existing Game Plan
+- **Asked for:** Less typing, more coaching without changing tabs or page structure.
+- **Changed:** Added saved-call selection, optional responsibility fields, quick discussion questions, and append-to-notes actions. Existing talk/type input remains available.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Coach approval is still required; selecting a call name does not infer or copy assignments.
+
+## 2026-10-20 — Drawing-aware coaching discussion
+- **Asked for:** Discuss a defensive answer without retyping the drawing.
+- **Changed:** Included bounded attached drawing data in the existing Game Plan discussion context. Existing review and coach-approval checks remain intact.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Drawing data is unvalidated context, not proof of football soundness. Dedicated knowledge and validated analysis are still incomplete.
+
+## 2026-10-20 — Purposeful expandable football diagrams
+- **Asked for:** Use small relevant drawings with expand and edit paths.
+- **Changed:** Added read-only enlargement to shared plan/practice/report previews and opponent-look cards; showed only linked scheme drawings in Analysis. Saved-diagram selection now previews the chosen drawing before attachment; reference requests support Talk/Type.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing StudioCanvas editing routes, stored artwork, navigation and page structure are preserved. Team, settings and text/table-oriented pages were not given decorative diagrams.
+
 ## 2026-10-19 — Silver workspace with Ohio State Scarlet accents
 - **Asked for:** Silver Grey as the dominant background, charcoal navigation, light silver cards, medium silver secondary panels and Ohio State Scarlet accents.
 - **Changed:** Updated shared theme colors and subtle gradients, native controls, text contrast, status text and hover states. Navigation remains charcoal with soft-white text.

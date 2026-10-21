@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Star, AlertTriangle, Wrench, ChevronRight } from "lucide-react";
 import { useStore, useHydrated, type ConceptKind } from "@/lib/store";
 import { computeFindings, type Finding, type Status } from "@/lib/analyze";
+import ExpandableDiagram from "@/components/ExpandableDiagram";
+import {diagramConcept} from "@/lib/schemeDiagrams";
 import SchemeTabs from "@/components/SchemeTabs";
 
 const card = "rounded-xl border border-line bg-card shadow-sm";
@@ -66,7 +68,7 @@ const categories: { key: ConceptKind | "team"; label: string }[] = [
 
 export default function AnalysisPage() {
   const hydrated = useHydrated();
-  const { groups, activeGroupId, players, scheme, overrides, concepts } = useStore();
+  const { groups, activeGroupId, players, scheme, overrides, concepts, calls } = useStore();
   const [category, setCategory] = useState<ConceptKind | "team">("front");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
@@ -78,6 +80,8 @@ export default function AnalysisPage() {
   });
   const selected = visible.find(f => f.id === selectedId) ?? visible[0];
   const selectedConcept = active.find(c => selected?.id === `scheme-${c.id}`);
+  const linkedDrawing = selectedConcept ? calls.find(c=>diagramConcept(c,concepts)?.id===selectedConcept.id) : undefined;
+  const drawingStructure = groups.find(g=>g.id===activeGroupId)?.structureId ?? "3-4";
   const categoryLabel = categories.find(c => c.key === category)!.label;
   const choose = (id: string) => {
     setSelectedId(id);
@@ -104,6 +108,7 @@ export default function AnalysisPage() {
       </aside>
       <div className="min-w-0">
         {selectedConcept && <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-dim">{selectedConcept.isBase ? "Base scheme" : "Active scheme"} · {categoryLabel}</p><Link href={`/scheme/concepts?kind=${selectedConcept.kind}&id=${encodeURIComponent(selectedConcept.id)}`} className="text-sm font-semibold text-grass">Open in Scheme Library →</Link></div>}
+        {linkedDrawing&&<div className="mb-3"><ExpandableDiagram call={linkedDrawing} structureId={drawingStructure}/><p className="mt-1 text-xs text-dim">Saved scheme drawing · assessment uses saved rules and ratings.</p></div>}
         {selected ? <FindingDetails key={selected.id} f={selected} accent={buckets.find(b => b.key === selected.status)!.accent} /> : <section id="finding-details" className={`${card} p-6 text-sm text-dim`}>Choose another category or add a confirmed scheme in Scheme Library.</section>}
       </div>
     </div>
