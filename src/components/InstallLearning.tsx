@@ -8,9 +8,10 @@ import {applicableRules,parseInstallProposal,exactRuleSuggestions,acceptSuggesti
 import TalkTypeInput from './TalkTypeInput';
 const button='rounded-lg border border-line px-3 py-2 text-sm font-semibold disabled:opacity-50';
 
-export function TeachBaseRules({call,role,duties}:{call?:Call;role?:string;duties?:Duties}){
+export function TeachBaseRules({call,role,duties,embedded=false,value,onChange}:{call?:Call;role?:string;duties?:Duties;embedded?:boolean;value?:string;onChange?:(value:string)=>void}){
  const {scheme,setScheme}=useStore();
- const [text,setText]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const [localText,setLocalText]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const text=value??localText,setText=onChange??setLocalText;
  const [proposal,setProposal]=useState<{text:string;scope:'general'|'call';why:string;duties?:Duties}|null>(null);
  const words=text.trim()||(role&&duties?`${role}: ${responsibilityText(duties)}`:'');
  async function organize(){
@@ -23,7 +24,8 @@ export function TeachBaseRules({call,role,duties}:{call?:Call;role?:string;dutie
   }catch{setProposal({text:words,scope:call?'call':'general',why:'Connected organization unavailable. These are your exact words; choose their scope before confirming.',duties:captured});}
   finally{setBusy(false);}
  }
- return <details className="rounded-lg border border-line bg-card p-3"><summary className="cursor-pointer font-semibold text-sm">{role?'Remember this correction':'Teach base philosophy'}</summary>
+ const Wrapper=embedded?'div':'details';
+ return <Wrapper className={embedded?'':'rounded-lg border border-line bg-card p-3'}>{!embedded&&<summary className="cursor-pointer font-semibold text-sm">{role?'Remember this correction':'Teach base philosophy'}</summary>}
   <p className="mt-2 text-xs text-dim">Short rules for run fits, alignments, coverage, pressures and checks. Confirmed rules inform future suggestions; they never rewrite saved installs.</p>
   <TalkTypeInput label={role?`${role}: correction or rule`:'Tell CounterScheme your defensive rule'} value={text} disabled={busy} onChange={v=>{setText(v);setProposal(null);}}/>
   <button className={`${button} mt-2`} disabled={busy||!words} onClick={()=>void organize()}>{busy?'Organizing…':'Review rule'}</button>
@@ -35,7 +37,7 @@ export function TeachBaseRules({call,role,duties}:{call?:Call;role?:string;dutie
    }}>Confirm rule & scope</button></div>}
   {message&&<p role="status" className="mt-2 text-xs">{message}</p>}
   <details className="mt-3 text-xs"><summary>Confirmed rules ({(scheme.coachingRules??[]).length})</summary>{(scheme.coachingRules??[]).map(r=><p key={r.id} className="mt-2"><strong>{r.scope==='general'?'Base rule':'Install exception'}:</strong> {r.text}</p>)}</details>
- </details>;
+ </Wrapper>;
 }
 
 export function InstallSuggestions({call,labels,onApply,onSelect}:{call:Call;labels:string[];onApply:(c:Call)=>void;onSelect:(slot:number)=>void}){

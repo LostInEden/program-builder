@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-21 — One teaching area on My Scheme
+- **Asked for:** Remove duplicate Teach CounterScheme boxes.
+- **Changed:** Consolidated the overview's scheme-item and base-philosophy teaching into one panel with a Teaching selector and one visible Talk/Type input. Switching purpose retains the draft text. Existing rule confirmation and scheme-item review remain available.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing installs and saved teaching data unchanged. Verified both input modes in the local preview; lint and build passed.
+
 ## 2026-10-21 — Overview-first section navigation
 - **Asked for:** Clicking a main section opens its overview; no subtabs, with tools accessible through the overview.
 - **Changed:** Main navigation now uses direct section links instead of dropdown menus. Removed sidebar children and My Scheme, scouting and game-plan subtab rows. Added overview tool cards for team pages, Scheme Library, Defense Analysis, Play Art, scouting/personnel/situations, Call Sheet, Practice Script and Self Scout. Detail pages retain simple return links.

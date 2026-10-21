@@ -30,6 +30,7 @@ export default function SchemeTeachingPanel() {
     concepts, confirmConcept, removeConcept, teachLog,
   } = useStore();
   const [teach, setTeach] = useState("");
+  const [mode,setMode]=useState("scheme");
   const [busy, setBusy] = useState(false);
   const [reply, setReply] = useState<{ summary: string; actions?: { label: string; href: string }[] } | null>(null);
   const [proposal, setProposal] = useState<TeachResult | null>(null);
@@ -79,14 +80,19 @@ export default function SchemeTeachingPanel() {
   return (
       <div className={`${card} grid lg:grid-cols-[1.6fr_1fr] divide-y lg:divide-y-0 lg:divide-x divide-line`}>
         <div className="p-6">
-          <div className="mb-4"><TeachBaseRules /></div>
           <div className="flex items-start gap-3 mb-4">
             <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-navy text-white font-extrabold text-sm">CS</span>
             <div>
               <div className="text-lg font-extrabold">Teach CounterScheme</div>
-              <p className="text-sm text-dim">Explain your defense. Review the proposed scheme items before saving.</p>
+              <p className="text-sm text-dim">Explain your defense. Review and confirm before saving.</p>
             </div>
           </div>
+          <label className="mb-3 flex items-center gap-2 text-sm">Teaching
+            <select aria-label="Teaching type" disabled={busy||!!proposal} value={mode} onChange={e=>setMode(e.target.value)} className="rounded-lg border border-line bg-panel px-3 py-2">
+              <option value="scheme">Scheme items</option><option value="philosophy">Base philosophy</option>
+            </select>
+          </label>
+          {mode==='philosophy'?<TeachBaseRules embedded value={teach} onChange={setTeach}/>:<>
           <div className="rounded-xl border border-line bg-white p-3">
             <TalkTypeInput value={teach} onChange={setTeach} label="Teach CounterScheme how your defense works" disabled={busy || !!proposal} />
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -135,6 +141,7 @@ export default function SchemeTeachingPanel() {
           <p className="mt-3 text-[11px] text-dim">
             Engine: {AI_LABEL}. Recognizes a limited set of scheme statements. Only the items shown in your review are saved, after you approve them. Unrecognized details need correction or manual entry.
           </p>
+          </>}
         </div>
 
         <div className="p-6">
