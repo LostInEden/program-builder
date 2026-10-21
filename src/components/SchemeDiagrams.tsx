@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useStore, type Concept, type ConceptKind } from "@/lib/store";
 import { diagramConcept, diagramSection } from "@/lib/schemeDiagrams";
+import ExpandableDiagram from "./ExpandableDiagram";
+import Link from "next/link";
 import PlayCardSVG from "./PlayCardSVG";
 
 export default function SchemeDiagrams({ concept, kind }: { concept?: Concept; kind: ConceptKind }) {
@@ -20,7 +22,8 @@ export default function SchemeDiagrams({ concept, kind }: { concept?: Concept; k
   return <section className="rounded-xl border border-line bg-card p-5 shadow-sm">
     <div className="flex items-center justify-between gap-3"><h3 className="font-bold">{concept ? "Diagrams" : "Saved Play Art"}</h3>
       <button onClick={create} className="text-sm font-semibold text-grass">Draw {concept ? concept.name : "a diagram"} →</button></div>
-    {!diagrams.length && <p className="mt-2 text-sm text-dim">{concept ? "No diagram linked yet. Draw this scheme item, or link an existing drawing in Play details." : "No drawings in this category yet."}</p>}
+    {concept?.diagram&&<div className="mt-3"><ExpandableDiagram call={concept.diagram.call} structureId={concept.diagram.structureId}/><p className="text-xs text-dim">Component drawing and categorized responsibilities saved from Full Defense.</p>{concept.diagram.sourceCallId&&<Link href={`/scheme/concepts?view=full-calls&play=${concept.diagram.sourceCallId}`} className="text-sm font-semibold text-grass">Open source defense →</Link>}</div>}
+    {!diagrams.length && !concept?.diagram && <p className="mt-2 text-sm text-dim">{concept ? "No diagram linked yet. Draw this scheme item, or link an existing drawing in Play details." : "No drawings in this category yet."}</p>}
     <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{diagrams.map(call => <button key={call.id} onClick={() => {
       if (concept && !call.schemeConceptId) updateCall(call.id, { schemeConceptId: concept.id });
       open(call.id);

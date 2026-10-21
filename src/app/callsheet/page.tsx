@@ -12,7 +12,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import PlanNavigation from "@/components/PlanNavigation";
-import { DiagramPreviews } from "@/components/WorkflowDiagrams";
+import WorkflowDiagrams, { DiagramPreviews } from "@/components/WorkflowDiagrams";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
 import {
@@ -276,6 +276,8 @@ function CallSheetInner() {
         </div>
       )}
 
+      <div className="no-print mt-4"><WorkflowDiagrams diagrams={sheet.diagrams??[]} onChange={diagrams=>updateCallSheet(o.id,{diagrams})} opponentId={o.id} context="Game-day defensive calls"/></div>
+      <div className="hidden print:block"><DiagramPreviews diagrams={sheet.diagrams??[]}/></div>
       {!!plan?.meeting?.decisions.some(d=>d.diagrams?.length)&&<details className="no-print mt-4 rounded-lg border border-line bg-card p-3"><summary className="cursor-pointer text-sm font-semibold">Approved game-plan diagrams</summary>{plan.meeting.decisions.filter(d=>d.diagrams?.length).map(d=><section key={d.id} className="mt-3"><h3 className="font-bold text-sm">{d.title}</h3><DiagramPreviews diagrams={d.diagrams}/></section>)}<Link href={`/gameplan?id=${o.id}&view=final`} className="text-sm underline">Open printable visual report</Link></details>}
 
       <div className="no-print mt-5 flex flex-wrap items-center gap-3 text-xs text-dim">

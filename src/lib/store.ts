@@ -1,4 +1,5 @@
 "use client";
+import {organizeDefense} from "./schemeWorkflow";
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -109,6 +110,7 @@ export type Responsibility = { id: string; role: string; job: string };
 export type ConceptStatus = "active" | "backPocket";
 
 export type Concept = {
+  diagram?: import("./schemeWorkflow").ComponentDrawing;
   id: string;
   kind: ConceptKind;
   name: string;
@@ -285,7 +287,7 @@ export type PendingUpdate = {
   changes: PlanChange[];
 };
 
-export type DiagramAttachment = { id: string; call: Call; structureId: string; visual?: {
+export type DiagramAttachment = { sourceDefense?: {id:string;revision:string}; id: string; call: Call; structureId: string; visual?: {
  opponentLook: Call; source: string; confirmed: boolean;
  review?: { revision: string; text: string; kind: "limited" | "counterscheme" };
 } };
@@ -363,6 +365,7 @@ export type CallSheetSection = {
   order: number;
 };
 export type CallSheet = {
+  diagrams?: DiagramAttachment[];
   sections: CallSheetSection[];
   /** How dense the sheet prints. Every coach organizes his differently. */
   columns: 2 | 3;
@@ -414,6 +417,7 @@ export type Overrides = Record<string, Record<number, SlotOverride>>;
 export type PlaybookSection = "Fronts" | "Coverages" | "Pressures" | "Checks & Adjustments";
 
 export type Call = {
+  structureId?: string;
   id: string;
   fullDefense?: import("./fullDefense").FullDefense;
   schemeConceptId?: string; // stable link to a Scheme Library item
@@ -945,6 +949,7 @@ type Store = {
 
   addCall: (section: PlaybookSection) => string;
   updateCall: (id: string, patch: Partial<Call>) => void;
+  saveFullDefense: (call: Call, labels: string[]) => Call;
   duplicateCall: (id: string) => void;
   deleteCall: (id: string) => void;
   setActiveCall: (id: string | null) => void;
@@ -1120,7 +1125,9 @@ export const useStore = create<Store>()(
       resetCallSheet: (opponentId) =>
         set((s) => {
           const callSheet = { ...s.callSheet };
-          delete callSheet[opponentId];
+          const diagrams=callSheet[opponentId]?.diagrams;
+          if(diagrams?.length)callSheet[opponentId]={columns:2,sections:[],diagrams};
+          else delete callSheet[opponentId];
           return { callSheet };
         }),
 
@@ -1310,6 +1317,7 @@ export const useStore = create<Store>()(
               id,
               section,
               name: "New Call",
+              structureId: s.groups.find(g=>g.id===s.activeGroupId)?.structureId,
               offForm: "",
               offConcept: "",
               offLook: look(defaultPresetName),
@@ -1323,6 +1331,11 @@ export const useStore = create<Store>()(
           activeCallId: id,
         }));
         return id;
+      },
+      saveFullDefense: (call, labels) => {
+        const result=organizeDefense(call,get().concepts,labels,uid);
+        set(s=>({concepts:result.concepts,calls:s.calls.some(c=>c.id===call.id)?s.calls.map(c=>c.id===call.id?result.call:c):[...s.calls,result.call]}));
+        return result.call;
       },
       updateCall: (id, patch) =>
         set((s) => ({ calls: s.calls.map((c) => (c.id === id ? { ...c, schemeConceptId: (c.fullDefense || patch.fullDefense) ? c.schemeConceptId : c.schemeConceptId ?? diagramConcept(c, s.concepts)?.id, ...patch } : c)) })),

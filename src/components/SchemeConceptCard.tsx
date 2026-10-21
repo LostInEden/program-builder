@@ -9,8 +9,8 @@ import PlayCardSVG from "./PlayCardSVG";
 
 export default function SchemeConceptCard({ concept: c, href }: { concept: Concept; href: string }) {
   const { calls, concepts, groups, activeGroupId, overrides } = useStore();
-  const diagram = calls.find(call => diagramConcept(call, concepts)?.id === c.id);
-  const structureId = groups.find(g => g.id === activeGroupId)?.structureId ?? "3-4";
+  const diagram = c.diagram?.call ?? calls.find(call => diagramConcept(call, concepts)?.id === c.id);
+  const structureId = c.diagram?.structureId ?? groups.find(g => g.id === activeGroupId)?.structureId ?? "3-4";
   return <Link href={href} className="overflow-hidden rounded-xl border border-line bg-card transition hover:border-grass focus-visible:outline-2 focus-visible:outline-grass">
     <div className="flex flex-wrap items-center justify-between gap-2 p-3">
       <h2 className="font-extrabold">{c.name}</h2>

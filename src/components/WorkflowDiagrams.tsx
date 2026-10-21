@@ -1,5 +1,7 @@
 "use client";
-import {availableDefense} from "@/lib/fullDefense";
+import {approvedDefense,attachApprovedDefense,defenseRevision,availableDefense} from "@/lib/fullDefense";
+import Link from "next/link";
+import {slotLabelOf} from "@/lib/store";
 import { useState } from 'react';
 import { useStore, type DiagramAttachment } from '@/lib/store';
 import ExpandableDiagram from './ExpandableDiagram';
@@ -7,12 +9,15 @@ import TalkTypeInput from './TalkTypeInput';
 import ChatReferenceDiagram from './ChatReferenceDiagram';
 
 export function DiagramPreviews({diagrams=[]}:{diagrams?:DiagramAttachment[]}) {
+  const {overrides}=useStore();
   return <div className="grid sm:grid-cols-2 gap-2">{diagrams.map(d=><figure key={d.id} className={`rounded border border-line bg-white p-2 break-inside-avoid ${d.visual?'sm:col-span-2':''}`}>
     <figcaption className="text-xs font-semibold">{d.call.name}</figcaption>
     <div className={d.visual?'grid sm:grid-cols-2 gap-2':''}>
       {d.visual&&<div><p className="text-xs text-dim mt-1">Opponent look</p><ExpandableDiagram call={d.visual.opponentLook} structureId={d.structureId}/></div>}
       <div>{d.visual&&<p className="text-xs font-semibold mt-1">Our defensive answer</p>}<ExpandableDiagram call={d.call} structureId={d.structureId}/></div>
     </div>
+    {d.sourceDefense&&<p className="text-xs text-dim no-print">Saved defense · <Link className="text-grass underline" href={`/scheme/concepts?view=full-calls&play=${d.sourceDefense.id}`}>Open source</Link></p>}
+    {Object.keys(d.call.assignments).length>0&&<details className="mt-2 text-xs print:block"><summary className="font-semibold">Player responsibilities</summary>{Object.entries(d.call.assignments).filter(([,a])=>a.trim()).map(([i,a])=><p className="whitespace-pre-wrap py-1" key={i}><strong>{slotLabelOf(overrides,d.structureId,Number(i))}:</strong> {a}</p>)}</details>}
     {d.visual&&<><p className="text-xs text-dim">{d.visual.source}</p><p className="text-xs text-dim whitespace-pre-wrap">{d.call.notes}</p><p className="text-xs text-dim">{d.call.defFront} · {d.call.defCoverage}</p><p className="text-xs text-dim whitespace-pre-wrap mt-1">{d.visual.review?.text}</p><p className="text-xs text-dim">{d.visual.confirmed?'Coach-reviewed drawing':'Unapproved draft'}; automated checks do not certify soundness.</p></>}
   </figure>)}</div>;
 }
@@ -28,8 +33,9 @@ export default function WorkflowDiagrams({diagrams=[],onChange,opponentId,contex
   const message={id:'workspace-diagram',role:'counterscheme' as const,text:context,ts:0,context:{opponentId}};
   return <details className="mt-3 text-sm"><summary className="cursor-pointer font-semibold text-grass">Diagrams ({diagrams.length})</summary>
     <DiagramPreviews diagrams={diagrams}/>
+    {diagrams.filter(d=>d.sourceDefense).map(d=>{const source=state.calls.find(c=>c.id===d.sourceDefense!.id);return source&&defenseRevision(source)!==d.sourceDefense!.revision?<div key={d.id} className="no-print text-xs my-2">Source defense changed. This saved version is preserved.{approvedDefense(source)&&<button className="ml-2 underline text-grass" onClick={()=>attach({...attachApprovedDefense(source),id:d.id})}>Use latest approved version</button>}</div>:null;})}
     {diagrams.filter(d=>!d.visual).map(d=><div key={d.id} className="no-print flex items-center gap-2 my-1"><span className="text-xs">{d.call.name}</span><ChatReferenceDiagram message={message} question={d.call.name} initialDiagram={d} onAttach={attach} compact/><button className="text-xs text-dim" onClick={()=>onChange(diagrams.filter(x=>x.id!==d.id))}>Detach</button></div>)}
-    <div className="no-print mt-2 flex flex-wrap gap-2"><select aria-label="Existing diagram" value={selected} onChange={e=>setSelected(e.target.value)} className="rounded border border-line bg-white p-2 text-xs"><option value="">Choose saved diagram…</option>{state.calls.filter(availableDefense).map(c=><option key={c.id} value={`call:${c.id}`}>{c.name} · {c.section}</option>)}{available.map(d=><option key={d.id} value={`attachment:${d.id}`}>{d.call.name} · opponent</option>)}</select><button className="rounded border border-line px-2 text-xs" disabled={!selected} onClick={()=>{const c=state.calls.find(c=>`call:${c.id}`===selected); const a=available.find(a=>`attachment:${a.id}`===selected); if(c||a)attach({id:crypto.randomUUID(),call:structuredClone(c??a!.call),structureId:a?.structureId??c?.fullDefense?.structureId??structureId});setSelected('');}}>Attach copy</button></div>
+    <div className="no-print mt-2 flex flex-wrap gap-2"><select aria-label="Existing diagram" value={selected} onChange={e=>setSelected(e.target.value)} className="rounded border border-line bg-white p-2 text-xs"><option value="">Choose saved diagram…</option>{state.calls.filter(availableDefense).map(c=><option key={c.id} value={`call:${c.id}`}>{c.name} · {c.fullDefense?'Full Defense':c.section}</option>)}{available.map(d=><option key={d.id} value={`attachment:${d.id}`}>{d.call.name} · opponent</option>)}</select><button className="rounded border border-line px-2 text-xs" disabled={!selected} onClick={()=>{const c=state.calls.find(c=>`call:${c.id}`===selected); const a=available.find(a=>`attachment:${a.id}`===selected); if(c?.fullDefense)attach(attachApprovedDefense(c));else if(c||a)attach({id:crypto.randomUUID(),call:structuredClone(c??a!.call),structureId:a?.structureId??structureId});setSelected('');}}>Attach copy</button></div>
     {(chosenCall||chosenAttachment)&&<div className="mt-2"><ExpandableDiagram call={chosenCall??chosenAttachment!.call} structureId={chosenAttachment?.structureId??chosenCall?.fullDefense?.structureId??structureId}/></div>}
     <details className="no-print mt-3"><summary className="cursor-pointer text-xs text-dim">Request a reference drawing</summary><form className="no-print grid gap-2 mt-2" onSubmit={e=>{e.preventDefault();setRequest(prompt.trim());}}><TalkTypeInput value={prompt} onChange={setPrompt} label="Describe the look in a short phrase"/><button disabled={!prompt.trim()} className="rounded border border-line px-2 text-xs">Prepare diagram</button></form>
     {request&&<div className="no-print"><ChatReferenceDiagram key={request} message={message} question={request} onAttach={attach} contextText={context}/></div>}

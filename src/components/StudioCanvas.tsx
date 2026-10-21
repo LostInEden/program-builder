@@ -116,6 +116,7 @@ export default function StudioCanvas({
   onSelect,
   onUpdate,
   onCopy,
+  showDefenderAppearance = true,
 }: {
   call: Call;
   structureId: string;
@@ -126,6 +127,7 @@ export default function StudioCanvas({
   onSelect: (s: Selection) => void;
   onUpdate?: (id: string, patch: Partial<Call>) => void;
   onCopy?: () => void;
+  showDefenderAppearance?: boolean;
 }) {
   const savedUpdateCall = useStore((s) => s.updateCall);
   const updateCall = onUpdate ?? savedUpdateCall;
@@ -954,7 +956,7 @@ export default function StudioCanvas({
             <Plus size={13} />
           </button>
         )}
-        {tool === "select" && menuPoint && (menuPlayer || selLineObj) && !panMode && <PlayArtObjectMenu
+        {tool === "select" && (showDefenderAppearance || selection?.kind !== "def") && menuPoint && (menuPlayer || selLineObj) && !panMode && <PlayArtObjectMenu
           key={selectedOff?.id ?? (selectedDef !== undefined ? `def:${selectedDef}` : selLineObj?.id)}
           position={[(menuPoint[0] - cameraLeft) * scale, (menuPoint[1] - cameraTop) * scale]} bounds={[fieldWidth, fieldHeight]}
           player={menuPlayer} line={selLineObj ?? undefined} onPlayerChange={patchPlayer} onLineChange={patchLine}

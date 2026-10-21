@@ -64,14 +64,14 @@ export function defaultCallSheet(): CallSheet {
  */
 export function withDefaults(saved: CallSheet | undefined): CallSheet {
   const base = defaultCallSheet();
-  if (!saved?.sections?.length) return base;
+  if (!saved?.sections?.length) return {...base,diagrams:saved?.diagrams};
   const have = new Set(saved.sections.map((s) => s.id));
   const missing = base.sections.filter((s) => !have.has(s.id));
   const sections = [...saved.sections, ...missing.map((s, i) => ({ ...s, order: saved.sections.length + i }))]
     .slice()
     .sort((a, b) => a.order - b.order)
     .map((s, i) => ({ ...s, order: i }));
-  return { columns: saved.columns === 3 ? 3 : 2, sections };
+  return { columns: saved.columns === 3 ? 3 : 2, sections, diagrams:saved.diagrams };
 }
 
 /** Renumber after a move so `order` is always 0..n-1 in list order. */

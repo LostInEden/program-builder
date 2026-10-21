@@ -74,7 +74,7 @@ function ConceptsInner() {
         <Link href="/scheme/concepts?view=full-calls" aria-current={fullCalls ? 'page' : undefined} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${fullCalls ? 'border-grass bg-grass/10 text-grass' : 'border-line text-dim'}`}>Full Defense</Link>
         {(Object.keys(KIND_LABEL) as ConceptKind[]).map(kind => <Link key={kind} href={`/scheme/concepts?kind=${kind}`} aria-current={!fullCalls && kindParam === kind ? 'page' : undefined} className={`rounded-lg border px-3 py-2 text-sm font-semibold ${!fullCalls && kindParam === kind ? 'border-grass bg-grass/10 text-grass' : 'border-line text-dim'}`}>{KIND_LABEL[kind]}</Link>)}
       </nav>
-      {fullCalls ? <FullDefenseLibrary /> : <>
+      {fullCalls ? <FullDefenseLibrary key={sp.get("play")??"library"} initialId={sp.get("play")??undefined} /> : <>
       <h2 className="mb-4 text-xl font-bold">{KIND_LABEL[kindParam]}</h2>
       {isNew && <div className={`${card} mb-5 p-4`}>
         <label className="text-sm font-semibold" htmlFor="new-concept-name">New {KIND_LABEL[newKind].replace(/s$/, '')}</label>

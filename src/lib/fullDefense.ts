@@ -3,22 +3,27 @@ export const responsibilityLabels = { alignment:'Alignment', runFit:'Run fit', c
 export type Duties = Partial<Record<keyof typeof responsibilityLabels,string>>;
 export type FullDefense = {
  structureId:string;
+ groupId?:string;
+ componentNames?:Partial<Record<ConceptKind,string>>;
+ objectCategories?:Record<string,ConceptKind>;
+ warnings?:string[];
  duties:Record<number,Duties>;
  legacyAssignments?:Record<number,string>;
+ additionalAdjustments?:Concept[];
  components:Partial<Record<ConceptKind,Concept>>;
  review?:{revision:string;text:string};
  approvedRevision?:string;
 };
 export function defenseRevision(call:Call):string {
  const copy=structuredClone(call);
- if(copy.fullDefense){delete copy.schemeConceptId;delete copy.fullDefense.review;delete copy.fullDefense.approvedRevision;}
+ if(copy.fullDefense){delete copy.schemeConceptId;delete copy.fullDefense.warnings;delete copy.fullDefense.review;delete copy.fullDefense.approvedRevision;}
  return JSON.stringify(copy);
 }
 export const approvedDefense=(call:Call)=>!!call.fullDefense?.approvedRevision&&call.fullDefense.approvedRevision===defenseRevision(call);
 export const availableDefense=(call:Call)=>!call.fullDefense||approvedDefense(call);
 export const matchingComponent=(concepts:Concept[],kind:ConceptKind,name:string)=>concepts.filter(c=>c.kind===kind&&c.name.trim().toLowerCase()===name.trim().toLowerCase());
 export function responsibilityText(d:Duties){return Object.entries(responsibilityLabels).filter(([k])=>d[k as keyof Duties]?.trim()).map(([k,label])=>`${label}: ${d[k as keyof Duties]}`).join('\n');}
-export function changedComponents(call:Call,concepts:Concept[]){return Object.values(call.fullDefense?.components??{}).filter(c=>JSON.stringify(c)!==JSON.stringify(concepts.find(x=>x.id===c.id)));}
+export function changedComponents(call:Call,concepts:Concept[]){return [...Object.values(call.fullDefense?.components??{}),...(call.fullDefense?.additionalAdjustments??[])].filter(c=>JSON.stringify(c)!==JSON.stringify(concepts.find(x=>x.id===c.id)));}
 
 /** Keep imported free-form assignments intact while adding categorized responsibilities. */
 export function setDuty(call:Call,slot:number,key:keyof Duties,value:string):Partial<Call>{
@@ -41,4 +46,9 @@ export function applyComponentRules(call:Call,concept:Concept,labels:string[]):P
   assignments[i]=[legacyAssignments[i],responsibilityText(fd.duties[i]??{})].filter(Boolean).join('\n');
  }
  return {assignments,fullDefense:{...fd,legacyAssignments}};
+}
+
+export function attachApprovedDefense(call:Call):import('./store').DiagramAttachment{
+ if(!approvedDefense(call))throw new Error('Review and approve this defense before using it.');
+ return {id:crypto.randomUUID(),call:structuredClone(call),structureId:call.fullDefense!.structureId,sourceDefense:{id:call.id,revision:defenseRevision(call)}};
 }

@@ -6,6 +6,7 @@ import { ChevronRight, Shield, Layers, Zap, SlidersHorizontal } from "lucide-rea
 import { useStore, useHydrated, type ConceptKind } from "@/lib/store";
 import SchemeTeachingPanel from "@/components/SchemeTeachingPanel";
 import PersonnelContext from "@/components/PersonnelContext";
+import FullDefenseLibrary from "@/components/FullDefenseLibrary";
 import SchemeTabs from "@/components/SchemeTabs";
 
 const card = "rounded-xl border border-line bg-card p-5 sm:p-6";
@@ -34,6 +35,7 @@ export default function SchemePage() {
       <button onClick={() => setTeaching(!teaching)} aria-expanded={teaching} className="mt-3 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-gold">{teaching ? "Close Teaching" : "Teach CounterScheme"}{pending ? ` · ${pending} to review` : ""}</button>
     </header>
     <SchemeTabs />
+    <FullDefenseLibrary />
     {teaching && <div className="mb-5"><SchemeTeachingPanel /></div>}
     <details className="mb-5 rounded-lg border border-line bg-card">
       <summary className="cursor-pointer px-4 py-3 text-sm font-semibold">Scheme tools & review{pending > 0 ? ` · ${pending} to confirm` : ""}</summary>

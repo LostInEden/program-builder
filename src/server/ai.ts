@@ -11,7 +11,7 @@ import { BLUEPRINT_SCHEMA, renderBlueprint } from "@/lib/footballBlueprint";
 import { referenceBlueprint } from "@/lib/referenceCatalog";
 import { COACH_KNOWLEDGE } from "./coachKnowledge";
 
-export const AI_JOBS = ["chat", "ask", "teach", "diagram"] as const;
+export const AI_JOBS = ["chat", "ask", "teach", "diagram", "organize-assignment", "review-defense"] as const;
 export type AiJob = (typeof AI_JOBS)[number];
 
 export const PERSONA = `You are CounterScheme, the defensive assistant inside a football coaching app built for a Tennessee high-school head coach and his staff. You talk coach-to-coach: plain, short, direct — answer first, then the reason. No hype, no bullet-point essays unless he asks for a breakdown.
@@ -29,6 +29,8 @@ Hard rules:
 - Stay on football and this app. If the coach explains a football term, treat it as his definition.`;
 
 const JOB_RULES: Record<AiJob, string> = {
+  "organize-assignment": `Organize the coach's exact short assignment into alignment, runFit, coverage, pressure and checks. Preserve terminology and meaning. Do not invent, correct or add football duties. Empty string for a category not supplied. Put ambiguous or unmapped words in unclassified. This is a proposal the coach will review before applying; never claim it was saved.`,
+  "review-defense": `Evaluate the ENTIRE supplied defensive play with its diagram, categorized and verbatim assignments, saved component snapshots, personnel package and installed system. Address alignment, gap/run-fit responsibilities, pass coverage, pressure replacement, checks/adjustments and personnel fit. Identify specific evidence for each concern, explain its consequence, and suggest a concise correction using installed terminology. Conflicting paths/assignments and incompatible components merit attention. Do not infer undocumented responsibilities solely from markers or pretend unknown personnel attributes are known. Distinguish missing evidence from unsoundness. Never certify soundness. Return short findings, each with area, concern, evidence, correction; include unknowns and a short summary. Coordinates and structure are provided; offense attacks down-screen. Never modify coach assignments.`,
   diagram: `Translate the requested football reference into football-v1 assignments, never SVG/pixel coordinates. Respect the coach's request above the supplied assistant answer. Saved facts are authoritative for their scheme; a generic concept may use a conventional example only with its assumptions stated. A custom name without alignments/assignments MUST return one focused question and empty arrays. Do not invent what our/my/tagged call means. If a requested assignment cannot be represented faithfully, ask instead of silently substituting.
 Use a formation preset (offense array empty), none for defense only, or custom with explicit offensive alignments. All widths are signed YARDS from ball, screen right positive; depth is yards beyond LOS, offense negative, defense positive. Offense attacks down-screen. mirror flips a preset, not custom coordinates. Screen right is offense's left: disclose screen-side examples. Labels match preset: RT RG C LG LT X H Y Z Q T (I-form uses F, empty W). All labels unique per side, max 2 characters. Use C1/C2 for corners.
 ROUTES use player label, named primitive, depth in yards beyond LOS, width NONNEGATIVE lateral yards traveled. inward means toward middle, outward means toward nearest sideline. vertical: straight to depth; hitch: stem then settle 1 yard back; snag: diagonal inside and settle; slant: 1-yard stem then inside; out/in/cross: stem to depth then lateral break; corner/post: stem to depth then diagonal 4 yards deeper outward/inward; flat: release outside to depth; wheel: flat then up to depth; comeback: stem then outside 3 yards back. Do not use a primitive if its direction doesn't match the request. Supply explicit paths instead. Check width against receiver split: X=8 H=20 Y=80 Z=93 in 2x2; trips H=72 Y=80 Z=92; bunch H=70 Y=74 Z=78. Field width 53.33 yards; default ball centered. Route endpoint must stay on field, maximum 19 yards beyond LOS. If deeper routes requested, ask to shorten displayed reference instead of clipping.
@@ -61,6 +63,8 @@ const str = { type: "string" } as const;
 const nstr = { type: ["string", "null"] } as const;
 
 const SCHEMAS: Record<AiJob, object> = {
+  "organize-assignment": {type:"object",additionalProperties:false,required:["alignment","runFit","coverage","pressure","checks","unclassified"],properties:{alignment:str,runFit:str,coverage:str,pressure:str,checks:str,unclassified:str}},
+  "review-defense": {type:"object",additionalProperties:false,required:["summary","findings","unknowns"],properties:{summary:str,unknowns:{type:"array",items:str},findings:{type:"array",items:{type:"object",additionalProperties:false,required:["area","concern","evidence","correction"],properties:{area:str,concern:str,evidence:str,correction:str}}}}},
   diagram: BLUEPRINT_SCHEMA,
   chat: {
     type: "object",

@@ -15,6 +15,41 @@ Entry format:
 
 ---
 
+## 2026-10-20 — Full Defense as the My Scheme starting workspace
+- **Asked for:** Complete the My Scheme workflow rather than only adding a library placeholder replacement.
+- **Changed:** My Scheme Overview now presents Full Defense immediately below the existing tabs. Added named defense search, copy, direct reopening, explicit unsaved-edit handling, and a large StudioCanvas with a focused player-responsibility inspector.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing navigation, theme, identity tools, legacy Play Art and saved data remain available. Player appearance controls are optional in the full-defense editor so clicking a defender prioritizes responsibilities.
+
+## 2026-10-20 — Automatic component filing and visual combination previews
+- **Asked for:** Save complete defenses into reusable fronts, coverages, pressures and adjustments without duplicates or silent changes.
+- **Changed:** Atomic defense saves file named components by category, reuse matching existing components, and retain structured responsibilities plus scoped diagram artifacts. Component cards show the saved art. Saved pieces combine through a preview with explicit alignment/responsibility conflicts. Added multiple saved adjustments and legacy drawing import.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Extraction uses coach-named components, categorized duties and explicit/unambiguous drawing ownership; ambiguous objects remain on the full play until categorized. Shared edits never overwrite approved snapshots. Changed library versions require review and Apply. Structure mismatches are rejected rather than silently remapping players.
+
+## 2026-10-20 — CounterScheme assignment organization with coach approval
+- **Asked for:** Enter short phrases or voice and let CounterScheme organize responsibilities.
+- **Changed:** Added a structured assignment-organization job through the existing protected model endpoint. The coach reviews alignment, run fit, pass coverage, pressure and checks before applying. Existing categories show replacement text, unmatched words are retained, and failed requests do not edit assignments. Existing saved duties provide selection suggestions.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Uses the existing Talk / Type voice capability. Model proposals are never applied silently; direct category editing remains available when the service is unavailable.
+
+## 2026-10-20 — Complete-defense review with diagram consistency checks
+- **Asked for:** Review alignments, run fits, coverage, pressure replacement, personnel fit and adjustments together.
+- **Changed:** Added a dedicated structured review job receiving the full drawing, assignments, component snapshots, terminology, philosophy and selected personnel package. Findings include concerns, evidence and suggested corrections. Diagram/assignment edits raise consistency reminders and invalidate prior review. Approval requires all 11 defenders, assignments, front, coverage and a current review.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Review remains advisory, not a football-soundness certification. Service failure visibly falls back to limited checks and staff judgment. Existing knowledge-base configuration is reused, not replaced or represented as a completed football corpus.
+
+## 2026-10-20 — Approved defense reuse across the weekly workflow
+- **Asked for:** Reuse the saved drawing and assignments for game plans, practice scripts and call sheets.
+- **Changed:** Selecting an approved full defense in Game Plans attaches its diagram and assignments. Shared practice/call-sheet attachment controls retain source IDs and revisions, provide source links and explicit updates, and expose player responsibilities. Added persistent printable call-sheet diagram attachments.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Approved snapshots are preserved when source plays change. Browser testing verified save, component creation, approval, reload and call-sheet attachment persistence on an isolated local origin. Domain tests cover component reuse, merge conflicts, structure mismatch rejection, review invalidation and legacy preservation.
+
 ## 2026-10-20 — Full Defense drawing and responsibility workspace
 - **Asked for:** Build a complete defensive play visually and connect each player to responsibilities.
 - **Changed:** Replaced the Full Calls placeholder with Full Defense. Reused StudioCanvas for a saved full-play editor, categorized responsibilities, voice entry, existing defensive drawing import, and explicit save/reopen actions. Added keyboard selection for defenders.
