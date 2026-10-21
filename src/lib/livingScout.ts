@@ -3,7 +3,7 @@ import type { Opponent, Play, StaffMeeting } from './store';
 
 export const SCOUT_SECTIONS = ['Offensive Identity','Key Personnel','Formations & Personnel','Run & Pass Concepts','Situational Tendencies','Key Takeaways'] as const;
 export type ScoutSection = typeof SCOUT_SECTIONS[number];
-export type ScoutSource = {id:string; name:string; game?:string; gameDate?:string; fingerprint:string; createdAt:number};
+export type ScoutSource = {id:string; name:string; game?:string; gameDate?:string; fingerprint:string; createdAt:number; sheet?:{name:string;headers:string[];rows:Record<string,string>[]}; mapping?:Record<string,string|null|undefined>};
 export type ScoutObservation = {id:string; text:string; source:string; createdAt:number; replaces?:string; organized?:{section:ScoutSection; quote:string}[]};
 export type ScoutItem = {id:string; title:string; detail:string; playIds:string[]; source?:string};
 export type ScoutReportSection = {title:ScoutSection; items:ScoutItem[]};

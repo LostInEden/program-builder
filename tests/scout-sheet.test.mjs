@@ -1,0 +1,14 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import vm from 'node:vm';
+const require=createRequire(import.meta.url),ts=require('typescript');
+function load(name,imports){const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL(`../src/lib/${name}.ts`,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,Date,require:k=>imports?.[k]??require(k)});return exports;}
+const {sheetFromRows,spreadsheetCell,readScoutWorkbook}=load('scoutSheet');
+const {rowsToPlays}=load('tendencies',{'@/lib/store':{},'@/lib/knowledge':{}});
+test('duplicate, blank and unmapped headings preserve all cells',()=>{const s=sheetFromRows('Film',[[],['PLAY','CUSTOM','CUSTOM',''],['1','zero','second','edge'],['2','0','false','boundary']]);assert.deepEqual(Array.from(s.headers),['PLAY','CUSTOM','CUSTOM (2)','Column 4']);assert.equal(s.rows[1].CUSTOM,'0');assert.equal(s.rows[1]['CUSTOM (2)'],'false');assert.equal(s.rows[0]['Column 4'],'edge');});
+test('offensive sample excludes D/K but source sheet retains every tag and row',()=>{const s=sheetFromRows('Film',[['ODK','TYPE','CUSTOM'],['O','Run','tight split'],['D','Pass','press'],['K','','punt']]);const p=rowsToPlays(s.rows,{odk:'ODK',playType:'TYPE'});assert.equal(p.length,1);assert.equal(p[0].extra.CUSTOM,'tight split');assert.equal(s.rows.length,3);assert.equal(s.rows[2].CUSTOM,'punt');});
+test('workbook supports multiple sheets, rich text, zero values and cached formulas',async()=>{const {Workbook}=require('exceljs');const w=new Workbook();const a=w.addWorksheet('Game One');a.addRow(['ODK','PLAY TYPE','CUSTOM','GAIN']);a.addRow(['O','Run',{richText:[{text:'Boundary '},{text:'tag'}]},0]);a.addRow(['D','Pass','Keep defensive tags',{formula:'2+3',result:5}]);const b=w.addWorksheet('Game Two');b.addRow(['ODK','PLAY TYPE','OTHER']);b.addRow(['O','Pass','Motion']);const bytes=await w.xlsx.writeBuffer();const data=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);const sheets=await readScoutWorkbook(data);assert.equal(sheets.length,2);assert.equal(sheets[0].rows[0].CUSTOM,'Boundary tag');assert.equal(sheets[0].rows[0].GAIN,'0');assert.equal(sheets[0].rows[1].GAIN,'5');assert.equal(sheets[1].rows[0].OTHER,'Motion');writeFileSync('/tmp/counterscheme-hudl-test.xlsx',bytes);});
+test('formula without cached result is retained without executing it',()=>{assert.equal(spreadsheetCell({formula:'1+2'}),'=1+2');assert.equal(spreadsheetCell(false),'false');});
+test('empty and excessive-width sheets fail with useful errors',()=>{assert.throws(()=>sheetFromRows('Empty',[['']]),/empty/);assert.throws(()=>sheetFromRows('Wide',[Array(501).fill('x')]),/500 columns/);});

@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-21 — Full Hudl tagged-sheet uploads
+- **Asked for:** Upload the Hudl sheet with all tags.
+- **Changed:** Added direct Excel (.xlsx), CSV and TSV imports, worksheet selection, automatic column mapping and an all-tag preview. Original source rows and every custom column are retained alongside offensive snaps. Imported sheets can be reopened through a paginated all-tags table.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing imports and coach edits preserved. Defense/kicking rows remain in the source sheet but are excluded from offensive tendencies. Legacy .xls files must be saved as .xlsx. Build, changed-file lint and 12 import/preservation tests passed. Browser upload-dialog rendering verified; file-picker automation was interrupted before the sample workbook was selected. Available in the local preview; hosted deployment remains unconfirmed.
+
 ## 2026-10-21 — Cumulative scouting sources and corrections
 - **Asked for:** Combine multiple games and weekly observations without losing earlier information.
 - **Changed:** CSV imports append source-linked snaps, reject identical reports, and preserve existing manual scout fields. Added one Talk/Type/document intake on Opponent Matchup and the scout report, with PDF, DOCX and text extraction. Corrections retain their original observations in source history.
