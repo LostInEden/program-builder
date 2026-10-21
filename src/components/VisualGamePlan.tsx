@@ -14,7 +14,7 @@ import PlayCardSVG from './PlayCardSVG';
 import ExpandableDiagram from './ExpandableDiagram';
 
 const control='rounded border border-line bg-panel px-2 py-1 text-xs';
-export default function VisualGamePlan({opponent,diagrams,onChange}:{opponent:Opponent;diagrams:DiagramAttachment[];onChange:(d:DiagramAttachment[])=>void}) {
+export default function VisualGamePlan({opponent,diagrams,onChange,focus}:{opponent:Opponent;diagrams:DiagramAttachment[];onChange:(d:DiagramAttachment[])=>void;focus?:{title:string;evidence:string}}) {
  const state=useStore();
  const group=state.groups.find(g=>g.id===state.activeGroupId)??state.groups[0];
  const [active,setActive]=useState<DiagramAttachment|null>(null);
@@ -59,7 +59,9 @@ export default function VisualGamePlan({opponent,diagrams,onChange}:{opponent:Op
   finally{setBusy(false);}
  }
  function attach(){if(!active?.visual)return;onChange([...diagrams.filter(d=>d.id!==active.id),structuredClone(active)]);setActive(null);}
- const looks=scoutLooks(opponent),overview=opponentOverview(opponent);
+ const allLooks=scoutLooks(opponent),overview=opponentOverview(opponent);
+ const focused=focus?allLooks.find(l=>l.name.toLowerCase()===focus.title.toLowerCase()):undefined;
+ const looks=focus?[focused??{key:'selected-scout',name:focus.title,evidence:focus.evidence,diagram:undefined}]:allLooks;
  return <section className="mt-3 rounded-lg border border-line p-3">
   <h3 className="font-bold">Draw our defensive answer</h3>
   <p className="text-xs text-dim mt-1">Opponent look → draw → check → coach approval. {overview.personnel?`Top personnel: ${overview.personnel.group} (${overview.personnel.pct}%).`:''}</p>

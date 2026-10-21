@@ -1,0 +1,12 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import vm from 'node:vm';
+const require=createRequire(import.meta.url),ts=require('typescript'),exports={};
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../src/lib/scoutExport.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require,Blob,Date});
+const headings=['Offensive Identity','Key Personnel','Formations & Personnel','Run & Pass Concepts','Situational Tendencies','Key Takeaways'];
+const sections=headings.map(title=>({title,lines:['Trips — 12/20 tagged snaps; limited sample. Same film seen in two games. Original coach wording remains intact.','Counter from 11 personnel — 6/12 tagged snaps. Prepare the defensive answer using our installed rules.']}));
+test('Quick Scout PDF contains six sections and exactly two pages',async()=>{const blob=await exports.exportScout('pdf','CounterScheme QA Quick Scout',sections,true);const buffer=Buffer.from(await blob.arrayBuffer());const content=buffer.toString();assert.ok(content.startsWith('%PDF'));assert.equal((content.match(/\/Type \/Page\b/g)||[]).length,2);for(const heading of headings)assert.ok(content.includes(heading));writeFileSync('/tmp/counterscheme-quick-scout-qa.pdf',buffer);});
+test('Word export is a real editable docx with the full content',async()=>{const blob=await exports.exportScout('docx','CounterScheme QA Full Scout',sections);const buffer=Buffer.from(await blob.arrayBuffer());assert.equal(buffer.subarray(0,2).toString(),'PK');const result=await require('mammoth').extractRawText({buffer});for(const heading of headings)assert.ok(result.value.includes(heading));assert.ok(result.value.includes('6/12 tagged snaps'));writeFileSync('/tmp/counterscheme-scout-qa.docx',buffer);});
+test('full report paginates long source text without losing final section',async()=>{const full=sections.map(s=>({...s,lines:Array.from({length:30},(_,i)=>`${i} - ${s.lines.join(' ')}`)}));const blob=await exports.exportScout('pdf','Long full scout',full);const content=Buffer.from(await blob.arrayBuffer()).toString();assert.ok((content.match(/\/Type \/Page\b/g)||[]).length>2);assert.ok(content.includes('Key Takeaways'));});

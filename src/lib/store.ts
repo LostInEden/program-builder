@@ -1,3 +1,4 @@
+import type { ScoutSource, ScoutObservation } from "./livingScout";
 "use client";
 import {organizeDefense} from "./schemeWorkflow";
 
@@ -187,6 +188,7 @@ export const emptyGrid = (): DownDistanceGrid =>
 // One row of the opponent's Hudl play-by-play export — every column the coach
 // tags (Q34). Unmapped columns are kept verbatim in `extra` so nothing is lost.
 export type Play = {
+  scoutSourceId?: string;
   id: string;
   num: string;
   odk: string;
@@ -210,6 +212,8 @@ export type Play = {
 };
 
 export type Opponent = {
+  scoutSources?: ScoutSource[];
+  scoutObservations?: ScoutObservation[];
   diagrams?: DiagramAttachment[];
   id: string;
   name: string;

@@ -15,6 +15,34 @@ Entry format:
 
 ---
 
+## 2026-10-21 — Cumulative scouting sources and corrections
+- **Asked for:** Combine multiple games and weekly observations without losing earlier information.
+- **Changed:** CSV imports append source-linked snaps, reject identical reports, and preserve existing manual scout fields. Added one Talk/Type/document intake on Opponent Matchup and the scout report, with PDF, DOCX and text extraction. Corrections retain their original observations in source history.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Optional source/observation fields preserve existing storage. Source text is saved before organization; unavailable model service leaves the original visible with a retry option. Scanned PDFs require readable text. CSV duplicate detection covers identical source rows; overlapping playlists with changed rows still need staff review.
+
+## 2026-10-21 — Six-section living opponent report
+- **Asked for:** One concise report organized by football categories, not game recaps.
+- **Changed:** Added Offensive Identity, Key Personnel, Formations & Personnel, Run & Pass Concepts, Situational Tendencies and Key Takeaways. Summaries expand to supporting snaps and original statistical reports. Counts use tagged denominators, identify limited samples, identify multi-game recurrence when games are labeled, and surface descriptive run-rate changes with dated samples of at least 20 snaps per comparison.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Organization accepts only exact source quotes, retains unclassified text, and excludes superseded observations. No invented statistics or soundness certification. Navigation, theme and saved diagrams unchanged.
+
+## 2026-10-21 — Scout evidence to visual defensive answers
+- **Asked for:** Select a scouted formation, play or tendency and work through an answer using My Scheme.
+- **Changed:** Each report item opens a focused Game Plan topic with its evidence. Reuses the existing StudioCanvas opponent-look, installed-call, defensive-check and approval workflow. Cumulative scouting is included in connected CounterScheme discussions alongside saved scheme and personnel context.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing approved decisions and drafts remain intact. Only coach-approved decisions feed final plans, practice and call sheets. Local drawing checks remain limited; connected football reasoning requires the configured service.
+
+## 2026-10-21 — PDF and editable Word scouting reports
+- **Asked for:** Full Scout and 1–2 page Quick Scout downloads, separately or together with the defensive game plan.
+- **Changed:** Added real PDF and DOCX downloads, report-content and length selectors, print support and existing saved diagram images. Combined exports keep scouting separate from approved defensive decisions. Full source detail remains available when Quick Scout condenses it.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Added docx, jspdf and mammoth libraries. Export tests verify two-page Quick Scout PDFs, editable Word content and long-report pagination. Combined game plans add pages. Browser preview verified report generation and scout-to-plan handoff; automated download-event capture is unavailable in the in-app browser. These changes are available locally; Vercel deployment is not confirmed.
+
 ## 2026-10-21 — One teaching area on My Scheme
 - **Asked for:** Remove duplicate Teach CounterScheme boxes.
 - **Changed:** Consolidated the overview's scheme-item and base-philosophy teaching into one panel with a Teaching selector and one visible Talk/Type input. Switching purpose retains the draft text. Existing rule confirmation and scheme-item review remain available.

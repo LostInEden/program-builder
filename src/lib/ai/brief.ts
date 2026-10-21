@@ -1,3 +1,4 @@
+import { cumulativeScout } from "../livingScout";
 // The FACTS block a remote model answers from. Everything in here was counted
 // by the app's own code (tendencies, tells, the plan) or typed by the coach —
 // the model gets words and numbers to explain, never raw data to do math on.
@@ -94,6 +95,7 @@ function opponentBlock(o: Opponent, termMap: ChatContext["termMap"]): string[] {
   const notes = o.matchupNotes.filter((n) => n.value.trim()).slice(0, 10);
   if (notes.length) out.push(...notes.map((n) => `${n.label}: ${cut(n.value, 140)}`));
   if (o.redZone) out.push(`Red zone: ${cut(o.redZone, 200)}`);
+  for(const section of cumulativeScout(o)){if(section.items.length)out.push(`Cumulative ${section.title}: ${section.items.slice(0,12).map(i=>cut([i.title,i.detail,i.source].filter(Boolean).join(" — "),400)).join("; ")}`);}
   if (o.notes) out.push(`Coach's notes: ${cut(o.notes, 500)}`);
   return out;
 }

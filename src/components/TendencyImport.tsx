@@ -7,10 +7,16 @@
 import { useMemo, useState } from "react";
 import Papa from "papaparse";
 import { X, Upload, Check } from "lucide-react";
+import { appendScoutImport } from "@/lib/livingScout";
+import { useStore } from "@/lib/store";
 import type { Opponent } from "@/lib/store";
 import { PLAY_FIELDS, guessMapping, rowsToPlays, headlineFromPlays, computeTells, type PlayField, type PlayMapping } from "@/lib/tendencies";
 
-export default function TendencyImport({ onApply, onClose }: { onApply: (patch: Partial<Opponent>) => void; onClose: () => void }) {
+export default function TendencyImport({ opponent, onApply, onClose }: { opponent: Opponent; onApply: (patch: Partial<Opponent>) => void; onClose: () => void }) {
+  const [fileName,setFileName]=useState("");
+  const [game,setGame]=useState("");
+  const [gameDate,setGameDate]=useState("");
+  const [saving,setSaving]=useState(false);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [map, setMap] = useState<PlayMapping>({});
@@ -22,6 +28,7 @@ export default function TendencyImport({ onApply, onClose }: { onApply: (patch: 
       setError("Excel files: save as CSV first (File → Save As → CSV). Hudl and MaxPreps both export CSV directly.");
       return;
     }
+    setFileName(f.name);
     Papa.parse<Record<string, string>>(f, {
       header: true,
       skipEmptyLines: true,
@@ -64,6 +71,7 @@ export default function TendencyImport({ onApply, onClose }: { onApply: (patch: 
             </label>
           ) : (
             <>
+              <div className="flex gap-2 mb-3"><input aria-label="Game label" placeholder="Game / playlist (optional)" value={game} onChange={e=>setGame(e.target.value)} className="rounded border border-line bg-panel p-2"/><input aria-label="Game date" type="date" value={gameDate} onChange={e=>setGameDate(e.target.value)} className="rounded border border-line bg-panel p-2"/></div>
               <div className="text-sm font-semibold mb-2">
                 {plays.length} offensive snaps from {rows.length} rows{skipped > 0 ? ` (${skipped} skipped — defense, kicking, or blank)` : ""}. Check the columns:
               </div>
@@ -107,11 +115,20 @@ export default function TendencyImport({ onApply, onClose }: { onApply: (patch: 
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
         <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-line bg-white px-5 py-3">
-          {rows.length > 0 && <span className="mr-auto text-xs text-dim">Applying replaces this opponent&apos;s plays and recomputes every tendency.</span>}
+          {rows.length > 0 && <span className="mr-auto text-xs text-dim">Adds snaps to the cumulative scout. Previous games and coach edits are preserved.</span>}
           <button onClick={onClose} className="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-dim hover:text-ink">Cancel</button>
           <button
-            disabled={!patch || !ready}
-            onClick={() => { if (patch) { onApply(patch); onClose(); } }}
+            disabled={!patch || !ready || saving}
+            onClick={async () => {
+              if(!patch||saving)return;setSaving(true);setError(null);
+              try {
+                const bytes=new TextEncoder().encode(JSON.stringify(rows));
+                const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))).map(b=>b.toString(16).padStart(2,'0')).join('');
+                const current=useStore.getState().opponents.find(o=>o.id===opponent.id);
+                if(!current)throw new Error('Opponent no longer available.');
+                onApply(appendScoutImport(current,plays,{id:crypto.randomUUID(),name:fileName,game:game.trim()||undefined,gameDate:gameDate||undefined,fingerprint,createdAt:Date.now()}));onClose();
+              }catch(e){setError(e instanceof Error?e.message:'Could not import report.');}finally{setSaving(false);}
+            }}
             className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep disabled:opacity-50"
           >
             <Check size={15} /> Apply to opponent

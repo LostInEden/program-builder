@@ -5,6 +5,7 @@
 // Everything here is what THEY do; nothing on this page is a call. The answer
 // to it all lives on the Game Plan.
 
+import CumulativeScout from "@/components/CumulativeScout";
 import { Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -83,9 +84,9 @@ function ScoutingInner() {
           {o && <><Link href={`/matchup?id=${o.id}`} className="text-sm font-semibold text-gold hover:underline">← Opponent Matchup</Link><Link href={`/matchup?id=${o.id}&view=details`} className="rounded-lg border border-line px-3 py-2 text-sm font-semibold hover:border-gold">Opponent Details / Edit Scout</Link></>}
           {o && (
             <>
-              <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim">
+              {!full && <button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold hover:border-dim">
                 <Printer size={15} /> Print / Save as PDF
-              </button>
+              </button>}
               <Link href={`/gameplan?id=${o.id}`} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">
                 <ClipboardList size={15} /> Game Plan
               </Link>
@@ -108,7 +109,7 @@ function ScoutingInner() {
           <p className="text-sm text-dim max-w-md mx-auto mb-4">Add one on Opponent Matchup and upload their play-by-play — the report reads itself off the snaps.</p>
           <Link href="/matchup" className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white hover:bg-grass-deep">Go to Opponent Matchup</Link>
         </div>
-      ) : (
+      ) : full ? <CumulativeScout opponent={o}/> : (
         <motion.div key={o.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-7">
           {!situationsOnly && hasPersonnel && (
             <Section n={next()} title="Personnel" note={plays.length ? `off ${plays.length} snaps` : "from what you entered by hand"}>
