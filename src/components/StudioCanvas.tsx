@@ -914,7 +914,7 @@ export default function StudioCanvas({
           const [x, y] = defPos(i);
           const selected = selection?.kind === "def" && selection.slot === i;
           const symbol = appearance.symbol ?? "letters";
-          return <button key={`d${i}`} onPointerDown={e => beginMarkerDrag(e, "def", `${i}`, i)}
+          return <button key={`d${i}`} onKeyDown={e => { if ((e.key === "Enter" || e.key === " ") && tool === "select") { e.preventDefault(); e.stopPropagation(); onSelect({kind:"def",slot:i}); } }} onPointerDown={e => beginMarkerDrag(e, "def", `${i}`, i)}
             onDoubleClick={e => { if (!draft && tool === "select") { e.stopPropagation(); blockTo(i); } }}
             title={`${defLabel(i) || "Defender"} · drag to align`} aria-label={`Defender ${defLabel(i) || i + 1}`}
             className={`absolute -translate-x-1/2 -translate-y-1/2 ${selected ? "ring-1 ring-gold rounded" : ""}`}

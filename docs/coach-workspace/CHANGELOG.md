@@ -15,6 +15,27 @@ Entry format:
 
 ---
 
+## 2026-10-20 — Full Defense drawing and responsibility workspace
+- **Asked for:** Build a complete defensive play visually and connect each player to responsibilities.
+- **Changed:** Replaced the Full Calls placeholder with Full Defense. Reused StudioCanvas for a saved full-play editor, categorized responsibilities, voice entry, existing defensive drawing import, and explicit save/reopen actions. Added keyboard selection for defenders.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Additive Call metadata preserves legacy diagrams and assignments. Structure is captured per full play. Existing navigation and theme remain unchanged. Saves use existing device storage, not a new cloud service.
+
+## 2026-10-20 — Component snapshots and explicit rule reuse
+- **Asked for:** Reuse fronts, coverages, pressures and adjustments without duplicates or silently changing approved plays.
+- **Changed:** Full plays select independent component snapshots; new components save categorized rules and reuse matching names within their category. Changed or removed library components are flagged for explicit review. Matching player rules can be added explicitly without replacing prior assignments.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Ambiguous position names are not mapped automatically. Component selection references rules rather than inventing geometry; saved defensive art can be loaded explicitly. Automatic geometric component extraction and natural-language assignment classification remain future work.
+
+## 2026-10-20 — Full-defense review and approved workflow reuse
+- **Asked for:** Evaluate the complete defense, let the coach approve, and reuse it downstream.
+- **Changed:** Added drawing checks and optional CounterScheme model review with diagram, assignments, components, structure and existing personnel context. Edits invalidate review/approval. Approved full plays appear in existing game-plan and shared diagram attachment selectors; attachment structure and responsibility data are preserved.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Review is advisory, not a validated football-soundness engine. Approval requires front, coverage and recorded responsibilities for visible defenders. Production build and 23 focused tests pass. Existing store hydration lint warning is outside this change; changed UI/domain files pass lint. Local UI verified creation, component selection, player editing and save; browser automation stalled at its close-confirmation dialog during reload verification, with persistence/revision behavior covered by tests.
+
 ## 2026-10-20 — Quicker coaching decisions in the existing Game Plan
 - **Asked for:** Less typing, more coaching without changing tabs or page structure.
 - **Changed:** Added saved-call selection, optional responsibility fields, quick discussion questions, and append-to-notes actions. Existing talk/type input remains available.

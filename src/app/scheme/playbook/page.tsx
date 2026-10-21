@@ -54,9 +54,9 @@ export default function PlaybookPage() {
   // Packages inherit the level's Base chart (Q9) — read the effective spots.
   const groupSlots = effectiveSlots(group, baseGroupFor(groups, group.level));
   const structure = getStructure(group.structureId);
-  const sectionCalls = section === "Playbook" ? calls : calls.filter((c) => c.section === section);
+  const sectionCalls = calls.filter(c => !c.fullDefense && (section === "Playbook" || c.section === section));
   const call =
-    calls.find((c) => c.id === activeCallId && (section === "Playbook" || c.section === section)) ??
+    sectionCalls.find((c) => c.id === activeCallId && (section === "Playbook" || c.section === section)) ??
     sectionCalls[0] ??
     null;
   const label = (i: number) => slotLabelOf(overrides, group.structureId, i);

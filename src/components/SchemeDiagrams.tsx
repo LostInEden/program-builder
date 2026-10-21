@@ -9,7 +9,7 @@ export default function SchemeDiagrams({ concept, kind }: { concept?: Concept; k
   const router = useRouter();
   const { calls, concepts, groups, activeGroupId, overrides, addCall, updateCall, setActiveCall } = useStore();
   const structureId = groups.find(g => g.id === activeGroupId)?.structureId ?? "3-4";
-  const diagrams = calls.filter(call => concept ? diagramConcept(call, concepts)?.id === concept.id : call.section === diagramSection[kind]);
+  const diagrams = calls.filter(call => !call.fullDefense && (concept ? diagramConcept(call, concepts)?.id === concept.id : call.section === diagramSection[kind]));
   const open = (id: string) => { setActiveCall(id); router.push("/scheme/playbook"); };
   const create = () => {
     const id = addCall(diagramSection[kind]);
