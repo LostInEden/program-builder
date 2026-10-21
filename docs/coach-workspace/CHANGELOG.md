@@ -15,6 +15,20 @@ Entry format:
 
 ---
 
+## 2026-10-21 — Exception-based Defense Analysis
+- **Asked for:** Only flag real football concerns; missing information is not a concern.
+- **Changed:** Replaced the analysis page's generic strengths/recommendations with evidence-cited Critical Issues and Potential Concerns. Reuses the protected reasoning endpoint, saved calls, component snapshots, personnel, coach philosophy and diagrams. Evaluation limits remain separate from totals; no-result and unavailable states do not certify soundness.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Rechecks saved input changes while the page is open and evaluates fresh on entry. Complete plays are kept together across size-bounded requests. This is model-assisted review, not exhaustive football verification; existing knowledge-base availability is unchanged.
+
+## 2026-10-21 — Review, dismiss and explicitly apply scheme corrections
+- **Asked for:** Short issue/why/fix with coach-controlled corrections and preserved saved data.
+- **Changed:** Added evidence review, optional relevant saved diagrams, version-specific dismissals, restore dismissed concerns, and before/after confirmation for supported single-assignment corrections. Stale or invalid proposals cannot apply. Other fixes open the existing scheme editor.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** No migration or automatic scheme edits. Explicit corrections preserve unrelated assignments, shared components and approved copies; revised defenses require approval again. Verified with regression tests, TypeScript, lint and production build.
+
 ## 2026-10-20 — Full Defense as the My Scheme starting workspace
 - **Asked for:** Complete the My Scheme workflow rather than only adding a library placeholder replacement.
 - **Changed:** My Scheme Overview now presents Full Defense immediately below the existing tabs. Added named defense search, copy, direct reopening, explicit unsaved-edit handling, and a large StudioCanvas with a focused player-responsibility inspector.

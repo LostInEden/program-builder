@@ -1,117 +1,114 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Star, AlertTriangle, Wrench, ChevronRight } from "lucide-react";
-import { useStore, useHydrated, type ConceptKind } from "@/lib/store";
-import { computeFindings, type Finding, type Status } from "@/lib/analyze";
-import ExpandableDiagram from "@/components/ExpandableDiagram";
-import {diagramConcept} from "@/lib/schemeDiagrams";
-import SchemeTabs from "@/components/SchemeTabs";
+import {useEffect,useMemo,useState} from 'react';
+import Link from 'next/link';
+import {useStore,useHydrated} from '@/lib/store';
+import {getStructure} from '@/lib/football';
+import {parseExceptions,reviewBatches,correctionPatch,concernKey,type Facts,type ExceptionResult,type Concern} from '@/lib/schemeExceptions';
+import ExpandableDiagram from '@/components/ExpandableDiagram';
+import SchemeTabs from '@/components/SchemeTabs';
 
-const card = "rounded-xl border border-line bg-card shadow-sm";
-
-const buckets: { key: Status; title: string; sub: string; icon: typeof Star; accent: string; head: string }[] = [
-  { key: "Sound", title: "Strengths", sub: "What the defense handles well.", icon: Star, accent: "text-emerald-600", head: "bg-emerald-50 border-emerald-200" },
-  { key: "Potential Conflict", title: "Concerns", sub: "Where rules conflict or it can be stressed.", icon: AlertTriangle, accent: "text-red-600", head: "bg-red-50 border-red-200" },
-  { key: "Needs Review", title: "Recommendations", sub: "Small fixes using what you already carry.", icon: Wrench, accent: "text-grass", head: "bg-grass/5 border-grass/30" },
-];
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="display uppercase text-[10px] font-bold tracking-[0.15em] text-dim mb-1">{title}</div>
-      {children}
+const dismissalStorage='counterscheme-analysis-dismissals-v1';
+function fingerprint(text:string){let hash=BigInt('14695981039346656037');for(let i=0;i<text.length;i++)hash=BigInt.asUintN(64,(hash^BigInt(text.charCodeAt(i)))*BigInt('1099511628211'));return hash.toString(16);}
+const card='rounded-xl border border-line bg-card p-4 shadow-sm';
+export default function AnalysisPage(){
+ const hydrated=useHydrated();
+ const {scheme,concepts,calls,players,groups,activeGroupId,overrides,updateCall}=useStore();
+ const [retry,setRetry]=useState(0);
+ const [review,setReview]=useState<{revision:string;result?:ExceptionResult;error?:string}|null>(null);
+ const [dismissed,setDismissed]=useState<string[]>(()=>{try{const saved=JSON.parse(localStorage.getItem(dismissalStorage)??'[]');return Array.isArray(saved)?saved.filter((s:unknown)=>typeof s==='string'):[];}catch{return [];}});
+ const [selected,setSelected]=useState<string|null>(null);
+ const [notice,setNotice]=useState('');
+ const facts=useMemo(()=>{
+  const out:Facts={philosophy:JSON.stringify(scheme),personnel:JSON.stringify({players:players.map(({id,name,positions,skills,eval:grades,heightIn,weightLb,forty,vertical})=>({id,name,positions,skills,grades,heightIn,weightLb,forty,vertical})),groups,activeGroupId,overrides})};
+  const stripConcept=(c:typeof concepts[number])=>({...c,diagram:undefined});
+  for(const c of concepts.filter(c=>c.confirmed&&c.status!=='backPocket'))out[`concept:${c.id}`]=JSON.stringify(stripConcept(c));
+  for(const c of calls){
+   const fd=c.fullDefense;
+   out[`call:${c.id}`]=JSON.stringify({...c,fullDefense:fd?{...fd,review:undefined,approvedRevision:undefined,warnings:undefined,components:Object.fromEntries(Object.entries(fd.components).map(([k,v])=>[k,v?stripConcept(v):v])),additionalAdjustments:fd.additionalAdjustments?.map(stripConcept)}:undefined});
+  }
+  out.structures=JSON.stringify([...new Set(groups.map(g=>g.structureId).concat(calls.flatMap(c=>c.fullDefense?.structureId||c.structureId||[])))].map(id=>getStructure(id)));
+  return out;
+ },[scheme,concepts,calls,players,groups,activeGroupId,overrides]);
+ const revision=JSON.stringify(facts);
+ useEffect(()=>{
+  if(!hydrated)return;
+  const controller=new AbortController();
+  const timer=setTimeout(async()=>{
+   try{
+    const {batches,limits}=reviewBatches(facts);
+    const combined:ExceptionResult={concerns:[],limits:[...limits],evaluated:[]};
+    if(!batches.length)combined.limits.push('No saved defensive calls or confirmed components were available to evaluate.');
+    for(const batch of batches){
+     const body=JSON.stringify({job:'scheme-exceptions',input:{facts:batch}});
+     const response=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(60000)])});
+     if(!response.ok)throw Error('CounterScheme review is unavailable. No new conclusions have been made. Your saved scheme is unchanged.');
+     const data=await response.json();
+     const part=parseExceptions(data.result,batch);
+     combined.concerns.push(...part.concerns);combined.limits.push(...part.limits);combined.evaluated.push(...part.evaluated);
+    }
+    combined.concerns.sort((a,b)=>Number(b.severity==='critical')-Number(a.severity==='critical'));
+    if(!controller.signal.aborted)setReview({revision,result:combined});
+   }catch(e){if(!controller.signal.aborted)setReview({revision,error:e instanceof Error?e.message:'Review failed. Try again.'});}
+  },900);
+  return ()=>{clearTimeout(timer);controller.abort();};
+ },[hydrated,facts,revision,retry]);
+ const current=review?.revision===revision?review:null;
+ const result=current?.result;
+ // A dismissal only applies to exactly the evidence reviewed. Changes trigger a fresh review.
+ const snapshotId=useMemo(()=>fingerprint(revision),[revision]);
+ const key=(c:Concern)=>snapshotId+':'+fingerprint(concernKey(c));
+ function saveDismissals(next:string[]){setDismissed(next);try{localStorage.setItem(dismissalStorage,JSON.stringify(next.slice(-1000)));}catch{setNotice('Dismissed for this visit. This browser could not save the dismissal.');}}
+ const visible=result?.concerns.filter(c=>!dismissed.includes(key(c)))??[];
+ const dismissedCount=(result?.concerns.length??0)-visible.length;
+ function apply(c:Concern){
+  try{
+   if(!c.correction||!result)throw Error('Reevaluate this saved defense first.');
+   const live=useStore.getState().calls.find(x=>x.id===c.correction!.callId);
+   if(!live)throw Error('The saved defense is no longer available.');
+   updateCall(live.id,correctionPatch(live,c.correction));
+   setSelected(null);setNotice('Assignment updated. Review and approve the revised defense in Full Defense.');
+  }catch(e){setNotice(e instanceof Error?e.message:'Unable to apply correction.');}
+ }
+ if(!hydrated)return <div className="p-8 text-dim">Loading…</div>;
+ return <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+  <h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1>
+  <p className="mb-5 mt-1 text-sm text-dim">Football concerns that need your attention. Your rules. Your decisions.</p>
+  <SchemeTabs active="analysis"/>
+  <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+   <p aria-live="polite">{!current?'Evaluating saved scheme…':current.error?'Review unavailable':`${visible.filter(c=>c.severity==='critical').length} critical · ${visible.filter(c=>c.severity==='potential').length} potential`}</p>
+   <button className="text-grass font-semibold" onClick={()=>{setReview(null);setRetry(x=>x+1);}}>Reevaluate</button>
+  </div>
+  {notice&&<p role="status" className="mb-3 text-sm">{notice}</p>}
+  {current?.error&&<div role="alert" className={card}>{current.error}</div>}
+  {result&&!result.concerns.length&&<p className={card}>No issues identified in the areas evaluated.</p>}
+  {result&&result.concerns.length>0&&!visible.length&&<p className={card}>All identified concerns have been dismissed for this version.</p>}
+  <div className="space-y-3">{visible.map(c=>{
+   const id=concernKey(c),call=c.source.startsWith('call:')?calls.find(x=>`call:${x.id}`===c.source):undefined;
+   const concept=c.source.startsWith('concept:')?concepts.find(x=>`concept:${x.id}`===c.source):undefined;
+   const href=call?`/scheme/concepts?view=full-calls&play=${encodeURIComponent(call.id)}`:concept?`/scheme/concepts?kind=${concept.kind}&id=${encodeURIComponent(concept.id)}`:'/scheme';
+   let canApply=false;
+   if(c.correction){const target=calls.find(x=>x.id===c.correction!.callId);try{if(target){correctionPatch(target,c.correction);canApply=true;}}catch{/* Invalid or stale proposals remain suggestions only. */}}
+   return <section key={id} className={card}>
+    <p className="mb-1 text-xs font-semibold text-dim">{c.severity==='critical'?'Critical issue':'Potential concern'} · {call?.name??concept?.name??'Defense'}</p>
+    <h2 className="font-bold">{c.issue}</h2>
+    <p className="mt-2 text-sm"><strong>Why:</strong> {c.why}</p>
+    <p className="mt-1 text-sm"><strong>Fix:</strong> {c.fix}</p>
+    <div className="mt-3 flex gap-4 text-sm font-semibold">
+     <button className="text-grass" aria-expanded={selected===id} onClick={()=>setSelected(selected===id?null:id)}>Review</button>
+     <Link className="text-grass" href={href}>Edit saved scheme</Link>
+     <button className="text-dim" onClick={()=>saveDismissals([...dismissed,key(c)])}>Dismiss</button>
     </div>
-  );
-}
-
-function FindingDetails({ f, accent }: { f: Finding; accent: string }) {
-  const short = (text?: string) => text?.match(/^.*?[.!?](?:\s|$)/)?.[0].trim() || text;
-  const missing = f.personnel?.filter(p => p.includes("not rated") || p.includes("no assigned starter")).length ?? 0;
-  const needsWork = f.personnel?.filter(p => p.includes("development need")) ?? [];
-  const personnel = !f.personnel?.length ? undefined : needsWork.length
-    ? `${needsWork.length} skill checks need work. Review the named players in details.${missing ? " Some ratings are still missing." : ""}`
-    : missing ? "Add the missing player ratings before judging personnel fit."
-    : "No low ratings flagged in these checks. Confirm the fit against the matchup.";
-  const summaries = f.strengths ? [
-    ["Strengths", short(f.strengths[0])],
-    ["Potential weakness", short(f.weaknesses?.[0])],
-    ["Personnel fit", personnel],
-    ["Adjustment to consider", short(f.improvements?.[0])],
-  ] : [["What we see", f.detail], ["Why it matters", short(f.why)], ["Next step", f.suggestion]];
-  return <section id="finding-details" aria-label="Finding details" className={`${card} p-4 sm:p-5`}>
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <h2 className="text-xl font-extrabold">{f.check.replace(" — scheme & personnel", "")}</h2>
-      <span className={`text-xs font-semibold ${accent}`}>{f.status === "Potential Conflict" ? "Needs attention" : f.status === "Sound" ? "Check passed" : "Review needed"}</span>
-    </div>
-    {f.strengths && <p className="mt-1 text-xs text-dim">Scheme guidance — confirm assignments and player fit.</p>}
-    <div className="mt-4 grid gap-3 sm:grid-cols-2">{summaries.filter(([, text]) => text).map(([title, text]) => <div key={title} className="rounded-lg border border-line p-3"><h3 className="mb-1 text-sm font-bold">{title}</h3><p className="text-sm leading-relaxed text-dim">{text}</p></div>)}</div>
-    <details className="mt-4 border-t border-line pt-3">
-      <summary className="cursor-pointer text-sm font-semibold text-grass">Why this assessment? View evidence</summary>
-      <div className="mt-4 space-y-4 text-sm">
-        <p className="text-dim">{f.detail}</p>
-        {f.why && <Section title="Soundness & evidence"><p className="leading-relaxed">{f.why}</p></Section>}
-        {([["Full strengths", f.strengths], ["Weaknesses", f.weaknesses], ["Player ratings", f.personnel], ["Improvements", f.improvements], ["Situational examples", f.examples], ["Rules & fits", f.breakdown]] as [string, string[] | undefined][]).map(([title, items]) => !!items?.length && <Section key={title} title={title}><ul className="list-disc space-y-2 pl-4">{items.map(item => <li key={item} className="leading-relaxed">{item}</li>)}</ul></Section>)}
-        {f.suggestion && <Section title="Suggested adjustment"><p>{f.suggestion}</p></Section>}
-        {f.basis && <p className="text-xs text-dim">{f.basis}</p>}
-      </div>
-    </details>
-  </section>;
-}
-
-const categories: { key: ConceptKind | "team"; label: string }[] = [
-  { key: "front", label: "Fronts" }, { key: "coverage", label: "Coverages" },
-  { key: "pressure", label: "Pressures" }, { key: "adjustment", label: "Adjustments" },
-  { key: "team", label: "Overall Defense" },
-];
-
-export default function AnalysisPage() {
-  const hydrated = useHydrated();
-  const { groups, activeGroupId, players, scheme, overrides, concepts, calls } = useStore();
-  const [category, setCategory] = useState<ConceptKind | "team">("front");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  if (!hydrated) return <div className="px-8 py-10 text-dim">Loading…</div>;
-  const { findings, groupName, structureName } = computeFindings({ groups, activeGroupId, players, scheme, overrides, concepts });
-  const active = concepts.filter(c => c.confirmed && c.status !== "backPocket");
-  const visible = category === "team" ? findings.filter(f => !f.id.startsWith("scheme-")) : active.filter(c => c.kind === category).flatMap(c => {
-    const f = findings.find(f => f.id === `scheme-${c.id}`);
-    return f ? [f] : [];
-  });
-  const selected = visible.find(f => f.id === selectedId) ?? visible[0];
-  const selectedConcept = active.find(c => selected?.id === `scheme-${c.id}`);
-  const linkedDrawing = selectedConcept ? calls.find(c=>diagramConcept(c,concepts)?.id===selectedConcept.id) : undefined;
-  const drawingStructure = groups.find(g=>g.id===activeGroupId)?.structureId ?? "3-4";
-  const categoryLabel = categories.find(c => c.key === category)!.label;
-  const choose = (id: string) => {
-    setSelectedId(id);
-    if (window.matchMedia("(max-width: 1023px)").matches) requestAnimationFrame(() => document.getElementById("finding-details")?.scrollIntoView({ behavior: "smooth", block: "start" }));
-  };
-  return <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div><h1 className="text-3xl font-extrabold tracking-tight">Defense Analysis</h1><p className="mt-1 text-sm text-dim">Does it fit your players? Review strengths, weaknesses, responsibilities, and practical improvements.</p></div>
-      <p className="text-xs text-dim">{groupName} · {structureName}</p>
-    </div>
-    <SchemeTabs active="analysis" />
-    <nav aria-label="Analysis categories" className="mb-4 flex flex-wrap gap-2">{categories.map(c => <button key={c.key} onClick={() => { setCategory(c.key); setSelectedId(null); }} aria-pressed={category === c.key} className={`rounded-lg border px-3 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-grass ${category === c.key ? "border-grass bg-grass text-white" : "border-line bg-card text-dim hover:border-grass"}`}>{c.label}</button>)}</nav>
-    <div className="grid items-start gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className={`${card} overflow-hidden`} aria-label="Choose a scheme">
-        <div className="flex items-center justify-between border-b border-line p-4"><h2 className="font-bold">{categoryLabel}</h2><span className="text-xs text-dim">{visible.length}</span></div>
-        <div className="max-h-64 overflow-y-auto lg:max-h-[65dvh]">{visible.map(f => {
-          const bucket = buckets.find(b => b.key === f.status)!;
-          const Icon = bucket.icon;
-          const concept = active.find(c => f.id === `scheme-${c.id}`);
-          return <button key={f.id} aria-pressed={selected?.id === f.id} aria-controls="finding-details" onClick={() => choose(f.id)} className={`flex w-full items-center gap-2 border-b border-line p-3 text-left last:border-0 focus-visible:outline-2 focus-visible:outline-grass ${selected?.id === f.id ? "border-l-4 border-l-grass bg-grass/5" : "hover:bg-panel"}`}>
-            <div className="min-w-0 flex-1"><h3 className="text-sm font-bold">{concept?.name ?? f.check}</h3><span className={`mt-1 flex items-center gap-1 text-[11px] ${bucket.accent}`}><Icon size={12} />{f.status === "Potential Conflict" ? "Potential concern" : f.status === "Needs Review" ? "Needs review" : "Check passed"}{concept?.isBase ? " · Base" : ""}</span></div><ChevronRight size={14} className="shrink-0 text-dim" />
-          </button>;
-        })}{!visible.length && <p className="p-4 text-sm text-dim">No confirmed active {categoryLabel.toLowerCase()} to analyze. Confirm a scheme item in Scheme Library to include it here.</p>}</div>
-      </aside>
-      <div className="min-w-0">
-        {selectedConcept && <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-dim">{selectedConcept.isBase ? "Base scheme" : "Active scheme"} · {categoryLabel}</p><Link href={`/scheme/concepts?kind=${selectedConcept.kind}&id=${encodeURIComponent(selectedConcept.id)}`} className="text-sm font-semibold text-grass">Open in Scheme Library →</Link></div>}
-        {linkedDrawing&&<div className="mb-3"><ExpandableDiagram call={linkedDrawing} structureId={drawingStructure}/><p className="mt-1 text-xs text-dim">Saved scheme drawing · assessment uses saved rules and ratings.</p></div>}
-        {selected ? <FindingDetails key={selected.id} f={selected} accent={buckets.find(b => b.key === selected.status)!.accent} /> : <section id="finding-details" className={`${card} p-6 text-sm text-dim`}>Choose another category or add a confirmed scheme in Scheme Library.</section>}
-      </div>
-    </div>
-    <p className="mt-4 text-xs text-dim">Based on saved scheme rules and personnel evaluations. Missing assignments remain unknown; a passed check is not proof the entire defense is sound. Your staff makes the final decision.</p>
-  </div>;
+    {selected===id&&<div className="mt-3 border-t border-line pt-3 text-sm">
+     <h3 className="font-semibold">Saved evidence</h3>
+     {c.evidence.map((e,i)=><blockquote key={i} className="my-2 text-dim">“{e.quote}”</blockquote>)}
+     {c.diagram&&call&&<ExpandableDiagram call={call} structureId={call.fullDefense?.structureId??call.structureId??groups.find(g=>g.id===activeGroupId)?.structureId??'3-4'}/>}
+     {canApply&&c.correction&&<div className="mt-3 rounded-lg bg-panel p-3"><p className="font-semibold">Proposed assignment change</p><p className="mt-1">Before: {c.correction.before}</p><p className="mt-1">After: {c.correction.after}</p><button className="mt-3 rounded-lg bg-grass px-3 py-2 text-white font-semibold" onClick={()=>apply(c)}>Apply this correction</button><p className="mt-2 text-xs text-dim">Changes only this saved play. Shared components and approved copies stay unchanged.</p></div>}
+    </div>}
+   </section>;
+  })}</div>
+  {!!dismissedCount&&<button className="mt-4 text-sm text-grass" onClick={()=>saveDismissals([])}>Restore dismissed concerns ({dismissedCount})</button>}
+  {result&&<details className="mt-5 text-sm text-dim"><summary className="cursor-pointer">Evaluation coverage & limitations</summary><div className="mt-2 space-y-2">{result.evaluated.map((s,i)=><p key={`e${i}`}>Evaluated: {s}</p>)}{result.limits.map((s,i)=><p key={`l${i}`}>Not verified: {s}</p>)}</div></details>}
+  <p className="mt-4 text-xs text-dim">Reevaluates when saved scheme or personnel changes. Missing information is not a concern. Unevaluated responsibilities are not verified as sound. Staff makes the final decision.</p>
+ </div>;
 }
