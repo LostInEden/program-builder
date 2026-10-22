@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-22 — Continuous scouting report
+- **Asked for:** Make the scouting report smooth, a running document rather than blocked off.
+- **Changed:** Replaced the two-column section cards with a single continuous report surface, section headings and subtle dividers. Full Scout displays every observation and its complete text without More evidence or Read full observation steps. Supporting snaps remain expandable.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Scouting data, quick reports, downloads, diagrams and navigation preserved.
+
 ## 2026-10-22 — Separate scouting information from coaching decisions
 - **Asked for:** Scouting report needs to be all information. Game plan is where the coach answers questions.
 - **Changed:** Removed defensive-answer actions from individual scouting evidence items. Scouting stays informational even when choosing optional game-plan downloads; approved decisions no longer replace its on-screen evidence. A Build Game Plan link opens the coaching workspace.
