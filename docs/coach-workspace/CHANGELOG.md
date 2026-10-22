@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-22 — Formation drawings and usage in the scout
+- **Asked for:** Show top formations as diagrams with personnel and formation percentages.
+- **Changed:** Added top-three formation previews, expandable drawings and all-formation access within the continuous report. Shows formation and personnel shares with tagged-snap denominators and personnel breakdowns within each formation. Reuses saved opponent drawings and exact-name formation templates; unmatched looks can be drawn from a coach-selected starting template using StudioCanvas. Saved edits remain attached to the opponent. Full downloads include displayed formation drawings.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Standard references are labeled for film verification; ambiguous names never silently receive guessed formations. Original scout data and saved diagrams are preserved. Quick downloads remain concise.
+
 ## 2026-10-22 — Continuous scouting report
 - **Asked for:** Make the scouting report smooth, a running document rather than blocked off.
 - **Changed:** Replaced the two-column section cards with a single continuous report surface, section headings and subtle dividers. Full Scout displays every observation and its complete text without More evidence or Read full observation steps. Supporting snaps remain expandable.

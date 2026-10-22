@@ -6,6 +6,7 @@ import {decisionText} from '@/lib/meeting';
 import {DiagramPreviews} from './WorkflowDiagrams';
 import {BestPlaysCard,CombosCard,FormationsByPersonnelCard,PersonnelCard,PlayerUsageCard,SituationsCard,TellsCard,TopFormationsCard} from './TendencyReport';
 import ScoutIntake from './ScoutIntake';
+import ScoutFormations from './ScoutFormations';
 import {diagramImages,exportScout,type ExportSection} from '@/lib/scoutExport';
 
 export default function CumulativeScout({opponent:o}:{opponent:Opponent}){
@@ -22,12 +23,14 @@ export default function CumulativeScout({opponent:o}:{opponent:Opponent}){
   window.addEventListener('beforeprint',before);window.addEventListener('afterprint',after);
   return ()=>{after();window.removeEventListener('beforeprint',before);window.removeEventListener('afterprint',after);};
  },[]);
+ const formationImages=useRef<HTMLDivElement>(null);
  const scoutImages=useRef<HTMLDivElement>(null),planImages=useRef<HTMLDivElement>(null);
  const decisions=state.gamePlans.find(p=>p.opponentId===o.id)?.meeting?.decisions??[];
  const exportReport=async(format:'pdf'|'docx')=>{
   setBusy(true);setError('');try{
    let report:ExportSection[]=scope==='plan'?[]:sections.map(s=>({title:s.title,lines:(quick?s.items.slice(0,2):s.items).map(i=>{const text=[i.title,i.detail,i.source&&`Source: ${i.source}`].filter(Boolean).join(' — ');return quick&&text.length>230?text.slice(0,227)+'…':text;} )}));
    if(report.length){report=report.map(s=>({...s,lines:s.lines.length?s.lines:['No information recorded.']}));const images=await diagramImages(scoutImages.current);if(images.length)report[3].images=quick?images.slice(0,1):images;}
+   if(report.length&&!quick)report[2].images=await diagramImages(formationImages.current);
    if(scope!=='scout'){report.push({title:'Approved Defensive Game Plan',lines:decisions.length?decisions.map(d=>`${d.title} — ${decisionText(d)}`):['No coach-approved decisions yet.'],images:await diagramImages(planImages.current)});}
    const blob=await exportScout(format,`${o.name} — ${scope==='plan'?'Game Plan':quick?'Quick Scout':'Full Scout'}${scope==='combined'?' & Game Plan':''}`,report,quick&&scope==='scout');
    const name=`${o.name.replace(/[^a-z0-9 -]/gi,'')} ${scope==='plan'?'Game Plan':quick?'Quick Scout':'Full Scout'}${scope==='combined'?' and Game Plan':''}.${format}`;
@@ -45,7 +48,7 @@ export default function CumulativeScout({opponent:o}:{opponent:Opponent}){
   {<div className="mt-6">{sections.map((s,index)=>{
    const visible=quick?s.items.slice(0,2):s.items;
    const item=(i:ScoutItem)=><li key={i.id} className="py-2.5 break-inside-avoid"><p className="font-semibold text-sm leading-relaxed whitespace-pre-wrap">{i.title}</p>{i.detail&&<p className="text-sm text-dim mt-1 leading-relaxed whitespace-pre-wrap">{i.detail}</p>}{i.source&&<p className="text-xs text-dim mt-1">Source: {i.source}</p>}{i.playIds.length>0&&<details className="no-print mt-2 text-xs text-dim"><summary className="cursor-pointer">Supporting snaps ({i.playIds.length})</summary><div className="max-h-40 overflow-auto">{(o.plays??[]).filter(p=>i.playIds.includes(p.id)).map(p=><p className="py-1" key={p.id}>{o.scoutSources?.find(s=>s.id===p.scoutSourceId)?.game||o.scoutSources?.find(s=>s.id===p.scoutSourceId)?.name||'Earlier imported film'} · #{p.num||'—'} · {p.formation} · {p.play||p.playType} · {p.gain==null?'gain unknown':`${p.gain} yd`}</p>)}</div></details>}</li>;
-   return <section key={s.title} className="border-t border-line py-6 first:border-0 first:pt-0"><h2 className="font-extrabold text-lg mb-2 break-after-avoid">{index+1}. {s.title}</h2>{!s.items.length?<p className="text-sm text-dim mt-2">No information recorded.</p>:<ul>{visible.map(item)}</ul>}</section>;
+   return <section key={s.title} className="border-t border-line py-6 first:border-0 first:pt-0"><h2 className="font-extrabold text-lg mb-2 break-after-avoid">{index+1}. {s.title}</h2>{s.title==='Formations & Personnel'&&<div ref={formationImages}><ScoutFormations opponent={o}/></div>}{!s.items.length?<p className="text-sm text-dim mt-2">No information recorded.</p>:<ul>{visible.map(item)}</ul>}</section>;
   })}</div>}
   {!!o.plays?.length&&<details className="no-print border-t border-line py-6"><summary className="font-semibold cursor-pointer">Full statistical evidence</summary><div className="grid lg:grid-cols-2 gap-4 mt-4"><PersonnelCard plays={o.plays}/><TopFormationsCard plays={o.plays}/><FormationsByPersonnelCard plays={o.plays}/><BestPlaysCard plays={o.plays}/><PlayerUsageCard plays={o.plays}/><SituationsCard plays={o.plays}/><TellsCard plays={o.plays}/><CombosCard plays={o.plays}/></div></details>}
   {<div ref={scoutImages}>{!!o.diagrams?.length&&<><h2 className="font-bold mb-3">Saved opponent diagrams</h2><DiagramPreviews diagrams={quick?o.diagrams.slice(0,1):o.diagrams}/></>}</div>}
