@@ -391,7 +391,7 @@ export function buildPracticePool(input: PracticeInput): PracticePool {
       : plays.length < 20
         ? `Only ${plays.length} snaps on file — the ranking is thin. Tag more film and this list gets sharper.`
         : looks.every((l) => !normTag(l.rows[0].play))
-          ? "No play/concept tags in the import, so the reps are formation-only. Tag Offensive Play in Hudl for real scout cards."
+          ? "No play/concept tags in the import, so the reps are formation-only. Tag Offensive Play in your spreadsheet for real scout cards."
           : undefined;
 
   return { opponentId: opponent.id, reps: all, generatedAt: Date.now(), snaps: plays.length, cap: PRACTICE_CAP, warning };

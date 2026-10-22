@@ -314,7 +314,7 @@ function PracticeInner() {
           <ClipboardList size={34} className="mx-auto text-dim mb-3" />
           <div className="text-lg font-bold mb-1">Nothing to rep for {opponent.name} yet</div>
           <p className="text-sm text-dim max-w-lg mx-auto mb-4">
-            {week.pool?.warning ?? "Upload the Hudl play-by-play on Opponent Matchup. CounterScheme reads the snaps and builds the candidate reps itself."}
+            {week.pool?.warning ?? "Upload the play-by-play spreadsheet on Opponent Matchup. CounterScheme reads the snaps and builds the candidate reps itself."}
           </p>
           <Link href={`/matchup?id=${opponent.id}`} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-semibold text-white hover:bg-grass-deep">Open Opponent Matchup</Link>
         </div>

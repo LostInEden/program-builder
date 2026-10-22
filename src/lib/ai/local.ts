@@ -672,7 +672,7 @@ async function coachAsk(question: string, o: Opponent, ctx: ChatContext | Scheme
   const resolve = makeResolver(termMap);
   const s = r.summary;
   const runRate = s.plays ? s.runs / s.plays : null;
-  const noSnaps = `${o.name} has ${plays.length} tagged snap${plays.length === 1 ? "" : "s"} on file — upload the Hudl play-by-play on Opponent Matchup and I'll answer this off the film.`;
+  const noSnaps = `${o.name} has ${plays.length} tagged snap${plays.length === 1 ? "" : "s"} on file — upload the play-by-play spreadsheet on Opponent Matchup and I'll answer this off the film.`;
   const tells = r.actionable.length ? r.actionable : r.tells;
   const answerText = (t: Tell) =>
     answerFor({ condition: t.condition, outcome: t.outcome, outcomeKind: t.outcomeKind, tags: t.tags, termMap }, kit).text;
@@ -786,7 +786,7 @@ async function coachAsk(question: string, o: Opponent, ctx: ChatContext | Scheme
     const forms = r.personnel.flatMap((g) => g.formations).sort((a, b) => b.n - a.n);
     if (!rows.length)
       return {
-        answer: `Offensive Play is tagged on ${plays.filter((p) => p.play.trim()).length} of ${plays.length} snaps, so I can't rank their plays honestly. Tag Offensive Play in Hudl and this gets sharp. What I can say: they live in ${forms.slice(0, 3).map((f) => `${f.name} (${f.n})`).join(", ")}.`,
+        answer: `Offensive Play is tagged on ${plays.filter((p) => p.play.trim()).length} of ${plays.length} snaps, so I can't rank their plays honestly. Tag Offensive Play in your spreadsheet and this gets sharp. What I can say: they live in ${forms.slice(0, 3).map((f) => `${f.name} (${f.n})`).join(", ")}.`,
       };
     const lines = rows.map((p) => {
       const rowsFor = plays.filter((x) => p.playIds.includes(x.id));
@@ -878,7 +878,7 @@ async function coachAsk(question: string, o: Opponent, ctx: ChatContext | Scheme
     const named = o.keyPlayers.filter((k) => k.name.trim());
     if (!usage.length && !named.length)
       return {
-        answer: `Nobody is tagged by jersey on these ${plays.length} snaps and there are no key players on file, so I can't name them — tag the ball carrier in Hudl, or just tell me here ("#22 Johnson is their back, one-cut zone runner"). What I can say is where the ball goes: ${r.best.byFrequency.slice(0, 2).map((p) => `${p.name} (${p.n} snaps)`).join(", ") || "no play tags either, so nothing"}.`,
+        answer: `Nobody is tagged by jersey on these ${plays.length} snaps and there are no key players on file, so I can't name them — tag the ball carrier in your spreadsheet, or just tell me here ("#22 Johnson is their back, one-cut zone runner"). What I can say is where the ball goes: ${r.best.byFrequency.slice(0, 2).map((p) => `${p.name} (${p.n} snaps)`).join(", ") || "no play tags either, so nothing"}.`,
       };
     const lines: string[] = [];
     for (const p of usage.slice(0, 3)) {
@@ -894,7 +894,7 @@ async function coachAsk(question: string, o: Opponent, ctx: ChatContext | Scheme
       lines.push(`${k.jersey ? `#${k.jersey} ` : ""}${k.name}${k.pos ? ` (${k.pos})` : ""} — ${k.notes?.trim() || "your note, no snap tags behind it"}. ${bracketLine(kit)}`);
     }
     if (!usage.length)
-      lines.push(`That's your film, not the tagging — nobody is tagged by jersey on these ${plays.length} snaps, so I can't say how many touches he actually gets. Tag the ball carrier in Hudl and I'll count it.`);
+      lines.push(`That's your film, not the tagging — nobody is tagged by jersey on these ${plays.length} snaps, so I can't say how many touches he actually gets. Tag the ball carrier in your spreadsheet and I'll count it.`);
     return {
       answer: lines.join(" "),
       deeper: usage
@@ -1176,7 +1176,7 @@ function practiceAnswer(ctx: ChatContext): ChatReply {
   if (!o || (o.plays?.length ?? 0) < 5) {
     return {
       reply: reply(
-        `I can't build a rep list yet — ${o ? `${o.name} has ${o?.plays?.length ?? 0} tagged snaps on file` : "there's no opponent on file"}. Upload the Hudl breakdown and the candidate pool builds itself.`,
+        `I can't build a rep list yet — ${o ? `${o.name} has ${o?.plays?.length ?? 0} tagged snaps on file` : "there's no opponent on file"}. Upload the tagged play-by-play spreadsheet and the candidate pool builds itself.`,
         ctx,
         { actions: acts(matchupLink(ctx)) },
       ),

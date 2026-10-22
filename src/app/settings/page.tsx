@@ -24,7 +24,7 @@ const sections = [
     icon: Upload,
     title: "Data & imports",
     rows: [
-      { label: "Hudl play-by-play", value: "Opponent Matchup → Upload Report" },
+      { label: "Play-by-play spreadsheet", value: "Opponent Matchup → Upload Report" },
       { label: "Roster", value: "My Team → Import Roster (CSV or PDF)" },
       { label: "Weight room / testing", value: "My Team → Weight Room → Upload" },
     ],

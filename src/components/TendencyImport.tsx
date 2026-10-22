@@ -1,6 +1,6 @@
 "use client";
 
-// Tendency-report upload: the opponent's play-by-play CSV (Hudl-style) → one
+// Tendency-report upload: the opponent's play-by-play CSV (tagged) → one
 // stored Play per snap. The coach maps the columns once; CounterScheme does all
 // of the math from the snaps afterwards, so no tendency here is hand-typed.
 
@@ -56,7 +56,7 @@ export default function TendencyImport({ opponent, onApply, onClose }: { opponen
         <div className="sticky top-0 flex items-center gap-3 border-b border-line bg-white px-5 py-4">
           <Upload size={18} className="text-grass" />
           <div>
-            <div className="font-extrabold">Upload Hudl Tagged Sheet</div>
+            <div className="font-extrabold">Upload Tagged Spreadsheet</div>
             <div className="text-xs text-dim">Excel (.xlsx), CSV or TSV — every tag is preserved, including custom columns. One row per snap.</div>
           </div>
           <button onClick={onClose} className="ml-auto text-dim hover:text-ink" aria-label="Close"><X size={18} /></button>
@@ -65,8 +65,8 @@ export default function TendencyImport({ opponent, onApply, onClose }: { opponen
           {rows.length === 0 ? (
             <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line px-6 py-10 text-center cursor-pointer hover:border-grass">
               <Upload size={22} className="text-dim" />
-              <span className="text-sm font-semibold">{loading?'Reading sheet…':'Choose Hudl sheet'}</span>
-              <span className="text-xs text-dim">Export the whole playlist from Hudl. Play Type, Down, Distance, Formation and Play carry the most weight — anything else you tag makes the report sharper.</span>
+              <span className="text-sm font-semibold">{loading?'Reading sheet…':'Choose spreadsheet'}</span>
+              <span className="text-xs text-dim">Upload your complete tagged play-by-play spreadsheet. Play Type, Down, Distance, Formation and Play carry the most weight — anything else you tag makes the report sharper.</span>
               <input type="file" disabled={loading} accept=".xlsx,.csv,.tsv" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
             </label>
           ) : (

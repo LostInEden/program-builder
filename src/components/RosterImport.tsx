@@ -157,7 +157,7 @@ export default function RosterImport({ onClose }: { onClose: () => void }) {
             >
               <Upload size={28} className="text-grass" />
               <span>{busy ? "Reading the PDF…" : "Choose a CSV, spreadsheet export, or PDF roster"}</span>
-              <span className="text-xs">Hudl, MaxPreps, or your own sheet — you&apos;ll map the columns next</span>
+              <span className="text-xs">MaxPreps or your own spreadsheet — you&apos;ll map the columns next</span>
             </button>
             {problem && (
               <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

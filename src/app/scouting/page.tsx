@@ -250,7 +250,7 @@ function ScoutingInner() {
               <Upload size={34} className="mx-auto text-dim mb-3" />
               <div className="text-lg font-bold mb-1">Nothing scouted on {o.name} yet</div>
               <p className="text-sm text-dim max-w-xl mx-auto mb-4">
-                Upload the Hudl play-by-play — one row per snap — and this report writes itself: their personnel, what they line up in,
+                Upload the play-by-play spreadsheet — one row per snap — and this report writes itself: their personnel, what they line up in,
                 their best plays, who touches it, and the tells worth building an answer for.
               </p>
               <Link href={`/matchup?id=${o.id}`} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">

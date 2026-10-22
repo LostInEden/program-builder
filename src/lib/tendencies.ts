@@ -46,7 +46,7 @@ export const PLAY_FIELDS: { key: PlayField; label: string; aliases: string[] }[]
 
 const flat = (h: string) => h.toLowerCase().replace(/[_\-.]/g, " ").replace(/\s+/g, " ").trim();
 
-/** Best-effort header guess for a Hudl-style export. Exact alias beats substring. */
+/** Best-effort header guess for a tagged export. Exact alias beats substring. */
 export function guessMapping(headers: string[]): PlayMapping {
   const map: PlayMapping = {};
   const taken = new Set<string>();

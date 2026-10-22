@@ -156,7 +156,7 @@ export function PersonnelCard({ plays }: { plays: Play[] }) {
       </table>
       {untagged && (
         <p className="border-t border-line px-4 py-2 text-[11px] text-dim">
-          Personnel is blank on this export — tag it in Hudl and this splits by 10 / 11 / 12 personnel.
+          Personnel is blank on this export — tag it in your spreadsheet and this splits by 10 / 11 / 12 personnel.
         </p>
       )}
     </div>

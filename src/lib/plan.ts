@@ -485,7 +485,7 @@ export function planSteps(
       n: 1,
       label: "Prepare Opponent Data",
       done: dataReady,
-      detail: o.plays.length ? `${o.plays.length} snaps imported` : dataReady ? "Formations / concepts entered" : "Upload the Hudl play-by-play, or type what you have",
+      detail: o.plays.length ? `${o.plays.length} snaps imported` : dataReady ? "Formations / concepts entered" : "Upload the play-by-play spreadsheet, or type what you have",
       href: `/matchup?id=${o.id}`,
     },
     {

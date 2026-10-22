@@ -185,7 +185,7 @@ export type DownDistanceGrid = Record<(typeof DOWNS)[number], Record<(typeof DIS
 export const emptyGrid = (): DownDistanceGrid =>
   Object.fromEntries(DOWNS.map((d) => [d, Object.fromEntries(DISTANCES.map((x) => [x, null]))])) as DownDistanceGrid;
 
-// One row of the opponent's Hudl play-by-play export — every column the coach
+// One row of the opponent's play-by-play spreadsheet export — every column the coach
 // tags (Q34). Unmapped columns are kept verbatim in `extra` so nothing is lost.
 export type Play = {
   scoutSourceId?: string;

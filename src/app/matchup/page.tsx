@@ -439,7 +439,7 @@ function MatchupInner() {
             <div className={`${card} px-5 py-6 text-center`}>
               <div className="font-bold mb-1">No Tendency Report yet</div>
               <p className="text-sm text-dim max-w-xl mx-auto">
-                Upload the full Hudl play-by-play — one row per snap — and CounterScheme reads the snaps itself: their situations, what they line up in out of each personnel group, their best plays, and the tells worth building an answer for. Everything you type below still works in the meantime.
+                Upload the full play-by-play spreadsheet — one row per snap — and CounterScheme reads the snaps itself: their situations, what they line up in out of each personnel group, their best plays, and the tells worth building an answer for. Everything you type below still works in the meantime.
               </p>
               <button onClick={() => setImportOpen(true)} className="mt-3 inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep"><Upload size={15} /> Upload Report</button>
             </div>

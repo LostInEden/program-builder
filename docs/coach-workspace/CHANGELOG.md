@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-22 — Source-neutral spreadsheet wording
+- **Asked for:** Take the Hudl name out of the software.
+- **Changed:** Renamed upload controls to Upload Tagged Spreadsheet and removed vendor-specific wording from scouting, practice, settings, game-plan guidance and CounterScheme response prompts.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Wording only. Spreadsheet support, all-tag preservation, saved data and diagrams remain unchanged. Hosted availability depends on a successful Vercel deployment.
+
 ## 2026-10-21 — Full Hudl tagged-sheet uploads
 - **Asked for:** Upload the Hudl sheet with all tags.
 - **Changed:** Added direct Excel (.xlsx), CSV and TSV imports, worksheet selection, automatic column mapping and an all-tag preview. Original source rows and every custom column are retained alongside offensive snaps. Imported sheets can be reopened through a paginated all-tags table.

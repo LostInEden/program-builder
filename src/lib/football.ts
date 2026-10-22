@@ -281,7 +281,7 @@ offensivePresets["Empty Left (3x2)"] = [
 
 export type LineKind = "route" | "block" | "motion" | "pitch";
 
-// Field-position presets (Hudl-style): the card shows a slice of field around
+// Field-position presets (tagged): the card shows a slice of field around
 // the LOS; the preset picks which slice, driving yard numbers and end zones.
 export type FieldPreset = "midfield" | "redzone" | "goalline" | "backedup";
 export const FIELD_PRESETS: { id: FieldPreset; label: string; losYardline: number }[] = [
