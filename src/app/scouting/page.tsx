@@ -72,7 +72,7 @@ function ScoutingInner() {
       <div className="mb-5 flex flex-wrap items-center gap-3 justify-between no-print">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">{title}{o ? ` — ${o.name}` : ""}</h1>
-          <p className="text-dim mt-0.5">Study their personnel, concepts and situations. Use the evidence to develop answers in your defensive system.</p>
+          <p className="text-dim mt-0.5">Opponent personnel, formations, concepts, tendencies and supporting evidence. Develop your defensive answers in Game Plan.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {opponents.length > 0 && (
@@ -88,7 +88,7 @@ function ScoutingInner() {
                 <Printer size={15} /> Print / Save as PDF
               </button>}
               <Link href={`/gameplan?id=${o.id}`} className="inline-flex items-center gap-2 rounded-lg bg-grass px-4 py-2 text-sm font-bold text-white hover:bg-grass-deep">
-                <ClipboardList size={15} /> Game Plan
+                <ClipboardList size={15} /> Build Game Plan
               </Link>
             </>
           )}
@@ -99,7 +99,7 @@ function ScoutingInner() {
       {/* The paper version says who and what it is. */}
       <div className="hidden print:block mb-4">
         <h1 className="text-2xl font-extrabold">{title} — {o?.name ?? ""}</h1>
-        <p className="text-sm text-dim">Study their personnel, concepts and situations. Use the evidence to develop answers in your defensive system.</p>
+        <p className="text-sm text-dim">Opponent personnel, formations, concepts, tendencies and supporting evidence. Develop your defensive answers in Game Plan.</p>
       </div>
 
       {!o ? (
@@ -261,7 +261,7 @@ function ScoutingInner() {
 
           <div className="no-print flex flex-wrap items-center gap-3 text-sm">
             <Link href={`/gameplan?id=${o.id}`} className="inline-flex items-center gap-1 font-bold text-grass hover:underline">
-              Now the answer — open the Game Plan <ChevronRight size={14} />
+              Build Game Plan <ChevronRight size={14} />
             </Link>
             <Link href={`/matchup?id=${o.id}`} className="text-dim hover:text-ink">Back to Opponent Matchup</Link>
           </div>

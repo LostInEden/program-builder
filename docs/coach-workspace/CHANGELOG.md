@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-22 — Separate scouting information from coaching decisions
+- **Asked for:** Scouting report needs to be all information. Game plan is where the coach answers questions.
+- **Changed:** Removed defensive-answer actions from individual scouting evidence items. Scouting stays informational even when choosing optional game-plan downloads; approved decisions no longer replace its on-screen evidence. A Build Game Plan link opens the coaching workspace.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Saved scouting information, game-plan questions, decisions, diagrams and combined report downloads preserved. No stored data changes.
+
 ## 2026-10-22 — Source-neutral spreadsheet wording
 - **Asked for:** Take the Hudl name out of the software.
 - **Changed:** Renamed upload controls to Upload Tagged Spreadsheet and removed vendor-specific wording from scouting, practice, settings, game-plan guidance and CounterScheme response prompts.
