@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-22 — Living master scout report style
+- **Asked for:** Match the supplied master scouting report with more diagrams.
+- **Changed:** Added a Living Master Scout heading, film audit, compact bulleted observations with bold lead-ins, report-style section headings and a source integrity log. Formation drawings remain beside formation usage; matching saved concept drawings now appear with the Run & Pass Menu. Full downloads include the source log and displayed formation/concept drawings.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Used the supplied Cookeville PDF as a visual reference only; no opponent facts were imported or inferred. Saved data, existing downloads and Game Plan separation preserved. Build and changed-file lint checked.
+
 ## 2026-10-22 — Formation drawings and usage in the scout
 - **Asked for:** Show top formations as diagrams with personnel and formation percentages.
 - **Changed:** Added top-three formation previews, expandable drawings and all-formation access within the continuous report. Shows formation and personnel shares with tagged-snap denominators and personnel breakdowns within each formation. Reuses saved opponent drawings and exact-name formation templates; unmatched looks can be drawn from a coach-selected starting template using StudioCanvas. Saved edits remain attached to the opponent. Full downloads include displayed formation drawings.
