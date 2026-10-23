@@ -1,7 +1,7 @@
 'use client';
 import {useState} from 'react';
 import {useStore,type Opponent} from '@/lib/store';
-import {activeObservations,validateOrganization,type ScoutObservation} from '@/lib/livingScout';
+import {activeObservations,validateOrganization,SCOUT_SECTIONS,type ScoutSection,type ScoutObservation} from '@/lib/livingScout';
 import TalkTypeInput from './TalkTypeInput';
 import ScoutTagTable from './ScoutTagTable';
 import TendencyImport from './TendencyImport';
@@ -11,15 +11,16 @@ const timestamp=()=>Date.now();
 
 export default function ScoutIntake({opponent}:{opponent:Opponent}) {
  const [open,setOpen]=useState(false),[text,setText]=useState(''),[source,setSource]=useState('Film observation'),[replaces,setReplaces]=useState(''),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[csv,setCsv]=useState(false);
+ const [category,setCategory]=useState<ScoutSection|''>('');
  const save=async()=>{
   if(!text.trim()||busy)return;setBusy(true);setMessage('');
-  const entry:ScoutObservation={id:crypto.randomUUID(),text:text.trim(),source:source.trim()||'Coach observation',createdAt:timestamp(),...(replaces?{replaces}:{})};
+  const entry:ScoutObservation={id:crypto.randomUUID(),text:text.trim(),source:source.trim()||'Coach observation',createdAt:timestamp(),...(category?{organized:[{section:category,quote:text.trim()}]}:{}),...(replaces?{replaces}:{})};
   // Persist original words first. A model failure never loses the observation.
   const state=useStore.getState(),current=state.opponents.find(o=>o.id===opponent.id);
   if(!current){setBusy(false);return;}
   state.updateOpponent(current.id,{scoutObservations:[...(current.scoutObservations??[]),entry]});
   setText('');setReplaces('');
-  await organize(entry);
+  if(category)setMessage('Added to '+category+'. Original words retained.');else await organize(entry);
   setBusy(false);
  };
  const organize=async(entry:ScoutObservation)=>{
@@ -48,7 +49,7 @@ export default function ScoutIntake({opponent}:{opponent:Opponent}) {
  };
  return <section className="no-print mb-5 rounded-xl border border-line bg-card p-4">
   <div className="flex flex-wrap items-center gap-3"><button className="font-bold text-grass" onClick={()=>setOpen(!open)} aria-expanded={open}>Add Scout Info {open?'−':'+'}</button><button className="text-sm underline" onClick={()=>setCsv(true)}>Upload Tagged Spreadsheet</button><span className="text-xs text-dim">One cumulative scout · observations and previous games stay saved</span></div>
-  {open&&<div className="mt-4 space-y-3"><TalkTypeInput value={text} onChange={setText} label={replaces?'Correct this observation':'What did you see on film?'} disabled={busy}/><div className="flex flex-wrap gap-3 items-center"><input aria-label="Scouting source" value={source} onChange={e=>setSource(e.target.value)} placeholder="Game / source (optional)" className="rounded border border-line bg-panel px-3 py-2 text-sm"/><label className="text-sm underline cursor-pointer">Upload document<input className="sr-only" type="file" accept=".txt,.md,.pdf,.docx" disabled={busy} onChange={e=>{void upload(e.target.files?.[0]);e.target.value='';}}/></label><button disabled={busy||!text.trim()||text.length>45000} className="rounded-lg bg-grass text-white font-bold px-4 py-2 disabled:opacity-50" onClick={()=>void save()}>{busy?'Organizing…':replaces?'Save correction':'Add to Scout'}</button>{replaces&&<button onClick={()=>{setReplaces('');setText('');}}>Cancel correction</button>}</div></div>}
+  {open&&<div className="mt-4 space-y-3"><TalkTypeInput value={text} onChange={setText} label={replaces?'Correct this observation':'What did you see on film?'} disabled={busy}/><div className="flex flex-wrap gap-3 items-center"><select aria-label="Scouting section" value={category} onChange={e=>setCategory(e.target.value as ScoutSection|'')} className="rounded border border-line bg-panel px-3 py-2 text-sm"><option value="">Organize automatically</option>{SCOUT_SECTIONS.map(s=><option key={s}>{s}</option>)}</select><input aria-label="Scouting source" value={source} onChange={e=>setSource(e.target.value)} placeholder="Game / source (optional)" className="rounded border border-line bg-panel px-3 py-2 text-sm"/><label className="text-sm underline cursor-pointer">Upload document<input className="sr-only" type="file" accept=".txt,.md,.pdf,.docx" disabled={busy} onChange={e=>{void upload(e.target.files?.[0]);e.target.value='';}}/></label><button disabled={busy||!text.trim()||text.length>45000} className="rounded-lg bg-grass text-white font-bold px-4 py-2 disabled:opacity-50" onClick={()=>void save()}>{busy?'Organizing…':replaces?'Save correction':'Add to Scout'}</button>{replaces&&<button onClick={()=>{setReplaces('');setText('');}}>Cancel correction</button>}</div></div>}
   {message&&<p role="status" className="text-sm mt-3">{message}</p>}
   <WorkspaceSaveStatus/>
   {!!opponent.scoutObservations?.length&&<details className="mt-2 text-xs"><summary className="cursor-pointer text-dim">Observations & source history ({opponent.scoutObservations.length})</summary>{opponent.scoutObservations.map(e=>{const active=activeObservations(opponent).some(a=>a.id===e.id);return <div key={e.id} className="border-t border-line mt-2 py-2"><p className="font-semibold">{e.source} · {new Date(e.createdAt).toLocaleDateString()}{!active?' · replaced by a correction':''}</p><p className="whitespace-pre-wrap max-h-40 overflow-auto my-1">{e.text}</p>{active&&<button disabled={busy} className="text-grass underline mr-3" onClick={()=>{setOpen(true);setText(e.text);setSource(e.source);setReplaces(e.id);}}>Correct</button>}{active&&!e.organized&&<button disabled={busy} className="underline" onClick={async()=>{setBusy(true);await organize(e);setBusy(false);}}>Retry organization</button>}</div>;})}</details>}

@@ -15,6 +15,13 @@ Entry format:
 
 ---
 
+## 2026-10-22 — Expanded master scout content and evidence
+- **Asked for:** Match the reference report's depth and included information, not just its visual format.
+- **Changed:** Expanded the cumulative report to separate Run Game, Pass Game, Opponent Defense, Special Teams and Film Updates & Verification. Run/pass menus show named-play shares, known yardage, formations, personnel, tagged players, motion and direction. Executive read includes the most frequent tagged concepts. Situations include all downs, source field labels and concept examples. Personnel includes recorded physical details; film updates retain source summaries and corrections. Added an optional intake section selector and expanded automatic source organization. Downloads follow the expanded structure and related diagrams.
+- **Commit:** (this one)
+- **Status:** On coach
+- **Notes:** Existing six-section observations remain supported. No opponent facts, assignments, routes or percentages are invented; defense and special teams require supplied observations. Full reports retain data; Quick Scout is labeled Highlights rather than promising two pages. Missing or ambiguous yard-line orientation is not inferred. Preservation and content tests, lint and production build verified.
+
 ## 2026-10-22 — Living master scout report style
 - **Asked for:** Match the supplied master scouting report with more diagrams.
 - **Changed:** Added a Living Master Scout heading, film audit, compact bulleted observations with bold lead-ins, report-style section headings and a source integrity log. Formation drawings remain beside formation usage; matching saved concept drawings now appear with the Run & Pass Menu. Full downloads include the source log and displayed formation/concept drawings.

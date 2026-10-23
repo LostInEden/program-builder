@@ -1,7 +1,7 @@
 import {computeTells,tellSentence,situationOf,situationLabel} from './tendencies';
 import type { Opponent, Play, StaffMeeting } from './store';
 
-export const SCOUT_SECTIONS = ['Offensive Identity','Key Personnel','Formations & Personnel','Run & Pass Concepts','Situational Tendencies','Key Takeaways'] as const;
+export const SCOUT_SECTIONS = ['Offensive Identity','Key Personnel','Formations & Personnel','Run & Pass Concepts','Situational Tendencies','Key Takeaways','Run Game','Pass Game','Opponent Defense','Special Teams','Film Updates & Verification'] as const;
 export type ScoutSection = typeof SCOUT_SECTIONS[number];
 export type ScoutSource = {id:string; name:string; game?:string; gameDate?:string; fingerprint:string; createdAt:number; sheet?:{name:string;headers:string[];rows:Record<string,string>[]}; mapping?:Record<string,string|null|undefined>};
 export type ScoutObservation = {id:string; text:string; source:string; createdAt:number; replaces?:string; organized?:{section:ScoutSection; quote:string}[]};
@@ -33,7 +33,7 @@ export function cumulativeScout(o:Opponent):ScoutReportSection[] {
  if(o.offensiveStyle||o.tempo)add(0,'identity',[o.offensiveStyle,o.tempo].filter(Boolean).join(' · '),'Saved opponent information');
  if(plays.length)add(0,'run-pass',split(plays),`${plays.length} total snaps; ${plays.filter(p=>!p.playType).length} unclassified.`,plays);
  else if(o.runRate!=null)add(0,'manual-run',`${o.runRate}% run`,'Coach-entered rate; sample size not supplied.');
- for(const p of o.keyPlayers??[])add(1,`player:${p.id}`,[p.jersey&&`#${p.jersey}`,p.name,p.pos].filter(Boolean).join(' '),p.notes??'');
+ for(const p of o.keyPlayers??[])add(1,`player:${p.id}`,[p.jersey&&`#${p.jersey}`,p.name,p.pos].filter(Boolean).join(' '),[p.height,p.weight!=null?`${p.weight} lb`:null,p.cls,p.notes].filter(Boolean).join(' · '));
  const groups=(field:'formation'|'personnel'|'motion'|'play'|'player',section:number)=>{
   const tagged=plays.filter(p=>p[field]?.trim());const buckets=new Map<string,Play[]>();
   for(const p of tagged){const key=p[field].trim().replace(/\s+/g,' ').toUpperCase();buckets.set(key,[...(buckets.get(key)??[]),p]);}
@@ -43,11 +43,14 @@ export function cumulativeScout(o:Opponent):ScoutReportSection[] {
    add(section,`${field}:${name}`,`${field==='personnel'?'Personnel ':field==='motion'?'Motion ':''}${name}`,`${rows.length}/${tagged.length} ${field}-tagged snaps · ${split(rows)}${games.size>1?` · observed in ${games.size} games`:''}${field==='play'&&gains.length?` · ${(gains.reduce((n,p)=>n+p.gain!,0)/gains.length).toFixed(1)} yards/play (${gains.length} gain-tagged)`:''}`,rows);
   }
  };
- groups('player',1);groups('formation',2);groups('personnel',2);groups('motion',2);groups('play',3);
+ groups('player',1);groups('formation',2);groups('personnel',2);groups('motion',2);
  for(const f of (o.formations??[]).filter(f=>f.notes||!plays.some(p=>p.formation.trim().toLowerCase()===f.name.trim().toLowerCase())))add(2,`saved-formation:${f.id}`,f.name,[f.notes,f.snapsPct!=null?`${f.snapsPct}% usage (saved scouting entry)`:null].filter(Boolean).join(' · '));
  for(const p of (o.personnelUsage??[]).filter(g=>!plays.some(p=>p.personnel.trim().toLowerCase()===g.group.trim().toLowerCase())))add(2,`saved-personnel:${p.id}`,p.group,p.pct!=null?`${p.pct}% usage (saved scouting entry)`: 'Saved grouping');
- for(const c of o.concepts??[])add(3,`saved-concept:${c.id}`,c.name,[c.type,c.notes].filter(Boolean).join(' · '));
- for(const [name,rows] of [['1st down',plays.filter(p=>p.down===1)],['3rd down',plays.filter(p=>p.down===3)],['Short yardage (1–2)',plays.filter(p=>p.distance!=null&&p.distance>0&&p.distance<=2)]] as [string,Play[]][]){if(rows.length)add(4,name,name,split(rows),rows);}
+ for(const c of o.concepts??[])add(c.type==='Run'?6:c.type==='Pass'?7:3,`saved-concept:${c.id}`,c.name,[c.type,c.freq!=null?`${c.freq}% usage (recorded)`:null,c.notes].filter(Boolean).join(' · '));
+ for(const [name,rows] of [['1st down',plays.filter(p=>p.down===1)],['2nd down',plays.filter(p=>p.down===2)],['4th down',plays.filter(p=>p.down===4)],['3rd down',plays.filter(p=>p.down===3)],['Short yardage (1–2)',plays.filter(p=>p.distance!=null&&p.distance>0&&p.distance<=2)]] as [string,Play[]][]){if(rows.length)add(4,name,name,split(rows),rows);}
+ const fieldTags=new Map<string,Play[]>();
+ for(const p of plays){if(p.yardLine?.trim()){const label=p.yardLine.trim();fieldTags.set(label,[...(fieldTags.get(label)??[]),p]);}}
+ for(const [label,rows] of fieldTags)add(4,`field:${label}`,`Field position tag: ${label}`,`${split(rows)} · original field label; orientation not inferred`,rows);
  const situationKeys=new Map<string,Play[]>();for(const p of plays){const sit=situationOf(p);if(sit){const key=situationLabel(sit);situationKeys.set(key,[...(situationKeys.get(key)??[]),p]);}}
  for(const [name,rows] of situationKeys)add(4,`situation:${name}`,name,split(rows),rows);
  for(const t of computeTells(plays).actionable.slice(0,8))add(5,`tell:${t.id}`,tellSentence(t),`${t.hits}/${t.n} tagged opportunities · observed association, not a prediction`,plays.filter(p=>t.matchIds.includes(p.id)));
@@ -57,7 +60,7 @@ export function cumulativeScout(o:Opponent):ScoutReportSection[] {
  if(o.notes)add(5,'legacy-notes','Saved observations',o.notes);
  for(const e of activeObservations(o)){
   const organized=e.organized??[];
-  for(const [i,item] of organized.entries())add(SCOUT_SECTIONS.indexOf(item.section),`${e.id}:${i}`,item.quote,'Coach / source observation',[],e.source);
+  for(const [i,item] of organized.entries())add(Math.max(0,SCOUT_SECTIONS.indexOf(item.section)),`${e.id}:${i}`,item.quote,'Coach / source observation',[],e.source);
   // Keep unclassified text accessible without silently dropping a paragraph.
   const remainder=organized.reduce((text,item)=>text.replace(item.quote,''),e.text).trim();
   if(remainder)add(5,`${e.id}:raw`,remainder,organized.length?'Additional source information':'Observation — organization pending',[],e.source);
@@ -65,10 +68,44 @@ export function cumulativeScout(o:Opponent):ScoutReportSection[] {
  const dated=(o.scoutSources??[]).filter(s=>s.gameDate&&s.game).sort((a,b)=>a.gameDate!.localeCompare(b.gameDate!));
  const latest=dated.at(-1);
  if(latest){const recent=plays.filter(p=>o.scoutSources?.find(s=>s.id===p.scoutSourceId)?.game===latest.game&&p.playType);const prior=plays.filter(p=>{const s=o.scoutSources?.find(s=>s.id===p.scoutSourceId);return s?.gameDate&&s.gameDate<latest.gameDate!&&s.game!==latest.game&&p.playType;});
-  if(recent.length>=20&&prior.length>=20){const rate=(r:Play[])=>r.filter(p=>p.playType==='Run').length/r.length;const diff=Math.round((rate(recent)-rate(prior))*100);if(Math.abs(diff)>=15)add(5,'recent-change',`Recent run-rate change: ${diff>0?'+':''}${diff} percentage points`,`${latest.game}: ${split(recent)}. Earlier dated games: ${split(prior)}. Descriptive change; game context may explain it.`,[...recent,...prior]);}
+  if(recent.length>=20&&prior.length>=20){const rate=(r:Play[])=>r.filter(p=>p.playType==='Run').length/r.length;const diff=Math.round((rate(recent)-rate(prior))*100);if(Math.abs(diff)>=15)add(10,'recent-change',`Recent run-rate change: ${diff>0?'+':''}${diff} percentage points`,`${latest.game}: ${split(recent)}. Earlier dated games: ${split(prior)}. Descriptive change; game context may explain it.`,[...recent,...prior]);}
+ }
+
+ // Describe the charted run/pass menu without inferring blocking rules or routes.
+ for(const type of ['Run','Pass',''] as const){
+  const typed=plays.filter(p=>p.playType===type);
+  const named=typed.filter(p=>p.play.trim());
+  const buckets=new Map<string,Play[]>();
+  for(const p of named){const name=p.play.trim().toUpperCase();buckets.set(name,[...(buckets.get(name)??[]),p]);}
+  for(const [name,rows] of [...buckets].sort((a,b)=>b[1].length-a[1].length)){
+   const counts=(field:'formation'|'personnel'|'player'|'direction'|'motion')=>{
+    const known=rows.filter(p=>p[field]?.trim());const tally=new Map<string,number>();
+    for(const p of known){const v=p[field].trim().toUpperCase();tally.set(v,(tally.get(v)??0)+1);}
+    return [...tally].sort((a,b)=>b[1]-a[1]).slice(0,4).map(([v,n])=>`${v} (${n}/${known.length} tagged)`).join(', ');
+   };
+   const gains=rows.filter(p=>p.gain!=null);
+   const detail=[`${rows.length}/${named.length} named ${type||'unclassified'} snaps (${Math.round(rows.length/named.length*100)}%)`,gains.length?`${(gains.reduce((a,p)=>a+p.gain!,0)/gains.length).toFixed(1)} yards/play from ${gains.length} gain-tagged snaps`:null,...(['formation','personnel','player','direction','motion'] as const).map(f=>counts(f)?`${f}: ${counts(f)}`:null),rows.length<10?'Limited sample':null].filter(Boolean).join(' · ');
+   add(type==='Run'?6:type==='Pass'?7:3,`menu:${type}:${name}`,name,detail,rows);
+  }
+ }
+ for(const section of [6,7]){
+  const top=sections[section].items.find(i=>i.id.startsWith('menu:'));
+  if(top)add(0,`executive:${section}`,`Most frequent tagged ${section===6?'run':'pass'}: ${top.title}`,top.detail,plays.filter(p=>top.playIds.includes(p.id)));
+ }
+ for(const item of sections[4].items){
+  const rows=plays.filter(p=>item.playIds.includes(p.id)&&p.play.trim()),names=new Map<string,number>();
+  for(const p of rows){const name=p.play.trim().toUpperCase();names.set(name,(names.get(name)??0)+1);}
+  if(rows.length)item.detail+=' · Observed concepts: '+[...names].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,c])=>`${n} (${c}/${rows.length} named snaps)`).join(', ');
+ }
+ for(const source of o.scoutSources??[]){
+  const rows=plays.filter(p=>p.scoutSourceId===source.id);
+  add(10,`source:${source.id}`,[source.game,source.gameDate,source.name].filter(Boolean).join(' · '),`${rows.length} imported offensive snaps · ${split(rows)}`,rows);
+ }
+ for(const entry of o.scoutObservations??[]){
+  if(entry.replaces)add(10,`correction:${entry.id}`,'Recorded correction',entry.text,[],entry.source);
  }
  sections[4].items.sort((a,b)=>{const rank=(i:ScoutItem)=>i.id==='red-zone'?0:/3rd|Short yardage/.test(i.title)?1:2;return rank(a)-rank(b);});
- return sections;
+ return [0,1,2,6,7,3,4,8,9,5,10].map(i=>sections[i]);
 }
 export function scoutTopic(meeting:StaffMeeting,item:ScoutItem):StaffMeeting {
  const id=`scout:${item.id}`;
